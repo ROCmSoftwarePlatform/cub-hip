@@ -160,7 +160,7 @@ class cub::BlockScan&lt; T, BLOCK_THREADS, POLICY &gt;</h3>
 <li>See <a class="el" href="namespacecub.html#aa7484021273cbfd89229a6b5c205b9f1" title="Tuning policy for cub::BlockScan.">cub::BlockScanPolicy</a> for more performance details regarding algorithmic alternatives</li>
 </ul>
 </dd></dl>
-<dl class="section user"><dt>Examples</dt><dd><em>Example 1.</em> Perform a simple exclusive prefix sum of 512 integer keys that are partitioned in a blocked arrangement across a 128-thread threadblock (where each thread holds 4 keys). <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cub_8cuh.html">cub.cuh</a>&gt;</span></div>
+<dl class="section user"><dt>Examples</dt><dd><em>Example 1.</em> Perform a simple exclusive prefix sum of 512 integer keys that are partitioned in a blocked arrangement across a 128-thread threadblock (where each thread holds 4 keys). <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;cub.cuh&gt;</span></div>
 <div class="line"></div>
 <div class="line">__global__ <span class="keywordtype">void</span> SomeKernel(...)</div>
 <div class="line">{</div>
@@ -181,7 +181,7 @@ class cub::BlockScan&lt; T, BLOCK_THREADS, POLICY &gt;</h3>
 <div class="line"></div>
 <div class="line">    ...</div>
 </div><!-- fragment --></dd></dl>
-<dl class="section user"><dt></dt><dd><em>Example 2:</em> Perform inter-threadblock allocation within a global data structure by using local prefix sum that incorporates a single global atomic-add. <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cub_8cuh.html">cub.cuh</a>&gt;</span></div>
+<dl class="section user"><dt></dt><dd><em>Example 2:</em> Perform inter-threadblock allocation within a global data structure by using local prefix sum that incorporates a single global atomic-add. <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;cub.cuh&gt;</span></div>
 <div class="line"></div>
 <div class="line"><span class="keyword">struct </span>BlockPrefixOp</div>
 <div class="line">{</div>
@@ -2610,7 +2610,7 @@ template&lt;int ITEMS_PER_THREAD&gt; </div>
 <!-- HTML footer for doxygen 1.8.3.1-->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 8 2013 01:16:03 for CUB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Mar 9 2013 04:59:40 for CUB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3.1
 <br>
