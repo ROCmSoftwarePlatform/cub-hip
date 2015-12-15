@@ -161,11 +161,11 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;    {</div>
 <div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;        BLOCK_THREADS               = BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z,</div>
 <div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;</div>
-<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;        LOG_WARP_THREADS            = <a class="code" href="group___util_mgmt.html#ga07eedb9de4a50680067c2d51eb438f69" title="Number of threads per warp (log) ">CUB_LOG_WARP_THREADS</a>(PTX_ARCH),</div>
+<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;        LOG_WARP_THREADS            = CUB_LOG_WARP_THREADS(PTX_ARCH),</div>
 <div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;        WARP_THREADS                = 1 &lt;&lt; LOG_WARP_THREADS,</div>
 <div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;        WARPS                       = (BLOCK_THREADS + WARP_THREADS - 1) / WARP_THREADS,</div>
 <div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;</div>
-<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;        LOG_SMEM_BANKS              = <a class="code" href="group___util_mgmt.html#ga2863430ef147807280c593c89658a52c" title="Number of smem banks (log) ">CUB_LOG_SMEM_BANKS</a>(PTX_ARCH),</div>
+<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;        LOG_SMEM_BANKS              = CUB_LOG_SMEM_BANKS(PTX_ARCH),</div>
 <div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;        SMEM_BANKS                  = 1 &lt;&lt; LOG_SMEM_BANKS,</div>
 <div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;</div>
 <div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;        TILE_ITEMS                  = BLOCK_THREADS * ITEMS_PER_THREAD,</div>
@@ -192,7 +192,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;</div>
 <div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;<span class="keyword">public</span>:</div>
 <div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;</div>
-<div class="line"><a name="l00163"></a><span class="lineno"><a class="code" href="structcub_1_1_block_exchange_1_1_temp_storage.html">  163</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structcub_1_1_block_exchange_1_1_temp_storage.html" title="The operations exposed by BlockExchange require a temporary memory allocation of this nested type for...">TempStorage</a> : <a class="code" href="structcub_1_1_uninitialized.html" title="A storage-backing wrapper that allows types with non-trivial constructors to be aliased in unions...">Uninitialized</a>&lt;_TempStorage&gt; {};</div>
+<div class="line"><a name="l00163"></a><span class="lineno"><a class="code" href="structcub_1_1_block_exchange_1_1_temp_storage.html">  163</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structcub_1_1_block_exchange_1_1_temp_storage.html" title="The operations exposed by BlockExchange require a temporary memory allocation of this nested type for...">TempStorage</a> : Uninitialized&lt;_TempStorage&gt; {};</div>
 <div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;</div>
 <div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;<span class="keyword">private</span>:</div>
 <div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;</div>
@@ -222,7 +222,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;</div>
 <div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;    __device__ __forceinline__ <span class="keywordtype">void</span> BlockedToStriped(</div>
 <div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;        T               items[ITEMS_PER_THREAD],    </div>
-<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;        <a class="code" href="structcub_1_1_int2_type.html" title="Allows for the treatment of an integral constant as a type at compile-time (e.g., to achieve static c...">Int2Type&lt;false&gt;</a> time_slicing)</div>
+<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;        Int2Type&lt;false&gt; time_slicing)</div>
 <div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;    {</div>
 <div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;<span class="preprocessor">        #pragma unroll</span></div>
 <div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;<span class="preprocessor"></span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> ITEM = 0; ITEM &lt; ITEMS_PER_THREAD; ITEM++)</div>
@@ -701,26 +701,26 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00757"></a><span class="lineno"><a class="code" href="classcub_1_1_block_exchange.html#a2855471bbbcc4d66ac6a29d35a040e0c">  757</a></span>&#160;    __device__ __forceinline__ <span class="keywordtype">void</span> <a class="code" href="classcub_1_1_block_exchange.html#a2855471bbbcc4d66ac6a29d35a040e0c" title="Transposes data items from striped arrangement to blocked arrangement. ">StripedToBlocked</a>(</div>
 <div class="line"><a name="l00758"></a><span class="lineno">  758</span>&#160;        T                items[ITEMS_PER_THREAD])   </div>
 <div class="line"><a name="l00759"></a><span class="lineno">  759</span>&#160;    {</div>
-<div class="line"><a name="l00760"></a><span class="lineno">  760</span>&#160;        StripedToBlocked(items, <a class="code" href="structcub_1_1_int2_type.html" title="Allows for the treatment of an integral constant as a type at compile-time (e.g., to achieve static c...">Int2Type&lt;WARP_TIME_SLICING&gt;</a>());</div>
+<div class="line"><a name="l00760"></a><span class="lineno">  760</span>&#160;        StripedToBlocked(items, Int2Type&lt;WARP_TIME_SLICING&gt;());</div>
 <div class="line"><a name="l00761"></a><span class="lineno">  761</span>&#160;    }</div>
 <div class="line"><a name="l00762"></a><span class="lineno">  762</span>&#160;</div>
 <div class="line"><a name="l00803"></a><span class="lineno"><a class="code" href="classcub_1_1_block_exchange.html#ad7553f28b40fc875a80400edc8ac7b33">  803</a></span>&#160;    __device__ __forceinline__ <span class="keywordtype">void</span> <a class="code" href="classcub_1_1_block_exchange.html#ad7553f28b40fc875a80400edc8ac7b33" title="Transposes data items from blocked arrangement to striped arrangement. ">BlockedToStriped</a>(</div>
 <div class="line"><a name="l00804"></a><span class="lineno">  804</span>&#160;        T               items[ITEMS_PER_THREAD])    </div>
 <div class="line"><a name="l00805"></a><span class="lineno">  805</span>&#160;    {</div>
-<div class="line"><a name="l00806"></a><span class="lineno">  806</span>&#160;        BlockedToStriped(items, <a class="code" href="structcub_1_1_int2_type.html" title="Allows for the treatment of an integral constant as a type at compile-time (e.g., to achieve static c...">Int2Type&lt;WARP_TIME_SLICING&gt;</a>());</div>
+<div class="line"><a name="l00806"></a><span class="lineno">  806</span>&#160;        BlockedToStriped(items, Int2Type&lt;WARP_TIME_SLICING&gt;());</div>
 <div class="line"><a name="l00807"></a><span class="lineno">  807</span>&#160;    }</div>
 <div class="line"><a name="l00808"></a><span class="lineno">  808</span>&#160;</div>
 <div class="line"><a name="l00809"></a><span class="lineno">  809</span>&#160;</div>
 <div class="line"><a name="l00848"></a><span class="lineno"><a class="code" href="classcub_1_1_block_exchange.html#a122bf51ee7258410c9eb507f2abbd81a">  848</a></span>&#160;    __device__ __forceinline__ <span class="keywordtype">void</span> <a class="code" href="classcub_1_1_block_exchange.html#a122bf51ee7258410c9eb507f2abbd81a" title="Transposes data items from warp-striped arrangement to blocked arrangement. ">WarpStripedToBlocked</a>(</div>
 <div class="line"><a name="l00849"></a><span class="lineno">  849</span>&#160;        T                items[ITEMS_PER_THREAD])   </div>
 <div class="line"><a name="l00850"></a><span class="lineno">  850</span>&#160;    {</div>
-<div class="line"><a name="l00851"></a><span class="lineno">  851</span>&#160;        WarpStripedToBlocked(items, <a class="code" href="structcub_1_1_int2_type.html" title="Allows for the treatment of an integral constant as a type at compile-time (e.g., to achieve static c...">Int2Type&lt;WARP_TIME_SLICING&gt;</a>());</div>
+<div class="line"><a name="l00851"></a><span class="lineno">  851</span>&#160;        WarpStripedToBlocked(items, Int2Type&lt;WARP_TIME_SLICING&gt;());</div>
 <div class="line"><a name="l00852"></a><span class="lineno">  852</span>&#160;    }</div>
 <div class="line"><a name="l00853"></a><span class="lineno">  853</span>&#160;</div>
 <div class="line"><a name="l00895"></a><span class="lineno"><a class="code" href="classcub_1_1_block_exchange.html#a852508850f7cc778c6f2036dcfb74ce5">  895</a></span>&#160;    __device__ __forceinline__ <span class="keywordtype">void</span> <a class="code" href="classcub_1_1_block_exchange.html#a852508850f7cc778c6f2036dcfb74ce5" title="Transposes data items from blocked arrangement to warp-striped arrangement. ">BlockedToWarpStriped</a>(</div>
 <div class="line"><a name="l00896"></a><span class="lineno">  896</span>&#160;        T                items[ITEMS_PER_THREAD])   </div>
 <div class="line"><a name="l00897"></a><span class="lineno">  897</span>&#160;    {</div>
-<div class="line"><a name="l00898"></a><span class="lineno">  898</span>&#160;        BlockedToWarpStriped(items, <a class="code" href="structcub_1_1_int2_type.html" title="Allows for the treatment of an integral constant as a type at compile-time (e.g., to achieve static c...">Int2Type&lt;WARP_TIME_SLICING&gt;</a>());</div>
+<div class="line"><a name="l00898"></a><span class="lineno">  898</span>&#160;        BlockedToWarpStriped(items, Int2Type&lt;WARP_TIME_SLICING&gt;());</div>
 <div class="line"><a name="l00899"></a><span class="lineno">  899</span>&#160;    }</div>
 <div class="line"><a name="l00900"></a><span class="lineno">  900</span>&#160;</div>
 <div class="line"><a name="l00901"></a><span class="lineno">  901</span>&#160;</div>
@@ -732,7 +732,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00919"></a><span class="lineno">  919</span>&#160;        T               items[ITEMS_PER_THREAD],    </div>
 <div class="line"><a name="l00920"></a><span class="lineno">  920</span>&#160;        OffsetT         ranks[ITEMS_PER_THREAD])    </div>
 <div class="line"><a name="l00921"></a><span class="lineno">  921</span>&#160;    {</div>
-<div class="line"><a name="l00922"></a><span class="lineno">  922</span>&#160;        ScatterToBlocked(items, ranks, <a class="code" href="structcub_1_1_int2_type.html" title="Allows for the treatment of an integral constant as a type at compile-time (e.g., to achieve static c...">Int2Type&lt;WARP_TIME_SLICING&gt;</a>());</div>
+<div class="line"><a name="l00922"></a><span class="lineno">  922</span>&#160;        ScatterToBlocked(items, ranks, Int2Type&lt;WARP_TIME_SLICING&gt;());</div>
 <div class="line"><a name="l00923"></a><span class="lineno">  923</span>&#160;    }</div>
 <div class="line"><a name="l00924"></a><span class="lineno">  924</span>&#160;</div>
 <div class="line"><a name="l00925"></a><span class="lineno">  925</span>&#160;</div>
@@ -741,7 +741,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00936"></a><span class="lineno">  936</span>&#160;        T               items[ITEMS_PER_THREAD],    </div>
 <div class="line"><a name="l00937"></a><span class="lineno">  937</span>&#160;        OffsetT         ranks[ITEMS_PER_THREAD])    </div>
 <div class="line"><a name="l00938"></a><span class="lineno">  938</span>&#160;    {</div>
-<div class="line"><a name="l00939"></a><span class="lineno">  939</span>&#160;        ScatterToStriped(items, ranks, <a class="code" href="structcub_1_1_int2_type.html" title="Allows for the treatment of an integral constant as a type at compile-time (e.g., to achieve static c...">Int2Type&lt;WARP_TIME_SLICING&gt;</a>());</div>
+<div class="line"><a name="l00939"></a><span class="lineno">  939</span>&#160;        ScatterToStriped(items, ranks, Int2Type&lt;WARP_TIME_SLICING&gt;());</div>
 <div class="line"><a name="l00940"></a><span class="lineno">  940</span>&#160;    }</div>
 <div class="line"><a name="l00941"></a><span class="lineno">  941</span>&#160;</div>
 <div class="line"><a name="l00942"></a><span class="lineno">  942</span>&#160;</div>
@@ -819,11 +819,11 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l01033"></a><span class="lineno"> 1033</span>&#160;    <span class="keyword">enum</span></div>
 <div class="line"><a name="l01034"></a><span class="lineno"> 1034</span>&#160;    {</div>
 <div class="line"><a name="l01035"></a><span class="lineno"> 1035</span>&#160;        <span class="comment">// Whether the logical warp size and the PTX warp size coincide</span></div>
-<div class="line"><a name="l01036"></a><span class="lineno"> 1036</span>&#160;        IS_ARCH_WARP = (LOGICAL_WARP_THREADS == <a class="code" href="group___util_mgmt.html#gabfbb84b4dfe9567e3a5bd8216e2acbb4" title="Number of threads per warp. ">CUB_WARP_THREADS</a>(PTX_ARCH)),</div>
+<div class="line"><a name="l01036"></a><span class="lineno"> 1036</span>&#160;        IS_ARCH_WARP = (LOGICAL_WARP_THREADS == CUB_WARP_THREADS(PTX_ARCH)),</div>
 <div class="line"><a name="l01037"></a><span class="lineno"> 1037</span>&#160;</div>
 <div class="line"><a name="l01038"></a><span class="lineno"> 1038</span>&#160;        WARP_ITEMS                  = (ITEMS_PER_THREAD * LOGICAL_WARP_THREADS) + 1,</div>
 <div class="line"><a name="l01039"></a><span class="lineno"> 1039</span>&#160;</div>
-<div class="line"><a name="l01040"></a><span class="lineno"> 1040</span>&#160;        LOG_SMEM_BANKS              = <a class="code" href="group___util_mgmt.html#ga2863430ef147807280c593c89658a52c" title="Number of smem banks (log) ">CUB_LOG_SMEM_BANKS</a>(PTX_ARCH),</div>
+<div class="line"><a name="l01040"></a><span class="lineno"> 1040</span>&#160;        LOG_SMEM_BANKS              = CUB_LOG_SMEM_BANKS(PTX_ARCH),</div>
 <div class="line"><a name="l01041"></a><span class="lineno"> 1041</span>&#160;        SMEM_BANKS                  = 1 &lt;&lt; LOG_SMEM_BANKS,</div>
 <div class="line"><a name="l01042"></a><span class="lineno"> 1042</span>&#160;</div>
 <div class="line"><a name="l01043"></a><span class="lineno"> 1043</span>&#160;        <span class="comment">// Insert padding if the number of items per thread is a power of two</span></div>
@@ -912,7 +912,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <!-- HTML footer for doxygen 1.8.3.1-->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Apr 13 2015 13:56:49 for CUB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Dec 14 2015 13:11:13 for CUB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.4
 <br>
