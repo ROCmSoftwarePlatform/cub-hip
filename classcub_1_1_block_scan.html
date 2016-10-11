@@ -197,54 +197,54 @@ __device__ __forceinline__&#160;</td><td class="memItemRight" valign="bottom"><a
 <tr class="separator:aa5156b3509d81ed5e53e06e270ab28cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Exclusive prefix sum operations</div></td></tr>
 <tr class="memitem:a266a054160f65c87e43f645cd8e46fd1"><td class="memItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a266a054160f65c87e43f645cd8e46fd1">ExclusiveSum</a> (T input, T &amp;output)</td></tr>
-<tr class="memdesc:a266a054160f65c87e43f645cd8e46fd1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes one input element.  <a href="#a266a054160f65c87e43f645cd8e46fd1">More...</a><br/></td></tr>
+<tr class="memdesc:a266a054160f65c87e43f645cd8e46fd1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes one input element. The value of 0 is applied as the initial value, and is assigned to <code>output</code> in <em>thread</em><sub>0</sub>.  <a href="#a266a054160f65c87e43f645cd8e46fd1">More...</a><br/></td></tr>
 <tr class="separator:a266a054160f65c87e43f645cd8e46fd1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6ed3f77795e582df31d3d6d9d950615e"><td class="memItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a6ed3f77795e582df31d3d6d9d950615e">ExclusiveSum</a> (T input, T &amp;output, T &amp;block_aggregate)</td></tr>
-<tr class="memdesc:a6ed3f77795e582df31d3d6d9d950615e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes one input element. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a6ed3f77795e582df31d3d6d9d950615e">More...</a><br/></td></tr>
+<tr class="memdesc:a6ed3f77795e582df31d3d6d9d950615e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes one input element. The value of 0 is applied as the initial value, and is assigned to <code>output</code> in <em>thread</em><sub>0</sub>. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a6ed3f77795e582df31d3d6d9d950615e">More...</a><br/></td></tr>
 <tr class="separator:a6ed3f77795e582df31d3d6d9d950615e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3d93d50466c87bac7f7593b118ea7699"><td class="memTemplParams" colspan="2">template&lt;typename BlockPrefixCallbackOp &gt; </td></tr>
-<tr class="memitem:a3d93d50466c87bac7f7593b118ea7699"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a3d93d50466c87bac7f7593b118ea7699">ExclusiveSum</a> (T input, T &amp;output, T &amp;block_aggregate, BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
-<tr class="memdesc:a3d93d50466c87bac7f7593b118ea7699"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes one input element. Instead of using 0 as the block-wide prefix, the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a3d93d50466c87bac7f7593b118ea7699">More...</a><br/></td></tr>
-<tr class="separator:a3d93d50466c87bac7f7593b118ea7699"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a746a34edf114a55040378e3d675843b7"><td class="memTemplParams" colspan="2">template&lt;typename BlockPrefixCallbackOp &gt; </td></tr>
+<tr class="memitem:a746a34edf114a55040378e3d675843b7"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a746a34edf114a55040378e3d675843b7">ExclusiveSum</a> (T input, T &amp;output, BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
+<tr class="memdesc:a746a34edf114a55040378e3d675843b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes one input element. Instead of using 0 as the block-wide prefix, the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a746a34edf114a55040378e3d675843b7">More...</a><br/></td></tr>
+<tr class="separator:a746a34edf114a55040378e3d675843b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Exclusive prefix sum operations (multiple data per thread)</div></td></tr>
 <tr class="memitem:a2ca2ffc431bbaafa1bd474db58296cb4"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD&gt; </td></tr>
 <tr class="memitem:a2ca2ffc431bbaafa1bd474db58296cb4"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a2ca2ffc431bbaafa1bd474db58296cb4">ExclusiveSum</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD])</td></tr>
-<tr class="memdesc:a2ca2ffc431bbaafa1bd474db58296cb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes an array of consecutive input elements.  <a href="#a2ca2ffc431bbaafa1bd474db58296cb4">More...</a><br/></td></tr>
+<tr class="memdesc:a2ca2ffc431bbaafa1bd474db58296cb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes an array of consecutive input elements. The value of 0 is applied as the initial value, and is assigned to <code>output</code>[0] in <em>thread</em><sub>0</sub>.  <a href="#a2ca2ffc431bbaafa1bd474db58296cb4">More...</a><br/></td></tr>
 <tr class="separator:a2ca2ffc431bbaafa1bd474db58296cb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a196e010c38f8a0d6c06e0d0ca5c394aa"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD&gt; </td></tr>
 <tr class="memitem:a196e010c38f8a0d6c06e0d0ca5c394aa"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a196e010c38f8a0d6c06e0d0ca5c394aa">ExclusiveSum</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], T &amp;block_aggregate)</td></tr>
-<tr class="memdesc:a196e010c38f8a0d6c06e0d0ca5c394aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes an array of consecutive input elements. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a196e010c38f8a0d6c06e0d0ca5c394aa">More...</a><br/></td></tr>
+<tr class="memdesc:a196e010c38f8a0d6c06e0d0ca5c394aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes an array of consecutive input elements. The value of 0 is applied as the initial value, and is assigned to <code>output</code>[0] in <em>thread</em><sub>0</sub>. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a196e010c38f8a0d6c06e0d0ca5c394aa">More...</a><br/></td></tr>
 <tr class="separator:a196e010c38f8a0d6c06e0d0ca5c394aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a05f0829a8ded28ba062dcdf12d5eb4ec"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD, typename BlockPrefixCallbackOp &gt; </td></tr>
-<tr class="memitem:a05f0829a8ded28ba062dcdf12d5eb4ec"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a05f0829a8ded28ba062dcdf12d5eb4ec">ExclusiveSum</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], T &amp;block_aggregate, BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
-<tr class="memdesc:a05f0829a8ded28ba062dcdf12d5eb4ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes an array of consecutive input elements. Instead of using 0 as the block-wide prefix, the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a05f0829a8ded28ba062dcdf12d5eb4ec">More...</a><br/></td></tr>
-<tr class="separator:a05f0829a8ded28ba062dcdf12d5eb4ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a815b31d28fc9dd859bcbc96c6e8b2d42"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD, typename BlockPrefixCallbackOp &gt; </td></tr>
+<tr class="memitem:a815b31d28fc9dd859bcbc96c6e8b2d42"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a815b31d28fc9dd859bcbc96c6e8b2d42">ExclusiveSum</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
+<tr class="memdesc:a815b31d28fc9dd859bcbc96c6e8b2d42"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes an array of consecutive input elements. Instead of using 0 as the block-wide prefix, the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a815b31d28fc9dd859bcbc96c6e8b2d42">More...</a><br/></td></tr>
+<tr class="separator:a815b31d28fc9dd859bcbc96c6e8b2d42"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Exclusive prefix scan operations</div></td></tr>
-<tr class="memitem:ab6249a5aad4d82b2debe5e7630c11851"><td class="memTemplParams" colspan="2">template&lt;typename ScanOp &gt; </td></tr>
-<tr class="memitem:ab6249a5aad4d82b2debe5e7630c11851"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#ab6249a5aad4d82b2debe5e7630c11851">ExclusiveScan</a> (T input, T &amp;output, T identity, ScanOp scan_op)</td></tr>
-<tr class="memdesc:ab6249a5aad4d82b2debe5e7630c11851"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes one input element.  <a href="#ab6249a5aad4d82b2debe5e7630c11851">More...</a><br/></td></tr>
-<tr class="separator:ab6249a5aad4d82b2debe5e7630c11851"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7ab0258bec4a9e1d118e3ce55535cf5c"><td class="memTemplParams" colspan="2">template&lt;typename ScanOp &gt; </td></tr>
-<tr class="memitem:a7ab0258bec4a9e1d118e3ce55535cf5c"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a7ab0258bec4a9e1d118e3ce55535cf5c">ExclusiveScan</a> (T input, T &amp;output, T identity, ScanOp scan_op, T &amp;block_aggregate)</td></tr>
-<tr class="memdesc:a7ab0258bec4a9e1d118e3ce55535cf5c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes one input element. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a7ab0258bec4a9e1d118e3ce55535cf5c">More...</a><br/></td></tr>
-<tr class="separator:a7ab0258bec4a9e1d118e3ce55535cf5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a488d525db85569407b7e22db8588ac08"><td class="memTemplParams" colspan="2">template&lt;typename ScanOp , typename BlockPrefixCallbackOp &gt; </td></tr>
-<tr class="memitem:a488d525db85569407b7e22db8588ac08"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a488d525db85569407b7e22db8588ac08">ExclusiveScan</a> (T input, T &amp;output, T identity, ScanOp scan_op, T &amp;block_aggregate, BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
-<tr class="memdesc:a488d525db85569407b7e22db8588ac08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes one input element. the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a488d525db85569407b7e22db8588ac08">More...</a><br/></td></tr>
-<tr class="separator:a488d525db85569407b7e22db8588ac08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a925798e919ada2b618119025659f8aa6"><td class="memTemplParams" colspan="2">template&lt;typename ScanOp &gt; </td></tr>
+<tr class="memitem:a925798e919ada2b618119025659f8aa6"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a925798e919ada2b618119025659f8aa6">ExclusiveScan</a> (T input, T &amp;output, T initial_value, ScanOp scan_op)</td></tr>
+<tr class="memdesc:a925798e919ada2b618119025659f8aa6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes one input element.  <a href="#a925798e919ada2b618119025659f8aa6">More...</a><br/></td></tr>
+<tr class="separator:a925798e919ada2b618119025659f8aa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aacca4fee6d8ad93a36eb1866c911a51f"><td class="memTemplParams" colspan="2">template&lt;typename ScanOp &gt; </td></tr>
+<tr class="memitem:aacca4fee6d8ad93a36eb1866c911a51f"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#aacca4fee6d8ad93a36eb1866c911a51f">ExclusiveScan</a> (T input, T &amp;output, T initial_value, ScanOp scan_op, T &amp;block_aggregate)</td></tr>
+<tr class="memdesc:aacca4fee6d8ad93a36eb1866c911a51f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes one input element. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#aacca4fee6d8ad93a36eb1866c911a51f">More...</a><br/></td></tr>
+<tr class="separator:aacca4fee6d8ad93a36eb1866c911a51f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a81ee5f6c75fceffb8d1730c6421f7175"><td class="memTemplParams" colspan="2">template&lt;typename ScanOp , typename BlockPrefixCallbackOp &gt; </td></tr>
+<tr class="memitem:a81ee5f6c75fceffb8d1730c6421f7175"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a81ee5f6c75fceffb8d1730c6421f7175">ExclusiveScan</a> (T input, T &amp;output, ScanOp scan_op, BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
+<tr class="memdesc:a81ee5f6c75fceffb8d1730c6421f7175"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes one input element. the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a81ee5f6c75fceffb8d1730c6421f7175">More...</a><br/></td></tr>
+<tr class="separator:a81ee5f6c75fceffb8d1730c6421f7175"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Exclusive prefix scan operations (multiple data per thread)</div></td></tr>
-<tr class="memitem:a20f4eaab2459d928798100d31a93c422"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD, typename ScanOp &gt; </td></tr>
-<tr class="memitem:a20f4eaab2459d928798100d31a93c422"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a20f4eaab2459d928798100d31a93c422">ExclusiveScan</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], T identity, ScanOp scan_op)</td></tr>
-<tr class="memdesc:a20f4eaab2459d928798100d31a93c422"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes an array of consecutive input elements.  <a href="#a20f4eaab2459d928798100d31a93c422">More...</a><br/></td></tr>
-<tr class="separator:a20f4eaab2459d928798100d31a93c422"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1a9223edd7926c8d196bf6012a43c5e1"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD, typename ScanOp &gt; </td></tr>
-<tr class="memitem:a1a9223edd7926c8d196bf6012a43c5e1"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a1a9223edd7926c8d196bf6012a43c5e1">ExclusiveScan</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], T identity, ScanOp scan_op, T &amp;block_aggregate)</td></tr>
-<tr class="memdesc:a1a9223edd7926c8d196bf6012a43c5e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes an array of consecutive input elements. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a1a9223edd7926c8d196bf6012a43c5e1">More...</a><br/></td></tr>
-<tr class="separator:a1a9223edd7926c8d196bf6012a43c5e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3a18151fda4f6de7e0ecfedfd54fa83f"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallbackOp &gt; </td></tr>
-<tr class="memitem:a3a18151fda4f6de7e0ecfedfd54fa83f"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a3a18151fda4f6de7e0ecfedfd54fa83f">ExclusiveScan</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], T identity, ScanOp scan_op, T &amp;block_aggregate, BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
-<tr class="memdesc:a3a18151fda4f6de7e0ecfedfd54fa83f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes an array of consecutive input elements. the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a3a18151fda4f6de7e0ecfedfd54fa83f">More...</a><br/></td></tr>
-<tr class="separator:a3a18151fda4f6de7e0ecfedfd54fa83f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0279a2e82bc470be588711effa6600b1"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD, typename ScanOp &gt; </td></tr>
+<tr class="memitem:a0279a2e82bc470be588711effa6600b1"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a0279a2e82bc470be588711effa6600b1">ExclusiveScan</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], T initial_value, ScanOp scan_op)</td></tr>
+<tr class="memdesc:a0279a2e82bc470be588711effa6600b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes an array of consecutive input elements.  <a href="#a0279a2e82bc470be588711effa6600b1">More...</a><br/></td></tr>
+<tr class="separator:a0279a2e82bc470be588711effa6600b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb08117dbe3d5310675d28af2cc6e6dc"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD, typename ScanOp &gt; </td></tr>
+<tr class="memitem:adb08117dbe3d5310675d28af2cc6e6dc"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#adb08117dbe3d5310675d28af2cc6e6dc">ExclusiveScan</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], T initial_value, ScanOp scan_op, T &amp;block_aggregate)</td></tr>
+<tr class="memdesc:adb08117dbe3d5310675d28af2cc6e6dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes an array of consecutive input elements. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#adb08117dbe3d5310675d28af2cc6e6dc">More...</a><br/></td></tr>
+<tr class="separator:adb08117dbe3d5310675d28af2cc6e6dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a67df1e5c905ff1fdd8e113dfeffe270d"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallbackOp &gt; </td></tr>
+<tr class="memitem:a67df1e5c905ff1fdd8e113dfeffe270d"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a67df1e5c905ff1fdd8e113dfeffe270d">ExclusiveScan</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], ScanOp scan_op, BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
+<tr class="memdesc:a67df1e5c905ff1fdd8e113dfeffe270d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an exclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes an array of consecutive input elements. the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a67df1e5c905ff1fdd8e113dfeffe270d">More...</a><br/></td></tr>
+<tr class="separator:a67df1e5c905ff1fdd8e113dfeffe270d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Inclusive prefix sum operations</div></td></tr>
 <tr class="memitem:aac305c11b1d04708e2a41328c894830c"><td class="memItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#aac305c11b1d04708e2a41328c894830c">InclusiveSum</a> (T input, T &amp;output)</td></tr>
 <tr class="memdesc:aac305c11b1d04708e2a41328c894830c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an inclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes one input element.  <a href="#aac305c11b1d04708e2a41328c894830c">More...</a><br/></td></tr>
@@ -252,10 +252,10 @@ __device__ __forceinline__&#160;</td><td class="memItemRight" valign="bottom"><a
 <tr class="memitem:a99222ab9b122e6df879ee04b4e8244da"><td class="memItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a99222ab9b122e6df879ee04b4e8244da">InclusiveSum</a> (T input, T &amp;output, T &amp;block_aggregate)</td></tr>
 <tr class="memdesc:a99222ab9b122e6df879ee04b4e8244da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an inclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes one input element. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a99222ab9b122e6df879ee04b4e8244da">More...</a><br/></td></tr>
 <tr class="separator:a99222ab9b122e6df879ee04b4e8244da"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6da87204a0aee72269d6040a26a0c3e1"><td class="memTemplParams" colspan="2">template&lt;typename BlockPrefixCallbackOp &gt; </td></tr>
-<tr class="memitem:a6da87204a0aee72269d6040a26a0c3e1"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a6da87204a0aee72269d6040a26a0c3e1">InclusiveSum</a> (T input, T &amp;output, T &amp;block_aggregate, BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
-<tr class="memdesc:a6da87204a0aee72269d6040a26a0c3e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an inclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes one input element. Instead of using 0 as the block-wide prefix, the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a6da87204a0aee72269d6040a26a0c3e1">More...</a><br/></td></tr>
-<tr class="separator:a6da87204a0aee72269d6040a26a0c3e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a161048b996cf29f1d008fb7ff6b9a8c1"><td class="memTemplParams" colspan="2">template&lt;typename BlockPrefixCallbackOp &gt; </td></tr>
+<tr class="memitem:a161048b996cf29f1d008fb7ff6b9a8c1"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a161048b996cf29f1d008fb7ff6b9a8c1">InclusiveSum</a> (T input, T &amp;output, BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
+<tr class="memdesc:a161048b996cf29f1d008fb7ff6b9a8c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an inclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes one input element. Instead of using 0 as the block-wide prefix, the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a161048b996cf29f1d008fb7ff6b9a8c1">More...</a><br/></td></tr>
+<tr class="separator:a161048b996cf29f1d008fb7ff6b9a8c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Inclusive prefix sum operations (multiple data per thread)</div></td></tr>
 <tr class="memitem:a70a5e42bc4e0145a1256bcef24a70fa5"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD&gt; </td></tr>
 <tr class="memitem:a70a5e42bc4e0145a1256bcef24a70fa5"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a70a5e42bc4e0145a1256bcef24a70fa5">InclusiveSum</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD])</td></tr>
@@ -265,10 +265,10 @@ __device__ __forceinline__&#160;</td><td class="memItemRight" valign="bottom"><a
 <tr class="memitem:ab74faf02d031085922021ac6fd5b481e"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#ab74faf02d031085922021ac6fd5b481e">InclusiveSum</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], T &amp;block_aggregate)</td></tr>
 <tr class="memdesc:ab74faf02d031085922021ac6fd5b481e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an inclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes an array of consecutive input elements. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#ab74faf02d031085922021ac6fd5b481e">More...</a><br/></td></tr>
 <tr class="separator:ab74faf02d031085922021ac6fd5b481e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a244f3312a14e57bf43085669113af89f"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD, typename BlockPrefixCallbackOp &gt; </td></tr>
-<tr class="memitem:a244f3312a14e57bf43085669113af89f"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a244f3312a14e57bf43085669113af89f">InclusiveSum</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], T &amp;block_aggregate, BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
-<tr class="memdesc:a244f3312a14e57bf43085669113af89f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an inclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes an array of consecutive input elements. Instead of using 0 as the block-wide prefix, the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a244f3312a14e57bf43085669113af89f">More...</a><br/></td></tr>
-<tr class="separator:a244f3312a14e57bf43085669113af89f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7509b187ad1df7ab681193ddce2afd41"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD, typename BlockPrefixCallbackOp &gt; </td></tr>
+<tr class="memitem:a7509b187ad1df7ab681193ddce2afd41"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a7509b187ad1df7ab681193ddce2afd41">InclusiveSum</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
+<tr class="memdesc:a7509b187ad1df7ab681193ddce2afd41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an inclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes an array of consecutive input elements. Instead of using 0 as the block-wide prefix, the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a7509b187ad1df7ab681193ddce2afd41">More...</a><br/></td></tr>
+<tr class="separator:a7509b187ad1df7ab681193ddce2afd41"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Inclusive prefix scan operations</div></td></tr>
 <tr class="memitem:ae08f8fda4bf2692073d1eac7fdfc7f38"><td class="memTemplParams" colspan="2">template&lt;typename ScanOp &gt; </td></tr>
 <tr class="memitem:ae08f8fda4bf2692073d1eac7fdfc7f38"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#ae08f8fda4bf2692073d1eac7fdfc7f38">InclusiveScan</a> (T input, T &amp;output, ScanOp scan_op)</td></tr>
@@ -278,10 +278,10 @@ __device__ __forceinline__&#160;</td><td class="memItemRight" valign="bottom"><a
 <tr class="memitem:a09452aec6c46b2bcadc5e0d641ef16e1"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a09452aec6c46b2bcadc5e0d641ef16e1">InclusiveScan</a> (T input, T &amp;output, ScanOp scan_op, T &amp;block_aggregate)</td></tr>
 <tr class="memdesc:a09452aec6c46b2bcadc5e0d641ef16e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an inclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes one input element. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a09452aec6c46b2bcadc5e0d641ef16e1">More...</a><br/></td></tr>
 <tr class="separator:a09452aec6c46b2bcadc5e0d641ef16e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae9ad11af90a52a2a6d56c602818a09ac"><td class="memTemplParams" colspan="2">template&lt;typename ScanOp , typename BlockPrefixCallbackOp &gt; </td></tr>
-<tr class="memitem:ae9ad11af90a52a2a6d56c602818a09ac"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#ae9ad11af90a52a2a6d56c602818a09ac">InclusiveScan</a> (T input, T &amp;output, ScanOp scan_op, T &amp;block_aggregate, BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
-<tr class="memdesc:ae9ad11af90a52a2a6d56c602818a09ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an inclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes one input element. the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#ae9ad11af90a52a2a6d56c602818a09ac">More...</a><br/></td></tr>
-<tr class="separator:ae9ad11af90a52a2a6d56c602818a09ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a702cd90359874b9dcd52f443bf2af7d3"><td class="memTemplParams" colspan="2">template&lt;typename ScanOp , typename BlockPrefixCallbackOp &gt; </td></tr>
+<tr class="memitem:a702cd90359874b9dcd52f443bf2af7d3"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a702cd90359874b9dcd52f443bf2af7d3">InclusiveScan</a> (T input, T &amp;output, ScanOp scan_op, BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
+<tr class="memdesc:a702cd90359874b9dcd52f443bf2af7d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an inclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes one input element. the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a702cd90359874b9dcd52f443bf2af7d3">More...</a><br/></td></tr>
+<tr class="separator:a702cd90359874b9dcd52f443bf2af7d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Inclusive prefix scan operations (multiple data per thread)</div></td></tr>
 <tr class="memitem:a2f3efa807f15cf1a34cc1c1f7e8ef871"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD, typename ScanOp &gt; </td></tr>
 <tr class="memitem:a2f3efa807f15cf1a34cc1c1f7e8ef871"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a2f3efa807f15cf1a34cc1c1f7e8ef871">InclusiveScan</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], ScanOp scan_op)</td></tr>
@@ -291,10 +291,10 @@ __device__ __forceinline__&#160;</td><td class="memItemRight" valign="bottom"><a
 <tr class="memitem:a2f3e87641f8705f15c3dcd0fd23238ba"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a2f3e87641f8705f15c3dcd0fd23238ba">InclusiveScan</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], ScanOp scan_op, T &amp;block_aggregate)</td></tr>
 <tr class="memdesc:a2f3e87641f8705f15c3dcd0fd23238ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an inclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes an array of consecutive input elements. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a2f3e87641f8705f15c3dcd0fd23238ba">More...</a><br/></td></tr>
 <tr class="separator:a2f3e87641f8705f15c3dcd0fd23238ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a89e3d9b481bcf50731df07067cadf1ce"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallbackOp &gt; </td></tr>
-<tr class="memitem:a89e3d9b481bcf50731df07067cadf1ce"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#a89e3d9b481bcf50731df07067cadf1ce">InclusiveScan</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], ScanOp scan_op, T &amp;block_aggregate, BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
-<tr class="memdesc:a89e3d9b481bcf50731df07067cadf1ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an inclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes an array of consecutive input elements. the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#a89e3d9b481bcf50731df07067cadf1ce">More...</a><br/></td></tr>
-<tr class="separator:a89e3d9b481bcf50731df07067cadf1ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:accb292da806e242c851c142c01f638a4"><td class="memTemplParams" colspan="2">template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallbackOp &gt; </td></tr>
+<tr class="memitem:accb292da806e242c851c142c01f638a4"><td class="memTemplItemLeft" align="right" valign="top">__device__ __forceinline__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classcub_1_1_block_scan.html#accb292da806e242c851c142c01f638a4">InclusiveScan</a> (T(&amp;input)[ITEMS_PER_THREAD], T(&amp;output)[ITEMS_PER_THREAD], ScanOp scan_op, BlockPrefixCallbackOp &amp;block_prefix_callback_op)</td></tr>
+<tr class="memdesc:accb292da806e242c851c142c01f638a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes an inclusive block-wide prefix scan using the specified binary <code>scan_op</code> functor. Each thread contributes an array of consecutive input elements. the call-back functor <code>block_prefix_callback_op</code> is invoked by the first warp in the block, and the value returned by <em>lane</em><sub>0</sub> in that warp is used as the "seed" value that logically prefixes the threadblock's scan inputs. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs.  <a href="#accb292da806e242c851c142c01f638a4">More...</a><br/></td></tr>
+<tr class="separator:accb292da806e242c851c142c01f638a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="aa5156b3509d81ed5e53e06e270ab28cf"></a>
@@ -368,7 +368,7 @@ template&lt;typename T , int BLOCK_DIM_X, BlockScanAlgorithm ALGORITHM = BLOCK_S
 </table>
 </div><div class="memdoc">
 
-<p>Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes one input element. </p>
+<p>Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes one input element. The value of 0 is applied as the initial value, and is assigned to <code>output</code> in <em>thread</em><sub>0</sub>. </p>
 <dl class="section user"><dt></dt><dd><ul>
 <li>This operation assumes the value of obtained by the <code>T</code>'s default constructor (or by zero-initialization if no user-defined default constructor exists) is suitable as the identity value zero for addition.</li>
 <li>For multi-dimensional blocks, threads are linearly ranked in row-major order.</li>
@@ -402,7 +402,7 @@ template&lt;typename T , int BLOCK_DIM_X, BlockScanAlgorithm ALGORITHM = BLOCK_S
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00336">336</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00333">333</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
@@ -446,7 +446,7 @@ template&lt;typename T , int BLOCK_DIM_X, BlockScanAlgorithm ALGORITHM = BLOCK_S
 </table>
 </div><div class="memdoc">
 
-<p>Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes one input element. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs. </p>
+<p>Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes one input element. The value of 0 is applied as the initial value, and is assigned to <code>output</code> in <em>thread</em><sub>0</sub>. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs. </p>
 <dl class="section user"><dt></dt><dd><ul>
 <li>This operation assumes the value of obtained by the <code>T</code>'s default constructor (or by zero-initialization if no user-defined default constructor exists) is suitable as the identity value zero for addition.</li>
 <li>For multi-dimensional blocks, threads are linearly ranked in row-major order.</li>
@@ -482,11 +482,11 @@ template&lt;typename T , int BLOCK_DIM_X, BlockScanAlgorithm ALGORITHM = BLOCK_S
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00382">382</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00380">380</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a3d93d50466c87bac7f7593b118ea7699"></a>
+<a class="anchor" id="a746a34edf114a55040378e3d675843b7"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -508,12 +508,6 @@ template&lt;typename BlockPrefixCallbackOp &gt; </div>
           <td></td>
           <td class="paramtype">T &amp;&#160;</td>
           <td class="paramname"><em>output</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">T &amp;&#160;</td>
-          <td class="paramname"><em>block_aggregate</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -583,16 +577,15 @@ template&lt;typename BlockPrefixCallbackOp &gt; </div>
 <div class="line">        <span class="keywordtype">int</span> thread_data = d_data[block_offset];</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Collectively compute the block-wide exclusive prefix sum</span></div>
-<div class="line">        <span class="keywordtype">int</span> block_aggregate;</div>
 <div class="line">        <a class="code" href="classcub_1_1_block_scan.html#a5133f76e261ce0b33d381e8be747966c" title="Collective constructor using a private static allocation of shared memory as temporary storage...">BlockScan</a>(temp_storage).ExclusiveSum(</div>
-<div class="line">            thread_data, thread_data, block_aggregate, prefix_op);</div>
+<div class="line">            thread_data, thread_data, prefix_op);</div>
 <div class="line">        __syncthreads();</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Store scanned items to output segment</span></div>
 <div class="line">        d_data[block_offset] = thread_data;</div>
 <div class="line">    }</div>
 </div><!-- fragment --> </dd></dl>
-<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>1, 1, 1, 1, 1, 1, 1, 1, ...</code>. The corresponding output for the first segment will be <code>0, 1, ..., 127</code>. The output for the second segment will be <code>128, 129, ..., 255</code>. Furthermore, the value <code>128</code> will be stored in <code>block_aggregate</code> for all threads after each scan.</dd></dl>
+<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>1, 1, 1, 1, 1, 1, 1, 1, ...</code>. The corresponding output for the first segment will be <code>0, 1, ..., 127</code>. The output for the second segment will be <code>128, 129, ..., 255</code>.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">BlockPrefixCallbackOp</td><td><b>[inferred]</b> Call-back functor type having member <code>T operator()(T block_aggregate)</code> </td></tr>
@@ -603,13 +596,12 @@ template&lt;typename BlockPrefixCallbackOp &gt; </div>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>Calling thread's input item </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">output</td><td>Calling thread's output item (may be aliased to <code>input</code>) </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">block_aggregate</td><td>block-wide aggregate reduction of input items (exclusive of the <code>block_prefix_callback_op</code> value) </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to all inputs. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to the logical input sequence. </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00468">468</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00465">465</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
@@ -649,7 +641,7 @@ template&lt;int ITEMS_PER_THREAD&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes an array of consecutive input elements. </p>
+<p>Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes an array of consecutive input elements. The value of 0 is applied as the initial value, and is assigned to <code>output</code>[0] in <em>thread</em><sub>0</sub>. </p>
 <dl class="section user"><dt></dt><dd><ul>
 <li>This operation assumes the value of obtained by the <code>T</code>'s default constructor (or by zero-initialization if no user-defined default constructor exists) is suitable as the identity value zero for addition.</li>
 <li>Assumes a <a href="index.html#sec4sec3"><em>blocked arrangement</em></a> of (<em>block-threads</em>*<em>items-per-thread</em>) items across the thread block, where thread<sub><em>i</em></sub> owns the <em>i</em><sup>th</sup> range of <em>items-per-thread</em> contiguous items. For multi-dimensional thread blocks, a row-major thread ordering is assumed.</li>
@@ -690,7 +682,7 @@ template&lt;int ITEMS_PER_THREAD&gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00525">525</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00521">521</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
@@ -736,7 +728,7 @@ template&lt;int ITEMS_PER_THREAD&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes an array of consecutive input elements. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs. </p>
+<p>Computes an exclusive block-wide prefix scan using addition (+) as the scan operator. Each thread contributes an array of consecutive input elements. The value of 0 is applied as the initial value, and is assigned to <code>output</code>[0] in <em>thread</em><sub>0</sub>. Also provides every thread with the block-wide <code>block_aggregate</code> of all inputs. </p>
 <dl class="section user"><dt></dt><dd><ul>
 <li>This operation assumes the value of obtained by the <code>T</code>'s default constructor (or by zero-initialization if no user-defined default constructor exists) is suitable as the identity value zero for addition.</li>
 <li>Assumes a <a href="index.html#sec4sec3"><em>blocked arrangement</em></a> of (<em>block-threads</em>*<em>items-per-thread</em>) items across the thread block, where thread<sub><em>i</em></sub> owns the <em>i</em><sup>th</sup> range of <em>items-per-thread</em> contiguous items. For multi-dimensional thread blocks, a row-major thread ordering is assumed.</li>
@@ -779,11 +771,11 @@ template&lt;int ITEMS_PER_THREAD&gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00583">583</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00572">572</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a05f0829a8ded28ba062dcdf12d5eb4ec"></a>
+<a class="anchor" id="a815b31d28fc9dd859bcbc96c6e8b2d42"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -805,12 +797,6 @@ template&lt;int ITEMS_PER_THREAD, typename BlockPrefixCallbackOp &gt; </div>
           <td></td>
           <td class="paramtype">T(&amp;)&#160;</td>
           <td class="paramname"><em>output</em>[ITEMS_PER_THREAD], </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">T &amp;&#160;</td>
-          <td class="paramname"><em>block_aggregate</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -891,7 +877,7 @@ template&lt;int ITEMS_PER_THREAD, typename BlockPrefixCallbackOp &gt; </div>
 <div class="line">        <span class="comment">// Collectively compute the block-wide exclusive prefix sum</span></div>
 <div class="line">        <span class="keywordtype">int</span> block_aggregate;</div>
 <div class="line">        <a class="code" href="classcub_1_1_block_scan.html#a5133f76e261ce0b33d381e8be747966c" title="Collective constructor using a private static allocation of shared memory as temporary storage...">BlockScan</a>(temp_storage.scan).ExclusiveSum(</div>
-<div class="line">            thread_data, thread_data, block_aggregate, prefix_op);</div>
+<div class="line">            thread_data, thread_data, prefix_op);</div>
 <div class="line">        __syncthreads();</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Store scanned items to output segment</span></div>
@@ -899,7 +885,7 @@ template&lt;int ITEMS_PER_THREAD, typename BlockPrefixCallbackOp &gt; </div>
 <div class="line">        __syncthreads();</div>
 <div class="line">    }</div>
 </div><!-- fragment --> </dd></dl>
-<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>1, 1, 1, 1, 1, 1, 1, 1, ...</code>. The corresponding output for the first segment will be <code>0, 1, 2, 3, ..., 510, 511</code>. The output for the second segment will be <code>512, 513, 514, 515, ..., 1022, 1023</code>. Furthermore, the value <code>512</code> will be stored in <code>block_aggregate</code> for all threads after each scan.</dd></dl>
+<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>1, 1, 1, 1, 1, 1, 1, 1, ...</code>. The corresponding output for the first segment will be <code>0, 1, 2, 3, ..., 510, 511</code>. The output for the second segment will be <code>512, 513, 514, 515, ..., 1022, 1023</code>.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">ITEMS_PER_THREAD</td><td><b>[inferred]</b> The number of consecutive items partitioned onto each thread. </td></tr>
@@ -911,17 +897,16 @@ template&lt;int ITEMS_PER_THREAD, typename BlockPrefixCallbackOp &gt; </div>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>Calling thread's input items </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">output</td><td>Calling thread's output items (may be aliased to <code>input</code>) </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">block_aggregate</td><td>block-wide aggregate reduction of input items (exclusive of the <code>block_prefix_callback_op</code> value) </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to all inputs. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to the logical input sequence. </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00691">691</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00673">673</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="ab6249a5aad4d82b2debe5e7630c11851"></a>
+<a class="anchor" id="a925798e919ada2b618119025659f8aa6"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -948,7 +933,7 @@ template&lt;typename ScanOp &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">T&#160;</td>
-          <td class="paramname"><em>identity</em>, </td>
+          <td class="paramname"><em>initial_value</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1005,17 +990,17 @@ template&lt;typename ScanOp &gt; </div>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>Calling thread's input item </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">output</td><td>Calling thread's output item (may be aliased to <code>input</code>) </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">identity</td><td>Identity value </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">initial_value</td><td>Initial value to seed the exclusive scan (and is assigned to <code>output</code>[0] in <em>thread</em><sub>0</sub>) </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">scan_op</td><td>Binary scan functor </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00755">755</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00728">728</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a7ab0258bec4a9e1d118e3ce55535cf5c"></a>
+<a class="anchor" id="aacca4fee6d8ad93a36eb1866c911a51f"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -1042,7 +1027,7 @@ template&lt;typename ScanOp &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">T&#160;</td>
-          <td class="paramname"><em>identity</em>, </td>
+          <td class="paramname"><em>initial_value</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1106,18 +1091,18 @@ template&lt;typename ScanOp &gt; </div>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>Calling thread's input items </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">output</td><td>Calling thread's output items (may be aliased to <code>input</code>) </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">identity</td><td>Identity value </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">initial_value</td><td>Initial value to seed the exclusive scan (and is assigned to <code>output</code>[0] in <em>thread</em><sub>0</sub>) </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">scan_op</td><td>Binary scan functor </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">block_aggregate</td><td>block-wide aggregate reduction of input items </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00805">805</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00778">778</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a488d525db85569407b7e22db8588ac08"></a>
+<a class="anchor" id="a81ee5f6c75fceffb8d1730c6421f7175"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -1143,20 +1128,8 @@ template&lt;typename ScanOp , typename BlockPrefixCallbackOp &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">T&#160;</td>
-          <td class="paramname"><em>identity</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">ScanOp&#160;</td>
           <td class="paramname"><em>scan_op</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">T &amp;&#160;</td>
-          <td class="paramname"><em>block_aggregate</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1226,16 +1199,15 @@ template&lt;typename ScanOp , typename BlockPrefixCallbackOp &gt; </div>
 <div class="line">        <span class="keywordtype">int</span> thread_data = d_data[block_offset];</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Collectively compute the block-wide exclusive prefix max scan</span></div>
-<div class="line">        <span class="keywordtype">int</span> block_aggregate;</div>
 <div class="line">        <a class="code" href="classcub_1_1_block_scan.html#a5133f76e261ce0b33d381e8be747966c" title="Collective constructor using a private static allocation of shared memory as temporary storage...">BlockScan</a>(temp_storage).ExclusiveScan(</div>
-<div class="line">            thread_data, thread_data, INT_MIN, <a class="code" href="structcub_1_1_max.html" title="Default max functor. ">cub::Max</a>(), block_aggregate, prefix_op);</div>
+<div class="line">            thread_data, thread_data, INT_MIN, <a class="code" href="structcub_1_1_max.html" title="Default max functor. ">cub::Max</a>(), prefix_op);</div>
 <div class="line">        __syncthreads();</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Store scanned items to output segment</span></div>
 <div class="line">        d_data[block_offset] = thread_data;</div>
 <div class="line">    }</div>
 </div><!-- fragment --> </dd></dl>
-<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>0, -1, 2, -3, 4, -5, ...</code>. The corresponding output for the first segment will be <code>INT_MIN, 0, 0, 2, ..., 124, 126</code>. The output for the second segment will be <code>126, 128, 128, 130, ..., 252, 254</code>. Furthermore, <code>block_aggregate</code> will be assigned <code>126</code> in all threads after the first scan, assigned <code>254</code> after the second scan, etc.</dd></dl>
+<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>0, -1, 2, -3, 4, -5, ...</code>. The corresponding output for the first segment will be <code>INT_MIN, 0, 0, 2, ..., 124, 126</code>. The output for the second segment will be <code>126, 128, 128, 130, ..., 252, 254</code>.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">ScanOp</td><td><b>[inferred]</b> Binary scan functor type having member <code>T operator()(const T &amp;a, const T &amp;b)</code> </td></tr>
@@ -1247,19 +1219,17 @@ template&lt;typename ScanOp , typename BlockPrefixCallbackOp &gt; </div>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>Calling thread's input item </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">output</td><td>Calling thread's output item (may be aliased to <code>input</code>) </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">identity</td><td>Identity value </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">scan_op</td><td>Binary scan functor </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">block_aggregate</td><td>block-wide aggregate reduction of input items (exclusive of the <code>block_prefix_callback_op</code> value) </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to all inputs. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to the logical input sequence. </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00897">897</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00867">867</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a20f4eaab2459d928798100d31a93c422"></a>
+<a class="anchor" id="a0279a2e82bc470be588711effa6600b1"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -1286,7 +1256,7 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">T&#160;</td>
-          <td class="paramname"><em>identity</em>, </td>
+          <td class="paramname"><em>initial_value</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1345,17 +1315,17 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp &gt; </div>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>Calling thread's input items </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">output</td><td>Calling thread's output items (may be aliased to <code>input</code>) </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">identity</td><td>Identity value </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">initial_value</td><td>Initial value to seed the exclusive scan (and is assigned to <code>output</code>[0] in <em>thread</em><sub>0</sub>) </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">scan_op</td><td>Binary scan functor </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00961">961</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00929">929</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a1a9223edd7926c8d196bf6012a43c5e1"></a>
+<a class="anchor" id="adb08117dbe3d5310675d28af2cc6e6dc"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -1382,7 +1352,7 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">T&#160;</td>
-          <td class="paramname"><em>identity</em>, </td>
+          <td class="paramname"><em>initial_value</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1448,18 +1418,18 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp &gt; </div>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>Calling thread's input items </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">output</td><td>Calling thread's output items (may be aliased to <code>input</code>) </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">identity</td><td>Identity value </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">initial_value</td><td>Initial value to seed the exclusive scan (and is assigned to <code>output</code>[0] in <em>thread</em><sub>0</sub>) </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">scan_op</td><td>Binary scan functor </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">block_aggregate</td><td>block-wide aggregate reduction of input items </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01023">1023</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l00991">991</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a3a18151fda4f6de7e0ecfedfd54fa83f"></a>
+<a class="anchor" id="a67df1e5c905ff1fdd8e113dfeffe270d"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -1485,20 +1455,8 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallback
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">T&#160;</td>
-          <td class="paramname"><em>identity</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">ScanOp&#160;</td>
           <td class="paramname"><em>scan_op</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">T &amp;&#160;</td>
-          <td class="paramname"><em>block_aggregate</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1577,9 +1535,8 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallback
 <div class="line">        __syncthreads();</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Collectively compute the block-wide exclusive prefix max scan</span></div>
-<div class="line">        <span class="keywordtype">int</span> block_aggregate;</div>
 <div class="line">        <a class="code" href="classcub_1_1_block_scan.html#a5133f76e261ce0b33d381e8be747966c" title="Collective constructor using a private static allocation of shared memory as temporary storage...">BlockScan</a>(temp_storage.scan).ExclusiveScan(</div>
-<div class="line">            thread_data, thread_data, INT_MIN, <a class="code" href="structcub_1_1_max.html" title="Default max functor. ">cub::Max</a>(), block_aggregate, prefix_op);</div>
+<div class="line">            thread_data, thread_data, INT_MIN, <a class="code" href="structcub_1_1_max.html" title="Default max functor. ">cub::Max</a>(), prefix_op);</div>
 <div class="line">        __syncthreads();</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Store scanned items to output segment</span></div>
@@ -1587,7 +1544,7 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallback
 <div class="line">        __syncthreads();</div>
 <div class="line">    }</div>
 </div><!-- fragment --> </dd></dl>
-<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>0, -1, 2, -3, 4, -5, ...</code>. The corresponding output for the first segment will be <code>INT_MIN, 0, 0, 2, 2, 4, ..., 508, 510</code>. The output for the second segment will be <code>510, 512, 512, 514, 514, 516, ..., 1020, 1022</code>. Furthermore, <code>block_aggregate</code> will be assigned <code>510</code> in all threads after the first scan, assigned <code>1022</code> after the second scan, etc.</dd></dl>
+<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>0, -1, 2, -3, 4, -5, ...</code>. The corresponding output for the first segment will be <code>INT_MIN, 0, 0, 2, 2, 4, ..., 508, 510</code>. The output for the second segment will be <code>510, 512, 512, 514, 514, 516, ..., 1020, 1022</code>.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">ITEMS_PER_THREAD</td><td><b>[inferred]</b> The number of consecutive items partitioned onto each thread. </td></tr>
@@ -1600,15 +1557,13 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallback
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>Calling thread's input items </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">output</td><td>Calling thread's output items (may be aliased to <code>input</code>) </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">identity</td><td>Identity value </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">scan_op</td><td>Binary scan functor </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">block_aggregate</td><td>block-wide aggregate reduction of input items (exclusive of the <code>block_prefix_callback_op</code> value) </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to all inputs. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to the logical input sequence. </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01134">1134</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01099">1099</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
@@ -1679,7 +1634,7 @@ template&lt;typename T , int BLOCK_DIM_X, BlockScanAlgorithm ALGORITHM = BLOCK_S
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01390">1390</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01279">1279</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
@@ -1758,11 +1713,11 @@ template&lt;typename T , int BLOCK_DIM_X, BlockScanAlgorithm ALGORITHM = BLOCK_S
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01435">1435</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01324">1324</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a6da87204a0aee72269d6040a26a0c3e1"></a>
+<a class="anchor" id="a161048b996cf29f1d008fb7ff6b9a8c1"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -1784,12 +1739,6 @@ template&lt;typename BlockPrefixCallbackOp &gt; </div>
           <td></td>
           <td class="paramtype">T &amp;&#160;</td>
           <td class="paramname"><em>output</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">T &amp;&#160;</td>
-          <td class="paramname"><em>block_aggregate</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1858,16 +1807,15 @@ template&lt;typename BlockPrefixCallbackOp &gt; </div>
 <div class="line">        <span class="keywordtype">int</span> thread_data = d_data[block_offset];</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Collectively compute the block-wide inclusive prefix sum</span></div>
-<div class="line">        <span class="keywordtype">int</span> block_aggregate;</div>
 <div class="line">        <a class="code" href="classcub_1_1_block_scan.html#a5133f76e261ce0b33d381e8be747966c" title="Collective constructor using a private static allocation of shared memory as temporary storage...">BlockScan</a>(temp_storage).InclusiveSum(</div>
-<div class="line">            thread_data, thread_data, block_aggregate, prefix_op);</div>
+<div class="line">            thread_data, thread_data, prefix_op);</div>
 <div class="line">        __syncthreads();</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Store scanned items to output segment</span></div>
 <div class="line">        d_data[block_offset] = thread_data;</div>
 <div class="line">    }</div>
 </div><!-- fragment --> </dd></dl>
-<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>1, 1, 1, 1, 1, 1, 1, 1, ...</code>. The corresponding output for the first segment will be <code>1, 2, ..., 128</code>. The output for the second segment will be <code>129, 130, ..., 256</code>. Furthermore, the value <code>128</code> will be stored in <code>block_aggregate</code> for all threads after each scan.</dd></dl>
+<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>1, 1, 1, 1, 1, 1, 1, 1, ...</code>. The corresponding output for the first segment will be <code>1, 2, ..., 128</code>. The output for the second segment will be <code>129, 130, ..., 256</code>.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">BlockPrefixCallbackOp</td><td><b>[inferred]</b> Call-back functor type having member <code>T operator()(T block_aggregate)</code> </td></tr>
@@ -1878,13 +1826,12 @@ template&lt;typename BlockPrefixCallbackOp &gt; </div>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>Calling thread's input item </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">output</td><td>Calling thread's output item (may be aliased to <code>input</code>) </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">block_aggregate</td><td>block-wide aggregate reduction of input items (exclusive of the <code>block_prefix_callback_op</code> value) </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to all inputs. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to the logical input sequence. </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01521">1521</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01408">1408</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
@@ -1964,7 +1911,7 @@ template&lt;int ITEMS_PER_THREAD&gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01577">1577</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01463">1463</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
@@ -2053,11 +2000,11 @@ template&lt;int ITEMS_PER_THREAD&gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01644">1644</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01530">1530</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a244f3312a14e57bf43085669113af89f"></a>
+<a class="anchor" id="a7509b187ad1df7ab681193ddce2afd41"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -2079,12 +2026,6 @@ template&lt;int ITEMS_PER_THREAD, typename BlockPrefixCallbackOp &gt; </div>
           <td></td>
           <td class="paramtype">T(&amp;)&#160;</td>
           <td class="paramname"><em>output</em>[ITEMS_PER_THREAD], </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">T &amp;&#160;</td>
-          <td class="paramname"><em>block_aggregate</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -2162,9 +2103,8 @@ template&lt;int ITEMS_PER_THREAD, typename BlockPrefixCallbackOp &gt; </div>
 <div class="line">        __syncthreads();</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Collectively compute the block-wide inclusive prefix sum</span></div>
-<div class="line">        <span class="keywordtype">int</span> block_aggregate;</div>
 <div class="line">        <a class="code" href="classcub_1_1_block_scan.html#a5133f76e261ce0b33d381e8be747966c" title="Collective constructor using a private static allocation of shared memory as temporary storage...">BlockScan</a>(temp_storage.scan).IncluisveSum(</div>
-<div class="line">            thread_data, thread_data, block_aggregate, prefix_op);</div>
+<div class="line">            thread_data, thread_data, prefix_op);</div>
 <div class="line">        __syncthreads();</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Store scanned items to output segment</span></div>
@@ -2172,7 +2112,7 @@ template&lt;int ITEMS_PER_THREAD, typename BlockPrefixCallbackOp &gt; </div>
 <div class="line">        __syncthreads();</div>
 <div class="line">    }</div>
 </div><!-- fragment --> </dd></dl>
-<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>1, 1, 1, 1, 1, 1, 1, 1, ...</code>. The corresponding output for the first segment will be <code>1, 2, 3, 4, ..., 511, 512</code>. The output for the second segment will be <code>513, 514, 515, 516, ..., 1023, 1024</code>. Furthermore, the value <code>512</code> will be stored in <code>block_aggregate</code> for all threads after each scan.</dd></dl>
+<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>1, 1, 1, 1, 1, 1, 1, 1, ...</code>. The corresponding output for the first segment will be <code>1, 2, 3, 4, ..., 511, 512</code>. The output for the second segment will be <code>513, 514, 515, 516, ..., 1023, 1024</code>.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">ITEMS_PER_THREAD</td><td><b>[inferred]</b> The number of consecutive items partitioned onto each thread. </td></tr>
@@ -2184,13 +2124,12 @@ template&lt;int ITEMS_PER_THREAD, typename BlockPrefixCallbackOp &gt; </div>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>Calling thread's input items </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">output</td><td>Calling thread's output items (may be aliased to <code>input</code>) </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">block_aggregate</td><td>block-wide aggregate reduction of input items (exclusive of the <code>block_prefix_callback_op</code> value) </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to all inputs. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to the logical input sequence. </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01758">1758</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01642">1642</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
@@ -2277,7 +2216,7 @@ template&lt;typename ScanOp &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01828">1828</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01711">1711</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
@@ -2372,11 +2311,11 @@ template&lt;typename ScanOp &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01877">1877</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01760">1760</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="ae9ad11af90a52a2a6d56c602818a09ac"></a>
+<a class="anchor" id="a702cd90359874b9dcd52f443bf2af7d3"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -2404,12 +2343,6 @@ template&lt;typename ScanOp , typename BlockPrefixCallbackOp &gt; </div>
           <td></td>
           <td class="paramtype">ScanOp&#160;</td>
           <td class="paramname"><em>scan_op</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">T &amp;&#160;</td>
-          <td class="paramname"><em>block_aggregate</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -2479,16 +2412,15 @@ template&lt;typename ScanOp , typename BlockPrefixCallbackOp &gt; </div>
 <div class="line">        <span class="keywordtype">int</span> thread_data = d_data[block_offset];</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Collectively compute the block-wide inclusive prefix max scan</span></div>
-<div class="line">        <span class="keywordtype">int</span> block_aggregate;</div>
 <div class="line">        <a class="code" href="classcub_1_1_block_scan.html#a5133f76e261ce0b33d381e8be747966c" title="Collective constructor using a private static allocation of shared memory as temporary storage...">BlockScan</a>(temp_storage).InclusiveScan(</div>
-<div class="line">            thread_data, thread_data, <a class="code" href="structcub_1_1_max.html" title="Default max functor. ">cub::Max</a>(), block_aggregate, prefix_op);</div>
+<div class="line">            thread_data, thread_data, <a class="code" href="structcub_1_1_max.html" title="Default max functor. ">cub::Max</a>(), prefix_op);</div>
 <div class="line">        __syncthreads();</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Store scanned items to output segment</span></div>
 <div class="line">        d_data[block_offset] = thread_data;</div>
 <div class="line">    }</div>
 </div><!-- fragment --> </dd></dl>
-<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>0, -1, 2, -3, 4, -5, ...</code>. The corresponding output for the first segment will be <code>0, 0, 2, 2, ..., 126, 126</code>. The output for the second segment will be <code>128, 128, 130, 130, ..., 254, 254</code>. Furthermore, <code>block_aggregate</code> will be assigned <code>126</code> in all threads after the first scan, assigned <code>254</code> after the second scan, etc.</dd></dl>
+<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>0, -1, 2, -3, 4, -5, ...</code>. The corresponding output for the first segment will be <code>0, 0, 2, 2, ..., 126, 126</code>. The output for the second segment will be <code>128, 128, 130, 130, ..., 254, 254</code>.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">ScanOp</td><td><b>[inferred]</b> Binary scan functor type having member <code>T operator()(const T &amp;a, const T &amp;b)</code> </td></tr>
@@ -2501,13 +2433,12 @@ template&lt;typename ScanOp , typename BlockPrefixCallbackOp &gt; </div>
     <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>Calling thread's input item </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">output</td><td>Calling thread's output item (may be aliased to <code>input</code>) </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">scan_op</td><td>Binary scan functor </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">block_aggregate</td><td>block-wide aggregate reduction of input items (exclusive of the <code>block_prefix_callback_op</code> value) </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to all inputs. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to the logical input sequence. </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01968">1968</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01848">1848</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
@@ -2596,7 +2527,7 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l02029">2029</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01908">1908</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
@@ -2693,11 +2624,11 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l02099">2099</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l01978">1978</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a89e3d9b481bcf50731df07067cadf1ce"></a>
+<a class="anchor" id="accb292da806e242c851c142c01f638a4"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -2725,12 +2656,6 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallback
           <td></td>
           <td class="paramtype">ScanOp&#160;</td>
           <td class="paramname"><em>scan_op</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">T &amp;&#160;</td>
-          <td class="paramname"><em>block_aggregate</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -2809,9 +2734,8 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallback
 <div class="line">        __syncthreads();</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Collectively compute the block-wide inclusive prefix max scan</span></div>
-<div class="line">        <span class="keywordtype">int</span> block_aggregate;</div>
 <div class="line">        <a class="code" href="classcub_1_1_block_scan.html#a5133f76e261ce0b33d381e8be747966c" title="Collective constructor using a private static allocation of shared memory as temporary storage...">BlockScan</a>(temp_storage.scan).InclusiveScan(</div>
-<div class="line">            thread_data, thread_data, <a class="code" href="structcub_1_1_max.html" title="Default max functor. ">cub::Max</a>(), block_aggregate, prefix_op);</div>
+<div class="line">            thread_data, thread_data, <a class="code" href="structcub_1_1_max.html" title="Default max functor. ">cub::Max</a>(), prefix_op);</div>
 <div class="line">        __syncthreads();</div>
 <div class="line"></div>
 <div class="line">        <span class="comment">// Store scanned items to output segment</span></div>
@@ -2819,7 +2743,7 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallback
 <div class="line">        __syncthreads();</div>
 <div class="line">    }</div>
 </div><!-- fragment --> </dd></dl>
-<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>0, -1, 2, -3, 4, -5, ...</code>. The corresponding output for the first segment will be <code>0, 0, 2, 2, 4, 4, ..., 510, 510</code>. The output for the second segment will be <code>512, 512, 514, 514, 516, 516, ..., 1022, 1022</code>. Furthermore, <code>block_aggregate</code> will be assigned <code>510</code> in all threads after the first scan, assigned <code>1022</code> after the second scan, etc.</dd></dl>
+<dl class="section user"><dt></dt><dd>Suppose the input <code>d_data</code> is <code>0, -1, 2, -3, 4, -5, ...</code>. The corresponding output for the first segment will be <code>0, 0, 2, 2, 4, 4, ..., 510, 510</code>. The output for the second segment will be <code>512, 512, 514, 514, 516, 516, ..., 1022, 1022</code>.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">ITEMS_PER_THREAD</td><td><b>[inferred]</b> The number of consecutive items partitioned onto each thread. </td></tr>
@@ -2833,13 +2757,12 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallback
     <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>Calling thread's input items </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">output</td><td>Calling thread's output items (may be aliased to <code>input</code>) </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">scan_op</td><td>Binary scan functor </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">block_aggregate</td><td>block-wide aggregate reduction of input items (exclusive of the <code>block_prefix_callback_op</code> value) </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to all inputs. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">block_prefix_callback_op</td><td><b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a block-wide prefix to be applied to the logical input sequence. </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l02216">2216</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
+<p>Definition at line <a class="el" href="block__scan_8cuh_source.html#l02092">2092</a> of file <a class="el" href="block__scan_8cuh_source.html">block_scan.cuh</a>.</p>
 
 </div>
 </div>
@@ -2850,7 +2773,7 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallback
 <!-- HTML footer for doxygen 1.8.3.1-->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Mar 21 2016 13:28:11 for CUB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Oct 11 2016 09:02:39 for CUB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.4
 <br>
