@@ -853,7 +853,7 @@ template&lt;int ITEMS_PER_THREAD, typename BlockPrefixCallbackOp &gt; </div>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Specialize BlockLoad, BlockStore, and BlockScan for a 1D block of 128 threads, 4 ints per thread</span></div>
 <div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_load.html" title="The BlockLoad class provides collective data movement methods for loading a linear segment of items f...">cub::BlockLoad&lt;int*, 128, 4, BLOCK_LOAD_TRANSPOSE&gt;</a>   BlockLoad;</div>
-<div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_store.html" title="The BlockStore class provides collective data movement methods for writing a blocked arrangement of i...">cub::BlockStore&lt;int*, 128, 4, BLOCK_STORE_TRANSPOSE&gt;</a> BlockStore;</div>
+<div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_store.html" title="The BlockStore class provides collective data movement methods for writing a blocked arrangement of i...">cub::BlockStore&lt;int, 128, 4, BLOCK_STORE_TRANSPOSE&gt;</a>  BlockStore;</div>
 <div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_scan.html" title="The BlockScan class provides collective methods for computing a parallel prefix sum/scan of items par...">cub::BlockScan&lt;int, 128&gt;</a>                             <a class="code" href="classcub_1_1_block_scan.html#a5133f76e261ce0b33d381e8be747966c" title="Collective constructor using a private static allocation of shared memory as temporary storage...">BlockScan</a>;</div>
 <div class="line"></div>
 <div class="line">    <span class="comment">// Allocate aliased shared memory for BlockLoad, BlockStore, and BlockScan</span></div>
@@ -1513,7 +1513,7 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallback
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Specialize BlockLoad, BlockStore, and BlockScan for a 1D block of 128 threads, 4 ints per thread</span></div>
 <div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_load.html" title="The BlockLoad class provides collective data movement methods for loading a linear segment of items f...">cub::BlockLoad&lt;int*, 128, 4, BLOCK_LOAD_TRANSPOSE&gt;</a>   BlockLoad;</div>
-<div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_store.html" title="The BlockStore class provides collective data movement methods for writing a blocked arrangement of i...">cub::BlockStore&lt;int*, 128, 4, BLOCK_STORE_TRANSPOSE&gt;</a> BlockStore;</div>
+<div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_store.html" title="The BlockStore class provides collective data movement methods for writing a blocked arrangement of i...">cub::BlockStore&lt;int, 128, 4, BLOCK_STORE_TRANSPOSE&gt;</a>  BlockStore;</div>
 <div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_scan.html" title="The BlockScan class provides collective methods for computing a parallel prefix sum/scan of items par...">cub::BlockScan&lt;int, 128&gt;</a>                             <a class="code" href="classcub_1_1_block_scan.html#a5133f76e261ce0b33d381e8be747966c" title="Collective constructor using a private static allocation of shared memory as temporary storage...">BlockScan</a>;</div>
 <div class="line"></div>
 <div class="line">    <span class="comment">// Allocate aliased shared memory for BlockLoad, BlockStore, and BlockScan</span></div>
@@ -2081,7 +2081,7 @@ template&lt;int ITEMS_PER_THREAD, typename BlockPrefixCallbackOp &gt; </div>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Specialize BlockLoad, BlockStore, and BlockScan for a 1D block of 128 threads, 4 ints per thread</span></div>
 <div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_load.html" title="The BlockLoad class provides collective data movement methods for loading a linear segment of items f...">cub::BlockLoad&lt;int*, 128, 4, BLOCK_LOAD_TRANSPOSE&gt;</a>   BlockLoad;</div>
-<div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_store.html" title="The BlockStore class provides collective data movement methods for writing a blocked arrangement of i...">cub::BlockStore&lt;int*, 128, 4, BLOCK_STORE_TRANSPOSE&gt;</a> BlockStore;</div>
+<div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_store.html" title="The BlockStore class provides collective data movement methods for writing a blocked arrangement of i...">cub::BlockStore&lt;int, 128, 4, BLOCK_STORE_TRANSPOSE&gt;</a>  BlockStore;</div>
 <div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_scan.html" title="The BlockScan class provides collective methods for computing a parallel prefix sum/scan of items par...">cub::BlockScan&lt;int, 128&gt;</a>                             <a class="code" href="classcub_1_1_block_scan.html#a5133f76e261ce0b33d381e8be747966c" title="Collective constructor using a private static allocation of shared memory as temporary storage...">BlockScan</a>;</div>
 <div class="line"></div>
 <div class="line">    <span class="comment">// Allocate aliased shared memory for BlockLoad, BlockStore, and BlockScan</span></div>
@@ -2712,7 +2712,7 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallback
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Specialize BlockLoad, BlockStore, and BlockScan for a 1D block of 128 threads, 4 ints per thread</span></div>
 <div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_load.html" title="The BlockLoad class provides collective data movement methods for loading a linear segment of items f...">cub::BlockLoad&lt;int*, 128, 4, BLOCK_LOAD_TRANSPOSE&gt;</a>   BlockLoad;</div>
-<div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_store.html" title="The BlockStore class provides collective data movement methods for writing a blocked arrangement of i...">cub::BlockStore&lt;int*, 128, 4, BLOCK_STORE_TRANSPOSE&gt;</a> BlockStore;</div>
+<div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_store.html" title="The BlockStore class provides collective data movement methods for writing a blocked arrangement of i...">cub::BlockStore&lt;int, 128, 4, BLOCK_STORE_TRANSPOSE&gt;</a>  BlockStore;</div>
 <div class="line">    <span class="keyword">typedef</span> <a class="code" href="classcub_1_1_block_scan.html" title="The BlockScan class provides collective methods for computing a parallel prefix sum/scan of items par...">cub::BlockScan&lt;int, 128&gt;</a>                             <a class="code" href="classcub_1_1_block_scan.html#a5133f76e261ce0b33d381e8be747966c" title="Collective constructor using a private static allocation of shared memory as temporary storage...">BlockScan</a>;</div>
 <div class="line"></div>
 <div class="line">    <span class="comment">// Allocate aliased shared memory for BlockLoad, BlockStore, and BlockScan</span></div>
@@ -2773,7 +2773,7 @@ template&lt;int ITEMS_PER_THREAD, typename ScanOp , typename BlockPrefixCallback
 <!-- HTML footer for doxygen 1.8.3.1-->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 25 2016 10:52:46 for CUB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Nov 22 2016 14:40:09 for CUB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.4
 <br>
