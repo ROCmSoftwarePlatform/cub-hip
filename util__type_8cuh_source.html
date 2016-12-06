@@ -307,11 +307,11 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;<span class="preprocessor">#ifndef DOXYGEN_SHOULD_SKIP_THIS    // Do not document</span></div>
 <div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;<span class="preprocessor"></span></div>
 <div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;    __host__ __device__ __forceinline__ NullType&amp; operator =(<span class="keyword">const</span> T&amp; b) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }</div>
+<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;    __host__ __device__ __forceinline__ NullType&amp; operator =(<span class="keyword">const</span> T&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }</div>
 <div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;</div>
-<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;    __host__ __device__ __forceinline__ <span class="keywordtype">bool</span> operator ==(<span class="keyword">const</span> NullType&amp; b) { <span class="keywordflow">return</span> <span class="keyword">true</span>; }</div>
+<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;    __host__ __device__ __forceinline__ <span class="keywordtype">bool</span> operator ==(<span class="keyword">const</span> NullType&amp;) { <span class="keywordflow">return</span> <span class="keyword">true</span>; }</div>
 <div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;</div>
-<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;    __host__ __device__ __forceinline__ <span class="keywordtype">bool</span> operator !=(<span class="keyword">const</span> NullType&amp; b) { <span class="keywordflow">return</span> <span class="keyword">false</span>; }</div>
+<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;    __host__ __device__ __forceinline__ <span class="keywordtype">bool</span> operator !=(<span class="keyword">const</span> NullType&amp;) { <span class="keywordflow">return</span> <span class="keyword">false</span>; }</div>
 <div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;</div>
 <div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;<span class="preprocessor">#endif // DOXYGEN_SHOULD_SKIP_THIS</span></div>
 <div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;<span class="preprocessor"></span>};</div>
@@ -1083,7 +1083,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <!-- HTML footer for doxygen 1.8.3.1-->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 22 2016 14:40:08 for CUB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Dec 6 2016 13:22:00 for CUB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.4
 <br>

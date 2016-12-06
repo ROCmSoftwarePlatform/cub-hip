@@ -121,50 +121,50 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Methods</h2></td></tr>
 <tr><td colspan="2"><div class="groupHeader">Key-value pairs</div></td></tr>
-<tr class="memitem:a6770adfa8e5a99c8015d9e6ab5ed8ca0"><td class="memTemplParams" colspan="2">template&lt;typename KeyT , typename ValueT &gt; </td></tr>
-<tr class="memitem:a6770adfa8e5a99c8015d9e6ab5ed8ca0"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
-cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#a6770adfa8e5a99c8015d9e6ab5ed8ca0">SortPairs</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, KeyT *d_keys_in, KeyT *d_keys_out, ValueT *d_values_in, ValueT *d_values_out, int num_items, int num_segments, int *d_begin_offsets, int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
-<tr class="memdesc:a6770adfa8e5a99c8015d9e6ab5ed8ca0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of key-value pairs into ascending order. (~<em>2N </em>auxiliary storage required)  <a href="#a6770adfa8e5a99c8015d9e6ab5ed8ca0">More...</a><br/></td></tr>
-<tr class="separator:a6770adfa8e5a99c8015d9e6ab5ed8ca0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4cffada9bba553f9871a34d926bbb148"><td class="memTemplParams" colspan="2">template&lt;typename KeyT , typename ValueT &gt; </td></tr>
-<tr class="memitem:a4cffada9bba553f9871a34d926bbb148"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
-cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#a4cffada9bba553f9871a34d926bbb148">SortPairs</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, DoubleBuffer&lt; KeyT &gt; &amp;d_keys, DoubleBuffer&lt; ValueT &gt; &amp;d_values, int num_items, int num_segments, int *d_begin_offsets, int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
-<tr class="memdesc:a4cffada9bba553f9871a34d926bbb148"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of key-value pairs into ascending order. (~<em>N </em>auxiliary storage required)  <a href="#a4cffada9bba553f9871a34d926bbb148">More...</a><br/></td></tr>
-<tr class="separator:a4cffada9bba553f9871a34d926bbb148"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39de3d48166582a802cc7df1481d3ff4"><td class="memTemplParams" colspan="2">template&lt;typename KeyT , typename ValueT &gt; </td></tr>
-<tr class="memitem:a39de3d48166582a802cc7df1481d3ff4"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
-cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#a39de3d48166582a802cc7df1481d3ff4">SortPairsDescending</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, KeyT *d_keys_in, KeyT *d_keys_out, ValueT *d_values_in, ValueT *d_values_out, int num_items, int num_segments, int *d_begin_offsets, int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
-<tr class="memdesc:a39de3d48166582a802cc7df1481d3ff4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of key-value pairs into descending order. (~<em>2N</em> auxiliary storage required).  <a href="#a39de3d48166582a802cc7df1481d3ff4">More...</a><br/></td></tr>
-<tr class="separator:a39de3d48166582a802cc7df1481d3ff4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aafce5852dfbfbeef027493c3791d6347"><td class="memTemplParams" colspan="2">template&lt;typename KeyT , typename ValueT &gt; </td></tr>
-<tr class="memitem:aafce5852dfbfbeef027493c3791d6347"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
-cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#aafce5852dfbfbeef027493c3791d6347">SortPairsDescending</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, DoubleBuffer&lt; KeyT &gt; &amp;d_keys, DoubleBuffer&lt; ValueT &gt; &amp;d_values, int num_items, int num_segments, int *d_begin_offsets, int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
-<tr class="memdesc:aafce5852dfbfbeef027493c3791d6347"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of key-value pairs into descending order. (~<em>N </em>auxiliary storage required).  <a href="#aafce5852dfbfbeef027493c3791d6347">More...</a><br/></td></tr>
-<tr class="separator:aafce5852dfbfbeef027493c3791d6347"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8296251cd02507841883d2e70b976854"><td class="memTemplParams" colspan="2">template&lt;typename KeyT , typename ValueT &gt; </td></tr>
+<tr class="memitem:a8296251cd02507841883d2e70b976854"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
+cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#a8296251cd02507841883d2e70b976854">SortPairs</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, const KeyT *d_keys_in, KeyT *d_keys_out, const ValueT *d_values_in, ValueT *d_values_out, int num_items, int num_segments, const int *d_begin_offsets, const int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
+<tr class="memdesc:a8296251cd02507841883d2e70b976854"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of key-value pairs into ascending order. (~<em>2N </em>auxiliary storage required)  <a href="#a8296251cd02507841883d2e70b976854">More...</a><br/></td></tr>
+<tr class="separator:a8296251cd02507841883d2e70b976854"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1218e1804c29f62738bfe6a99fb24906"><td class="memTemplParams" colspan="2">template&lt;typename KeyT , typename ValueT &gt; </td></tr>
+<tr class="memitem:a1218e1804c29f62738bfe6a99fb24906"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
+cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#a1218e1804c29f62738bfe6a99fb24906">SortPairs</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, DoubleBuffer&lt; KeyT &gt; &amp;d_keys, DoubleBuffer&lt; ValueT &gt; &amp;d_values, int num_items, int num_segments, const int *d_begin_offsets, const int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
+<tr class="memdesc:a1218e1804c29f62738bfe6a99fb24906"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of key-value pairs into ascending order. (~<em>N </em>auxiliary storage required)  <a href="#a1218e1804c29f62738bfe6a99fb24906">More...</a><br/></td></tr>
+<tr class="separator:a1218e1804c29f62738bfe6a99fb24906"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5c0d23bc674b553fa4bd39ca987ddbd"><td class="memTemplParams" colspan="2">template&lt;typename KeyT , typename ValueT &gt; </td></tr>
+<tr class="memitem:ab5c0d23bc674b553fa4bd39ca987ddbd"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
+cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#ab5c0d23bc674b553fa4bd39ca987ddbd">SortPairsDescending</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, const KeyT *d_keys_in, KeyT *d_keys_out, const ValueT *d_values_in, ValueT *d_values_out, int num_items, int num_segments, const int *d_begin_offsets, const int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
+<tr class="memdesc:ab5c0d23bc674b553fa4bd39ca987ddbd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of key-value pairs into descending order. (~<em>2N</em> auxiliary storage required).  <a href="#ab5c0d23bc674b553fa4bd39ca987ddbd">More...</a><br/></td></tr>
+<tr class="separator:ab5c0d23bc674b553fa4bd39ca987ddbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71665f22608791e445fde5995e4cc4bc"><td class="memTemplParams" colspan="2">template&lt;typename KeyT , typename ValueT &gt; </td></tr>
+<tr class="memitem:a71665f22608791e445fde5995e4cc4bc"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
+cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#a71665f22608791e445fde5995e4cc4bc">SortPairsDescending</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, DoubleBuffer&lt; KeyT &gt; &amp;d_keys, DoubleBuffer&lt; ValueT &gt; &amp;d_values, int num_items, int num_segments, const int *d_begin_offsets, const int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
+<tr class="memdesc:a71665f22608791e445fde5995e4cc4bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of key-value pairs into descending order. (~<em>N </em>auxiliary storage required).  <a href="#a71665f22608791e445fde5995e4cc4bc">More...</a><br/></td></tr>
+<tr class="separator:a71665f22608791e445fde5995e4cc4bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Keys-only</div></td></tr>
-<tr class="memitem:ab6a917a29d441021949e197d3a639fba"><td class="memTemplParams" colspan="2">template&lt;typename KeyT &gt; </td></tr>
-<tr class="memitem:ab6a917a29d441021949e197d3a639fba"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
-cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#ab6a917a29d441021949e197d3a639fba">SortKeys</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, KeyT *d_keys_in, KeyT *d_keys_out, int num_items, int num_segments, int *d_begin_offsets, int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
-<tr class="memdesc:ab6a917a29d441021949e197d3a639fba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of keys into ascending order. (~<em>2N </em>auxiliary storage required)  <a href="#ab6a917a29d441021949e197d3a639fba">More...</a><br/></td></tr>
-<tr class="separator:ab6a917a29d441021949e197d3a639fba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab8b433b55358ac507a7fcbba933cdbac"><td class="memTemplParams" colspan="2">template&lt;typename KeyT &gt; </td></tr>
-<tr class="memitem:ab8b433b55358ac507a7fcbba933cdbac"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
-cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#ab8b433b55358ac507a7fcbba933cdbac">SortKeys</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, DoubleBuffer&lt; KeyT &gt; &amp;d_keys, int num_items, int num_segments, int *d_begin_offsets, int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
-<tr class="memdesc:ab8b433b55358ac507a7fcbba933cdbac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of keys into ascending order. (~<em>N </em>auxiliary storage required).  <a href="#ab8b433b55358ac507a7fcbba933cdbac">More...</a><br/></td></tr>
-<tr class="separator:ab8b433b55358ac507a7fcbba933cdbac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a49ccbb6ca7a1d26e4b01e68e8da8a701"><td class="memTemplParams" colspan="2">template&lt;typename KeyT &gt; </td></tr>
-<tr class="memitem:a49ccbb6ca7a1d26e4b01e68e8da8a701"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
-cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#a49ccbb6ca7a1d26e4b01e68e8da8a701">SortKeysDescending</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, KeyT *d_keys_in, KeyT *d_keys_out, int num_items, int num_segments, int *d_begin_offsets, int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
-<tr class="memdesc:a49ccbb6ca7a1d26e4b01e68e8da8a701"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of keys into descending order. (~<em>2N</em> auxiliary storage required).  <a href="#a49ccbb6ca7a1d26e4b01e68e8da8a701">More...</a><br/></td></tr>
-<tr class="separator:a49ccbb6ca7a1d26e4b01e68e8da8a701"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5c21fba171c718aaf9b3b3c27bda6a94"><td class="memTemplParams" colspan="2">template&lt;typename KeyT &gt; </td></tr>
-<tr class="memitem:a5c21fba171c718aaf9b3b3c27bda6a94"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
-cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#a5c21fba171c718aaf9b3b3c27bda6a94">SortKeysDescending</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, DoubleBuffer&lt; KeyT &gt; &amp;d_keys, int num_items, int num_segments, int *d_begin_offsets, int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
-<tr class="memdesc:a5c21fba171c718aaf9b3b3c27bda6a94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of keys into descending order. (~<em>N </em>auxiliary storage required).  <a href="#a5c21fba171c718aaf9b3b3c27bda6a94">More...</a><br/></td></tr>
-<tr class="separator:a5c21fba171c718aaf9b3b3c27bda6a94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd326c6906c32c810df3b7e2c7dff068"><td class="memTemplParams" colspan="2">template&lt;typename KeyT &gt; </td></tr>
+<tr class="memitem:afd326c6906c32c810df3b7e2c7dff068"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
+cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#afd326c6906c32c810df3b7e2c7dff068">SortKeys</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, const KeyT *d_keys_in, KeyT *d_keys_out, int num_items, int num_segments, const int *d_begin_offsets, const int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
+<tr class="memdesc:afd326c6906c32c810df3b7e2c7dff068"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of keys into ascending order. (~<em>2N </em>auxiliary storage required)  <a href="#afd326c6906c32c810df3b7e2c7dff068">More...</a><br/></td></tr>
+<tr class="separator:afd326c6906c32c810df3b7e2c7dff068"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2a8a7ceebf5b2ea0c212618d1c24803"><td class="memTemplParams" colspan="2">template&lt;typename KeyT &gt; </td></tr>
+<tr class="memitem:ab2a8a7ceebf5b2ea0c212618d1c24803"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
+cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#ab2a8a7ceebf5b2ea0c212618d1c24803">SortKeys</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, DoubleBuffer&lt; KeyT &gt; &amp;d_keys, int num_items, int num_segments, const int *d_begin_offsets, const int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
+<tr class="memdesc:ab2a8a7ceebf5b2ea0c212618d1c24803"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of keys into ascending order. (~<em>N </em>auxiliary storage required).  <a href="#ab2a8a7ceebf5b2ea0c212618d1c24803">More...</a><br/></td></tr>
+<tr class="separator:ab2a8a7ceebf5b2ea0c212618d1c24803"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a148a7093e33f5e3329ec8de1016ab3fc"><td class="memTemplParams" colspan="2">template&lt;typename KeyT &gt; </td></tr>
+<tr class="memitem:a148a7093e33f5e3329ec8de1016ab3fc"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
+cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#a148a7093e33f5e3329ec8de1016ab3fc">SortKeysDescending</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, const KeyT *d_keys_in, KeyT *d_keys_out, int num_items, int num_segments, const int *d_begin_offsets, const int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
+<tr class="memdesc:a148a7093e33f5e3329ec8de1016ab3fc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of keys into descending order. (~<em>2N</em> auxiliary storage required).  <a href="#a148a7093e33f5e3329ec8de1016ab3fc">More...</a><br/></td></tr>
+<tr class="separator:a148a7093e33f5e3329ec8de1016ab3fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7b1bfae8edef9c820d872a24955ffef6"><td class="memTemplParams" colspan="2">template&lt;typename KeyT &gt; </td></tr>
+<tr class="memitem:a7b1bfae8edef9c820d872a24955ffef6"><td class="memTemplItemLeft" align="right" valign="top">static CUB_RUNTIME_FUNCTION <br class="typebreak"/>
+cudaError_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structcub_1_1_device_segmented_radix_sort.html#a7b1bfae8edef9c820d872a24955ffef6">SortKeysDescending</a> (void *d_temp_storage, size_t &amp;temp_storage_bytes, DoubleBuffer&lt; KeyT &gt; &amp;d_keys, int num_items, int num_segments, const int *d_begin_offsets, const int *d_end_offsets, int begin_bit=0, int end_bit=sizeof(KeyT)*8, cudaStream_t stream=0, bool debug_synchronous=false)</td></tr>
+<tr class="memdesc:a7b1bfae8edef9c820d872a24955ffef6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sorts segments of keys into descending order. (~<em>N </em>auxiliary storage required).  <a href="#a7b1bfae8edef9c820d872a24955ffef6">More...</a><br/></td></tr>
+<tr class="separator:a7b1bfae8edef9c820d872a24955ffef6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a6770adfa8e5a99c8015d9e6ab5ed8ca0"></a>
+<a class="anchor" id="a8296251cd02507841883d2e70b976854"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -188,7 +188,7 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">KeyT *&#160;</td>
+          <td class="paramtype">const KeyT *&#160;</td>
           <td class="paramname"><em>d_keys_in</em>, </td>
         </tr>
         <tr>
@@ -200,7 +200,7 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">ValueT *&#160;</td>
+          <td class="paramtype">const ValueT *&#160;</td>
           <td class="paramname"><em>d_values_in</em>, </td>
         </tr>
         <tr>
@@ -224,13 +224,13 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_begin_offsets</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_end_offsets</em>, </td>
         </tr>
         <tr>
@@ -295,7 +295,7 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
 <div class="line"><span class="comment">// Determine temporary device storage requirements</span></div>
 <div class="line">void     *d_temp_storage = NULL;</div>
 <div class="line"><span class="keywordtype">size_t</span>   temp_storage_bytes = 0;</div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a6770adfa8e5a99c8015d9e6ab5ed8ca0" title="Sorts segments of key-value pairs into ascending order. (~2N auxiliary storage required) ...">cub::DeviceSegmentedRadixSort::SortPairs</a>(d_temp_storage, temp_storage_bytes,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a8296251cd02507841883d2e70b976854" title="Sorts segments of key-value pairs into ascending order. (~2N auxiliary storage required) ...">cub::DeviceSegmentedRadixSort::SortPairs</a>(d_temp_storage, temp_storage_bytes,</div>
 <div class="line">    d_keys_in, d_keys_out, d_values_in, d_values_out,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
@@ -303,7 +303,7 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
 <div class="line">cudaMalloc(&amp;d_temp_storage, temp_storage_bytes);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Run sorting operation</span></div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a6770adfa8e5a99c8015d9e6ab5ed8ca0" title="Sorts segments of key-value pairs into ascending order. (~2N auxiliary storage required) ...">cub::DeviceSegmentedRadixSort::SortPairs</a>(d_temp_storage, temp_storage_bytes,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a8296251cd02507841883d2e70b976854" title="Sorts segments of key-value pairs into ascending order. (~2N auxiliary storage required) ...">cub::DeviceSegmentedRadixSort::SortPairs</a>(d_temp_storage, temp_storage_bytes,</div>
 <div class="line">    d_keys_in, d_keys_out, d_values_in, d_values_out,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
@@ -341,7 +341,7 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="a4cffada9bba553f9871a34d926bbb148"></a>
+<a class="anchor" id="a1218e1804c29f62738bfe6a99fb24906"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -389,13 +389,13 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_begin_offsets</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_end_offsets</em>, </td>
         </tr>
         <tr>
@@ -466,14 +466,14 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
 <div class="line"><span class="comment">// Determine temporary device storage requirements</span></div>
 <div class="line"><span class="keywordtype">void</span>     *d_temp_storage = NULL;</div>
 <div class="line"><span class="keywordtype">size_t</span>   temp_storage_bytes = 0;</div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a6770adfa8e5a99c8015d9e6ab5ed8ca0" title="Sorts segments of key-value pairs into ascending order. (~2N auxiliary storage required) ...">cub::DeviceSegmentedRadixSort::SortPairs</a>(d_temp_storage, temp_storage_bytes, d_keys, d_values,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a8296251cd02507841883d2e70b976854" title="Sorts segments of key-value pairs into ascending order. (~2N auxiliary storage required) ...">cub::DeviceSegmentedRadixSort::SortPairs</a>(d_temp_storage, temp_storage_bytes, d_keys, d_values,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Allocate temporary storage</span></div>
 <div class="line">cudaMalloc(&amp;d_temp_storage, temp_storage_bytes);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Run sorting operation</span></div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a6770adfa8e5a99c8015d9e6ab5ed8ca0" title="Sorts segments of key-value pairs into ascending order. (~2N auxiliary storage required) ...">cub::DeviceSegmentedRadixSort::SortPairs</a>(d_temp_storage, temp_storage_bytes, d_keys, d_values,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a8296251cd02507841883d2e70b976854" title="Sorts segments of key-value pairs into ascending order. (~2N auxiliary storage required) ...">cub::DeviceSegmentedRadixSort::SortPairs</a>(d_temp_storage, temp_storage_bytes, d_keys, d_values,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// d_keys.Current()      &lt;-- [6, 7, 8, 0, 3, 5, 9]</span></div>
@@ -508,7 +508,7 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="a39de3d48166582a802cc7df1481d3ff4"></a>
+<a class="anchor" id="ab5c0d23bc674b553fa4bd39ca987ddbd"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -532,7 +532,7 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">KeyT *&#160;</td>
+          <td class="paramtype">const KeyT *&#160;</td>
           <td class="paramname"><em>d_keys_in</em>, </td>
         </tr>
         <tr>
@@ -544,7 +544,7 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">ValueT *&#160;</td>
+          <td class="paramtype">const ValueT *&#160;</td>
           <td class="paramname"><em>d_values_in</em>, </td>
         </tr>
         <tr>
@@ -568,13 +568,13 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_begin_offsets</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_end_offsets</em>, </td>
         </tr>
         <tr>
@@ -639,7 +639,7 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
 <div class="line"><span class="comment">// Determine temporary device storage requirements</span></div>
 <div class="line">void     *d_temp_storage = NULL;</div>
 <div class="line"><span class="keywordtype">size_t</span>   temp_storage_bytes = 0;</div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a39de3d48166582a802cc7df1481d3ff4" title="Sorts segments of key-value pairs into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortPairsDescending</a>(d_temp_storage, temp_storage_bytes,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#ab5c0d23bc674b553fa4bd39ca987ddbd" title="Sorts segments of key-value pairs into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortPairsDescending</a>(d_temp_storage, temp_storage_bytes,</div>
 <div class="line">    d_keys_in, d_keys_out, d_values_in, d_values_out,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
@@ -647,7 +647,7 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
 <div class="line">cudaMalloc(&amp;d_temp_storage, temp_storage_bytes);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Run sorting operation</span></div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a39de3d48166582a802cc7df1481d3ff4" title="Sorts segments of key-value pairs into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortPairsDescending</a>(d_temp_storage, temp_storage_bytes,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#ab5c0d23bc674b553fa4bd39ca987ddbd" title="Sorts segments of key-value pairs into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortPairsDescending</a>(d_temp_storage, temp_storage_bytes,</div>
 <div class="line">    d_keys_in, d_keys_out, d_values_in, d_values_out,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
@@ -685,7 +685,7 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="aafce5852dfbfbeef027493c3791d6347"></a>
+<a class="anchor" id="a71665f22608791e445fde5995e4cc4bc"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -733,13 +733,13 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_begin_offsets</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_end_offsets</em>, </td>
         </tr>
         <tr>
@@ -810,14 +810,14 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
 <div class="line"><span class="comment">// Determine temporary device storage requirements</span></div>
 <div class="line"><span class="keywordtype">void</span>     *d_temp_storage = NULL;</div>
 <div class="line"><span class="keywordtype">size_t</span>   temp_storage_bytes = 0;</div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a39de3d48166582a802cc7df1481d3ff4" title="Sorts segments of key-value pairs into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortPairsDescending</a>(d_temp_storage, temp_storage_bytes, d_keys, d_values,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#ab5c0d23bc674b553fa4bd39ca987ddbd" title="Sorts segments of key-value pairs into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortPairsDescending</a>(d_temp_storage, temp_storage_bytes, d_keys, d_values,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Allocate temporary storage</span></div>
 <div class="line">cudaMalloc(&amp;d_temp_storage, temp_storage_bytes);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Run sorting operation</span></div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a39de3d48166582a802cc7df1481d3ff4" title="Sorts segments of key-value pairs into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortPairsDescending</a>(d_temp_storage, temp_storage_bytes, d_keys, d_values,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#ab5c0d23bc674b553fa4bd39ca987ddbd" title="Sorts segments of key-value pairs into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortPairsDescending</a>(d_temp_storage, temp_storage_bytes, d_keys, d_values,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// d_keys.Current()      &lt;-- [8, 7, 6, 9, 5, 3, 0]</span></div>
@@ -852,7 +852,7 @@ template&lt;typename KeyT , typename ValueT &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="ab6a917a29d441021949e197d3a639fba"></a>
+<a class="anchor" id="afd326c6906c32c810df3b7e2c7dff068"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -876,7 +876,7 @@ template&lt;typename KeyT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">KeyT *&#160;</td>
+          <td class="paramtype">const KeyT *&#160;</td>
           <td class="paramname"><em>d_keys_in</em>, </td>
         </tr>
         <tr>
@@ -900,13 +900,13 @@ template&lt;typename KeyT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_begin_offsets</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_end_offsets</em>, </td>
         </tr>
         <tr>
@@ -969,14 +969,14 @@ template&lt;typename KeyT &gt; </div>
 <div class="line"><span class="comment">// Determine temporary device storage requirements</span></div>
 <div class="line">void     *d_temp_storage = NULL;</div>
 <div class="line"><span class="keywordtype">size_t</span>   temp_storage_bytes = 0;</div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#ab6a917a29d441021949e197d3a639fba" title="Sorts segments of keys into ascending order. (~2N auxiliary storage required) ">cub::DeviceSegmentedRadixSort::SortKeys</a>(d_temp_storage, temp_storage_bytes, d_keys_in, d_keys_out,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#afd326c6906c32c810df3b7e2c7dff068" title="Sorts segments of keys into ascending order. (~2N auxiliary storage required) ">cub::DeviceSegmentedRadixSort::SortKeys</a>(d_temp_storage, temp_storage_bytes, d_keys_in, d_keys_out,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Allocate temporary storage</span></div>
 <div class="line">cudaMalloc(&amp;d_temp_storage, temp_storage_bytes);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Run sorting operation</span></div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#ab6a917a29d441021949e197d3a639fba" title="Sorts segments of keys into ascending order. (~2N auxiliary storage required) ">cub::DeviceSegmentedRadixSort::SortKeys</a>(d_temp_storage, temp_storage_bytes, d_keys_in, d_keys_out,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#afd326c6906c32c810df3b7e2c7dff068" title="Sorts segments of keys into ascending order. (~2N auxiliary storage required) ">cub::DeviceSegmentedRadixSort::SortKeys</a>(d_temp_storage, temp_storage_bytes, d_keys_in, d_keys_out,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// d_keys_out            &lt;-- [6, 7, 8, 0, 3, 5, 9]</span></div>
@@ -1009,7 +1009,7 @@ template&lt;typename KeyT &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="ab8b433b55358ac507a7fcbba933cdbac"></a>
+<a class="anchor" id="ab2a8a7ceebf5b2ea0c212618d1c24803"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -1051,13 +1051,13 @@ template&lt;typename KeyT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_begin_offsets</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_end_offsets</em>, </td>
         </tr>
         <tr>
@@ -1125,14 +1125,14 @@ template&lt;typename KeyT &gt; </div>
 <div class="line"><span class="comment">// Determine temporary device storage requirements</span></div>
 <div class="line"><span class="keywordtype">void</span>     *d_temp_storage = NULL;</div>
 <div class="line"><span class="keywordtype">size_t</span>   temp_storage_bytes = 0;</div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#ab6a917a29d441021949e197d3a639fba" title="Sorts segments of keys into ascending order. (~2N auxiliary storage required) ">cub::DeviceSegmentedRadixSort::SortKeys</a>(d_temp_storage, temp_storage_bytes, d_keys,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#afd326c6906c32c810df3b7e2c7dff068" title="Sorts segments of keys into ascending order. (~2N auxiliary storage required) ">cub::DeviceSegmentedRadixSort::SortKeys</a>(d_temp_storage, temp_storage_bytes, d_keys,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Allocate temporary storage</span></div>
 <div class="line">cudaMalloc(&amp;d_temp_storage, temp_storage_bytes);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Run sorting operation</span></div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#ab6a917a29d441021949e197d3a639fba" title="Sorts segments of keys into ascending order. (~2N auxiliary storage required) ">cub::DeviceSegmentedRadixSort::SortKeys</a>(d_temp_storage, temp_storage_bytes, d_keys,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#afd326c6906c32c810df3b7e2c7dff068" title="Sorts segments of keys into ascending order. (~2N auxiliary storage required) ">cub::DeviceSegmentedRadixSort::SortKeys</a>(d_temp_storage, temp_storage_bytes, d_keys,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// d_keys.Current()      &lt;-- [6, 7, 8, 0, 3, 5, 9]</span></div>
@@ -1164,7 +1164,7 @@ template&lt;typename KeyT &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="a49ccbb6ca7a1d26e4b01e68e8da8a701"></a>
+<a class="anchor" id="a148a7093e33f5e3329ec8de1016ab3fc"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -1188,7 +1188,7 @@ template&lt;typename KeyT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">KeyT *&#160;</td>
+          <td class="paramtype">const KeyT *&#160;</td>
           <td class="paramname"><em>d_keys_in</em>, </td>
         </tr>
         <tr>
@@ -1212,13 +1212,13 @@ template&lt;typename KeyT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_begin_offsets</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_end_offsets</em>, </td>
         </tr>
         <tr>
@@ -1284,14 +1284,14 @@ template&lt;typename KeyT &gt; </div>
 <div class="line"><span class="comment">// Determine temporary device storage requirements</span></div>
 <div class="line"><span class="keywordtype">void</span>     *d_temp_storage = NULL;</div>
 <div class="line"><span class="keywordtype">size_t</span>   temp_storage_bytes = 0;</div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a49ccbb6ca7a1d26e4b01e68e8da8a701" title="Sorts segments of keys into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortKeysDescending</a>(d_temp_storage, temp_storage_bytes, d_keys_in, d_keys_out,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a148a7093e33f5e3329ec8de1016ab3fc" title="Sorts segments of keys into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortKeysDescending</a>(d_temp_storage, temp_storage_bytes, d_keys_in, d_keys_out,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Allocate temporary storage</span></div>
 <div class="line">cudaMalloc(&amp;d_temp_storage, temp_storage_bytes);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Run sorting operation</span></div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a49ccbb6ca7a1d26e4b01e68e8da8a701" title="Sorts segments of keys into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortKeysDescending</a>(d_temp_storage, temp_storage_bytes, d_keys_in, d_keys_out,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a148a7093e33f5e3329ec8de1016ab3fc" title="Sorts segments of keys into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortKeysDescending</a>(d_temp_storage, temp_storage_bytes, d_keys_in, d_keys_out,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// d_keys_out            &lt;-- [8, 7, 6, 9, 5, 3, 0]</span></div>
@@ -1324,7 +1324,7 @@ template&lt;typename KeyT &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="a5c21fba171c718aaf9b3b3c27bda6a94"></a>
+<a class="anchor" id="a7b1bfae8edef9c820d872a24955ffef6"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -1366,13 +1366,13 @@ template&lt;typename KeyT &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_begin_offsets</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
+          <td class="paramtype">const int *&#160;</td>
           <td class="paramname"><em>d_end_offsets</em>, </td>
         </tr>
         <tr>
@@ -1440,14 +1440,14 @@ template&lt;typename KeyT &gt; </div>
 <div class="line"><span class="comment">// Determine temporary device storage requirements</span></div>
 <div class="line"><span class="keywordtype">void</span>     *d_temp_storage = NULL;</div>
 <div class="line"><span class="keywordtype">size_t</span>   temp_storage_bytes = 0;</div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a49ccbb6ca7a1d26e4b01e68e8da8a701" title="Sorts segments of keys into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortKeysDescending</a>(d_temp_storage, temp_storage_bytes, d_keys,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a148a7093e33f5e3329ec8de1016ab3fc" title="Sorts segments of keys into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortKeysDescending</a>(d_temp_storage, temp_storage_bytes, d_keys,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Allocate temporary storage</span></div>
 <div class="line">cudaMalloc(&amp;d_temp_storage, temp_storage_bytes);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Run sorting operation</span></div>
-<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a49ccbb6ca7a1d26e4b01e68e8da8a701" title="Sorts segments of keys into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortKeysDescending</a>(d_temp_storage, temp_storage_bytes, d_keys,</div>
+<div class="line"><a class="code" href="structcub_1_1_device_segmented_radix_sort.html#a148a7093e33f5e3329ec8de1016ab3fc" title="Sorts segments of keys into descending order. (~2N auxiliary storage required). ">cub::DeviceSegmentedRadixSort::SortKeysDescending</a>(d_temp_storage, temp_storage_bytes, d_keys,</div>
 <div class="line">    num_items, num_segments, d_offsets, d_offsets + 1);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// d_keys.Current()      &lt;-- [8, 7, 6, 9, 5, 3, 0]</span></div>
@@ -1486,7 +1486,7 @@ template&lt;typename KeyT &gt; </div>
 <!-- HTML footer for doxygen 1.8.3.1-->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 22 2016 14:40:10 for CUB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Dec 6 2016 13:22:02 for CUB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.4
 <br>
