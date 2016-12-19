@@ -75,7 +75,7 @@ struct BlockHistogramSort
             4,
             (PTX_ARCH >= 350) ? true : false,
             BLOCK_SCAN_WARP_SCANS,
-            hipSharedMemBankSizeFourByte,
+            cudaSharedMemBankSizeFourByte,
             BLOCK_DIM_Y,
             BLOCK_DIM_Z,
             PTX_ARCH>

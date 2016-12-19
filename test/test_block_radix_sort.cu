@@ -536,7 +536,7 @@ template <
 void TestKeys()
 {
     // Test keys-only sorting with both smem configs
-    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, NullType>();    // Keys-only (4-byte smem bank config)
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeFourByte, Key, NullType>();    // Keys-only (4-byte smem bank config)
 #if !defined(SM100) && !defined(SM110) && !defined(SM130) && !defined(SM200)
     Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeEightByte, Key, NullType>();   // Keys-only (8-byte smem bank config)
 #endif
@@ -556,9 +556,9 @@ template <
 void TestKeysAndPairs()
 {
     // Test pairs sorting with only 4-byte configs
-    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, char>();        // With small-values
-    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, Key>();         // With same-values
-    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, TestFoo>();     // With large values
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeFourByte, Key, char>();        // With small-values
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeFourByte, Key, Key>();         // With same-values
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeFourByte, Key, TestFoo>();     // With large values
 }
 
 
@@ -691,14 +691,14 @@ int main(int argc, char** argv)
 
     {
         typedef float T;
-        TestDriver<32, 4, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(INTEGER_SEED, 0, 0, sizeof(T) * 8);
+        TestDriver<32, 4, 4, true, BLOCK_SCAN_WARP_SCANS, cudaSharedMemBankSizeFourByte, false, false, T, NullType>(INTEGER_SEED, 0, 0, sizeof(T) * 8);
     }
 /*
     // Compile/run quick tests
     typedef unsigned int T;
-    TestDriver<64, 17, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
-    TestDriver<96, 8, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
-    TestDriver<128, 2, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
+    TestDriver<64, 17, 4, true, BLOCK_SCAN_WARP_SCANS, cudaSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
+    TestDriver<96, 8, 4, true, BLOCK_SCAN_WARP_SCANS, cudaSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
+    TestDriver<128, 2, 4, true, BLOCK_SCAN_WARP_SCANS, cudaSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
 */
 
 #else
