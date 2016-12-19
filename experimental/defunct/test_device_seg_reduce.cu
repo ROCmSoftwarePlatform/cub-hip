@@ -1652,7 +1652,7 @@ struct DeviceSegReduceDispatch
                 seg_reduce_region_grid_size, seg_reduce_region_config.block_threads, (long long) stream, seg_reduce_region_config.items_per_thread, seg_reduce_region_sm_occupancy);
 
             // Mooch
-            if (CubDebug(error = hipDeviceSetSharedMemConfig(hipSharedMemBankSizeEightByte))) break;
+            if (CubDebug(error = hipDeviceSetSharedMemConfig(cudaSharedMemBankSizeEightByte))) break;
 
             // Invoke seg_reduce_region_kernel
             hipLaunchKernel(HIP_KERNEL_NAME(seg_reduce_region_kernel), dim3(seg_reduce_region_grid_size), dim3(seg_reduce_region_config.block_threads), 0, stream, 
