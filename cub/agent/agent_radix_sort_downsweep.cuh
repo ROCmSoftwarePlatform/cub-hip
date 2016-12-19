@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -295,7 +296,7 @@ struct AgentRadixSortDownsweep
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
-            UnsignedBits key = smem[threadIdx.x + (ITEM * BLOCK_THREADS)];
+            UnsignedBits key = smem[hipThreadIdx_x + (ITEM * BLOCK_THREADS)];
 
             UnsignedBits digit = BFE(key, current_bit, num_bits);
 
@@ -304,9 +305,9 @@ struct AgentRadixSortDownsweep
             // Un-twiddle
             key = Traits<KeyT>::TwiddleOut(key);
 
-            if (FULL_TILE || (threadIdx.x + (ITEM * BLOCK_THREADS) < valid_items))
+            if (FULL_TILE || (hipThreadIdx_x + (ITEM * BLOCK_THREADS) < valid_items))
             {
-                d_keys_out[relative_bin_offsets[ITEM] + threadIdx.x + (ITEM * BLOCK_THREADS)] = key;
+                d_keys_out[relative_bin_offsets[ITEM] + hipThreadIdx_x + (ITEM * BLOCK_THREADS)] = key;
             }
         }
     }
@@ -361,11 +362,11 @@ struct AgentRadixSortDownsweep
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
-            ValueT value = smem[threadIdx.x + (ITEM * BLOCK_THREADS)];
+            ValueT value = smem[hipThreadIdx_x + (ITEM * BLOCK_THREADS)];
 
-            if (FULL_TILE || (threadIdx.x + (ITEM * BLOCK_THREADS) < valid_items))
+            if (FULL_TILE || (hipThreadIdx_x + (ITEM * BLOCK_THREADS) < valid_items))
             {
-                d_values_out[relative_bin_offsets[ITEM] + threadIdx.x + (ITEM * BLOCK_THREADS)] = value;
+                d_values_out[relative_bin_offsets[ITEM] + hipThreadIdx_x + (ITEM * BLOCK_THREADS)] = value;
             }
         }
     }
@@ -525,43 +526,43 @@ struct AgentRadixSortDownsweep
         __syncthreads();
 
         // Share exclusive digit prefix
-        if (threadIdx.x < RADIX_DIGITS)
+        if (hipThreadIdx_x < RADIX_DIGITS)
         {
             // Store exclusive prefix
-            temp_storage.exclusive_digit_prefix[threadIdx.x] = exclusive_digit_prefix;
+            temp_storage.exclusive_digit_prefix[hipThreadIdx_x] = exclusive_digit_prefix;
         }
 
         __syncthreads();
 
         // Get inclusive digit prefix
         int inclusive_digit_prefix;
-        if (threadIdx.x < RADIX_DIGITS)
+        if (hipThreadIdx_x < RADIX_DIGITS)
         {
             if (IS_DESCENDING)
             {
                 // Get inclusive digit prefix from exclusive prefix (higher bins come first)
-                inclusive_digit_prefix = (threadIdx.x == 0) ?
+                inclusive_digit_prefix = (hipThreadIdx_x == 0) ?
                     (BLOCK_THREADS * ITEMS_PER_THREAD) :
-                    temp_storage.exclusive_digit_prefix[threadIdx.x - 1];
+                    temp_storage.exclusive_digit_prefix[hipThreadIdx_x - 1];
             }
             else
             {
                 // Get inclusive digit prefix from exclusive prefix (lower bins come first)
-                inclusive_digit_prefix = (threadIdx.x == RADIX_DIGITS - 1) ?
+                inclusive_digit_prefix = (hipThreadIdx_x == RADIX_DIGITS - 1) ?
                     (BLOCK_THREADS * ITEMS_PER_THREAD) :
-                    temp_storage.exclusive_digit_prefix[threadIdx.x + 1];
+                    temp_storage.exclusive_digit_prefix[hipThreadIdx_x + 1];
             }
         }
 
         __syncthreads();
 
         // Update global scatter base offsets for each digit
-        if (threadIdx.x < RADIX_DIGITS)
+        if (hipThreadIdx_x < RADIX_DIGITS)
         {
 
 
             bin_offset -= exclusive_digit_prefix;
-            temp_storage.relative_bin_offsets[threadIdx.x] = bin_offset;
+            temp_storage.relative_bin_offsets[hipThreadIdx_x] = bin_offset;
             bin_offset += inclusive_digit_prefix;
         }
 
@@ -595,9 +596,9 @@ struct AgentRadixSortDownsweep
         {
             T items[ITEMS_PER_THREAD];
 
-            LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_in + block_offset, items);
+            LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_in + block_offset, items);
             __syncthreads();
-            StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_out + block_offset, items);
+            StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_out + block_offset, items);
 
             block_offset += TILE_ITEMS;
         }
@@ -609,9 +610,9 @@ struct AgentRadixSortDownsweep
 
             T items[ITEMS_PER_THREAD];
 
-            LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_in + block_offset, items, valid_items);
+            LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_in + block_offset, items, valid_items);
             __syncthreads();
-            StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_out + block_offset, items, valid_items);
+            StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_out + block_offset, items, valid_items);
         }
     }
 
@@ -656,7 +657,7 @@ struct AgentRadixSortDownsweep
         num_bits(num_bits),
         short_circuit(1)
     {
-        if (threadIdx.x < RADIX_DIGITS)
+        if (hipThreadIdx_x < RADIX_DIGITS)
         {
             // Short circuit if the histogram has only bin counts of only zeros or problem-size
             short_circuit = ((bin_offset == 0) || (bin_offset == num_items));
@@ -690,18 +691,18 @@ struct AgentRadixSortDownsweep
         short_circuit(1)
     {
         // Load digit bin offsets (each of the first RADIX_DIGITS threads will load an offset for that digit)
-        if (threadIdx.x < RADIX_DIGITS)
+        if (hipThreadIdx_x < RADIX_DIGITS)
         {
             int bin_idx = (IS_DESCENDING) ?
-                RADIX_DIGITS - threadIdx.x - 1 :
-                threadIdx.x;
+                RADIX_DIGITS - hipThreadIdx_x - 1 :
+                hipThreadIdx_x;
 
             // Short circuit if the first block's histogram has only bin counts of only zeros or problem-size
-            OffsetT first_block_bin_offset = d_spine[gridDim.x * bin_idx];
+            OffsetT first_block_bin_offset = d_spine[hipGridDim_x * bin_idx];
             short_circuit = ((first_block_bin_offset == 0) || (first_block_bin_offset == num_items));
 
             // Load my block's bin offset for my bin
-            bin_offset = d_spine[(gridDim.x * bin_idx) + blockIdx.x];
+            bin_offset = d_spine[(hipGridDim_x * bin_idx) + hipBlockIdx_x];
         }
 
         short_circuit = __syncthreads_and(short_circuit);

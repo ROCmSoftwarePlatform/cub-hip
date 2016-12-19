@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -157,10 +158,10 @@ void Test(
     int compare;
 
     // Run unguarded kernel
-    Kernel<<<1, 1>>>(d_in, d_out, d_itrs);
+    hipLaunchKernel(HIP_KERNEL_NAME(Kernel), dim3(1), dim3(1), 0, 0, d_in, d_out, d_itrs);
 
-    CubDebugExit(cudaPeekAtLastError());
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipPeekAtLastError());
+    CubDebugExit(hipDeviceSynchronize());
 
     // Check results
     compare = CompareDeviceResults(h_reference, d_out, TEST_VALUES, g_verbose, g_verbose);
@@ -307,7 +308,7 @@ void TestModified()
     // Allocate device arrays
     T *d_data = NULL;
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_data, sizeof(T) * TEST_VALUES));
-    CubDebugExit(cudaMemcpy(d_data, h_data, sizeof(T) * TEST_VALUES, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_data, h_data, sizeof(T) * TEST_VALUES, hipMemcpyHostToDevice));
 
     // Initialize reference data
     T h_reference[8];
@@ -379,7 +380,7 @@ void TestTransform()
     // Allocate device arrays
     T *d_data = NULL;
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_data, sizeof(T) * TEST_VALUES));
-    CubDebugExit(cudaMemcpy(d_data, h_data, sizeof(T) * TEST_VALUES, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_data, h_data, sizeof(T) * TEST_VALUES, hipMemcpyHostToDevice));
 
     TransformOp<T> op;
 
@@ -454,10 +455,10 @@ void TestTexObj()
     T *d_data   = NULL;
     T *d_dummy  = NULL;
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_data, sizeof(T) * TEST_VALUES));
-    CubDebugExit(cudaMemcpy(d_data, h_data, sizeof(T) * TEST_VALUES, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_data, h_data, sizeof(T) * TEST_VALUES, hipMemcpyHostToDevice));
 
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_dummy, sizeof(T) * DUMMY_TEST_VALUES));
-    CubDebugExit(cudaMemcpy(d_dummy, h_data + DUMMY_OFFSET, sizeof(T) * DUMMY_TEST_VALUES, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_dummy, h_data + DUMMY_OFFSET, sizeof(T) * DUMMY_TEST_VALUES, hipMemcpyHostToDevice));
 
     // Initialize reference data
     T h_reference[8];
@@ -486,7 +487,7 @@ void TestTexObj()
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_copy, sizeof(T) * TEST_VALUES));
     thrust::device_ptr<T> d_copy_wrapper(d_copy);
 
-    CubDebugExit(cudaMemset(d_copy, 0, sizeof(T) * TEST_VALUES));
+    CubDebugExit(hipMemset(d_copy, 0, sizeof(T) * TEST_VALUES));
     thrust::copy_if(d_obj_itr, d_obj_itr + TEST_VALUES, d_copy_wrapper, SelectOp());
 
     int compare = CompareDeviceResults(h_data, d_copy, TEST_VALUES, g_verbose, g_verbose);
@@ -534,10 +535,10 @@ void TestTexRef()
     T *d_data   = NULL;
     T *d_dummy  = NULL;
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_data, sizeof(T) * TEST_VALUES));
-    CubDebugExit(cudaMemcpy(d_data, h_data, sizeof(T) * TEST_VALUES, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_data, h_data, sizeof(T) * TEST_VALUES, hipMemcpyHostToDevice));
 
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_dummy, sizeof(T) * DUMMY_TEST_VALUES));
-    CubDebugExit(cudaMemcpy(d_dummy, h_data + DUMMY_OFFSET, sizeof(T) * DUMMY_TEST_VALUES, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_dummy, h_data + DUMMY_OFFSET, sizeof(T) * DUMMY_TEST_VALUES, hipMemcpyHostToDevice));
 
     // Initialize reference data
     T h_reference[8];
@@ -570,7 +571,7 @@ void TestTexRef()
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_copy, sizeof(T) * TEST_VALUES));
     thrust::device_ptr<T> d_copy_wrapper(d_copy);
 
-    CubDebugExit(cudaMemset(d_copy, 0, sizeof(T) * TEST_VALUES));
+    CubDebugExit(hipMemset(d_copy, 0, sizeof(T) * TEST_VALUES));
     thrust::copy_if(d_ref_itr, d_ref_itr + TEST_VALUES, d_copy_wrapper, SelectOp());
 
     int compare = CompareDeviceResults(h_data, d_copy, TEST_VALUES, g_verbose, g_verbose);
@@ -613,7 +614,7 @@ void TestTexTransform()
     // Allocate device arrays
     T *d_data = NULL;
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_data, sizeof(T) * TEST_VALUES));
-    CubDebugExit(cudaMemcpy(d_data, h_data, sizeof(T) * TEST_VALUES, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_data, h_data, sizeof(T) * TEST_VALUES, hipMemcpyHostToDevice));
 
     TransformOp<T> op;
 

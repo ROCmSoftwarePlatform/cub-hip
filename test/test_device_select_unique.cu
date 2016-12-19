@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -77,11 +78,11 @@ enum Backend
  */
 template <typename InputIteratorT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
 CUB_RUNTIME_FUNCTION __forceinline__
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<CUB>               dispatch_to,
     int                         timing_timing_iterations,
     size_t                      *d_temp_storage_bytes,
-    cudaError_t                 *d_cdp_error,
+    hipError_t                 *d_cdp_error,
 
     void*               d_temp_storage,
     size_t                      &temp_storage_bytes,
@@ -89,10 +90,10 @@ cudaError_t Dispatch(
     OutputIteratorT              d_out,
     NumSelectedIteratorT         d_num_selected_out,
     OffsetT                     num_items,
-    cudaStream_t                stream,
+    hipStream_t                stream,
     bool                        debug_synchronous)
 {
-    cudaError_t error = cudaSuccess;
+    hipError_t error = hipSuccess;
     for (int i = 0; i < timing_timing_iterations; ++i)
     {
         error = DeviceSelect::Unique(d_temp_storage, temp_storage_bytes, d_in, d_out, d_num_selected_out, num_items, stream, debug_synchronous);
@@ -111,11 +112,11 @@ cudaError_t Dispatch(
  */
 template <typename InputIteratorT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
 __host__ __forceinline__
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<THRUST>            dispatch_to,
     int                         timing_timing_iterations,
     size_t                      *d_temp_storage_bytes,
-    cudaError_t                 *d_cdp_error,
+    hipError_t                 *d_cdp_error,
 
     void                        *d_temp_storage,
     size_t                      &temp_storage_bytes,
@@ -123,7 +124,7 @@ cudaError_t Dispatch(
     OutputIteratorT             d_out,
     NumSelectedIteratorT        d_num_selected_out,
     OffsetT                     num_items,
-    cudaStream_t                stream,
+    hipStream_t                stream,
     bool                        debug_synchronous)
 {
     // The input value type
@@ -149,11 +150,11 @@ cudaError_t Dispatch(
         }
 
         OffsetT num_selected = d_out_wrapper_end - d_out_wrapper;
-        CubDebugExit(cudaMemcpy(d_num_selected_out, &num_selected, sizeof(OffsetT), cudaMemcpyHostToDevice));
+        CubDebugExit(hipMemcpy(d_num_selected_out, &num_selected, sizeof(OffsetT), hipMemcpyHostToDevice));
 
     }
 
-    return cudaSuccess;
+    return hipSuccess;
 }
 
 
@@ -169,7 +170,7 @@ template <typename InputIteratorT, typename OutputIteratorT, typename NumSelecte
 __global__ void CnpDispatchKernel(
     int                         timing_timing_iterations,
     size_t                      *d_temp_storage_bytes,
-    cudaError_t                 *d_cdp_error,
+    hipError_t                 *d_cdp_error,
 
     void*               d_temp_storage,
     size_t                      temp_storage_bytes,
@@ -194,11 +195,11 @@ __global__ void CnpDispatchKernel(
  * Dispatch to CDP kernel
  */
 template <typename InputIteratorT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<CDP>               dispatch_to,
     int                         timing_timing_iterations,
     size_t                      *d_temp_storage_bytes,
-    cudaError_t                 *d_cdp_error,
+    hipError_t                 *d_cdp_error,
 
     void*               d_temp_storage,
     size_t                      &temp_storage_bytes,
@@ -206,19 +207,19 @@ cudaError_t Dispatch(
     OutputIteratorT              d_out,
     NumSelectedIteratorT         d_num_selected_out,
     OffsetT                     num_items,
-    cudaStream_t                stream,
+    hipStream_t                stream,
     bool                        debug_synchronous)
 {
     // Invoke kernel to invoke device-side dispatch
-    CnpDispatchKernel<<<1,1>>>(timing_timing_iterations, d_temp_storage_bytes, d_cdp_error,
+    hipLaunchKernel(HIP_KERNEL_NAME(CnpDispatchKernel), dim3(1), dim3(1), 0, 0, timing_timing_iterations, d_temp_storage_bytes, d_cdp_error,
         d_temp_storage, temp_storage_bytes, d_in, d_out, d_num_selected_out, num_items, debug_synchronous);
 
     // Copy out temp_storage_bytes
-    CubDebugExit(cudaMemcpy(&temp_storage_bytes, d_temp_storage_bytes, sizeof(size_t) * 1, cudaMemcpyDeviceToHost));
+    CubDebugExit(hipMemcpy(&temp_storage_bytes, d_temp_storage_bytes, sizeof(size_t) * 1, hipMemcpyDeviceToHost));
 
     // Copy out error
-    cudaError_t retval;
-    CubDebugExit(cudaMemcpy(&retval, d_cdp_error, sizeof(cudaError_t) * 1, cudaMemcpyDeviceToHost));
+    hipError_t retval;
+    CubDebugExit(hipMemcpy(&retval, d_cdp_error, sizeof(hipError_t) * 1, hipMemcpyDeviceToHost));
     return retval;
 }
 
@@ -335,9 +336,9 @@ void Test(
 
     // Allocate CDP device arrays
     size_t          *d_temp_storage_bytes = NULL;
-    cudaError_t     *d_cdp_error = NULL;
+    hipError_t     *d_cdp_error = NULL;
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_temp_storage_bytes,  sizeof(size_t) * 1));
-    CubDebugExit(g_allocator.DeviceAllocate((void**)&d_cdp_error,           sizeof(cudaError_t) * 1));
+    CubDebugExit(g_allocator.DeviceAllocate((void**)&d_cdp_error,           sizeof(hipError_t) * 1));
 
     // Allocate temporary storage
     void            *d_temp_storage = NULL;
@@ -346,8 +347,8 @@ void Test(
     CubDebugExit(g_allocator.DeviceAllocate(&d_temp_storage, temp_storage_bytes));
 
     // Clear device output array
-    CubDebugExit(cudaMemset(d_out, 0, sizeof(T) * num_items));
-    CubDebugExit(cudaMemset(d_num_selected_out, 0, sizeof(int)));
+    CubDebugExit(hipMemset(d_out, 0, sizeof(T) * num_items));
+    CubDebugExit(hipMemset(d_num_selected_out, 0, sizeof(int)));
 
     // Run warmup/correctness iteration
     CubDebugExit(Dispatch(Int2Type<BACKEND>(), 1, d_temp_storage_bytes, d_cdp_error, d_temp_storage, temp_storage_bytes, d_in, d_out, d_num_selected_out, num_items, 0, true));
@@ -428,7 +429,7 @@ void TestPointer(
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_in, sizeof(T) * num_items));
 
     // Initialize device input
-    CubDebugExit(cudaMemcpy(d_in, h_in, sizeof(T) * num_items, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_in, h_in, sizeof(T) * num_items, hipMemcpyHostToDevice));
 
     // Run Test
     Test<BACKEND>(d_in, h_reference, num_selected, num_items);
@@ -582,7 +583,7 @@ int main(int argc, char** argv)
 
     // Get device ordinal
     int device_ordinal;
-    CubDebugExit(cudaGetDevice(&device_ordinal));
+    CubDebugExit(hipGetDevice(&device_ordinal));
 
     // Get device SM version
     int sm_version;

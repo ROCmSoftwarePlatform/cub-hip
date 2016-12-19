@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -74,7 +75,7 @@ template <
     int             ITEMS_PER_THREAD,
     typename        InputIteratorT>
 __device__ __forceinline__ void LoadDirectBlocked(
-    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
+    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
     InputIteratorT  block_itr,                  ///< [in] The thread block's base input iterator for loading from
     InputT          (&items)[ITEMS_PER_THREAD]) ///< [out] Data to load
 {
@@ -103,7 +104,7 @@ template <
     int             ITEMS_PER_THREAD,
     typename        InputIteratorT>
 __device__ __forceinline__ void LoadDirectBlocked(
-    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
+    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
     InputIteratorT  block_itr,                  ///< [in] The thread block's base input iterator for loading from
     InputT          (&items)[ITEMS_PER_THREAD], ///< [out] Data to load
     int             valid_items)                ///< [in] Number of valid items to load
@@ -136,7 +137,7 @@ template <
     int             ITEMS_PER_THREAD,
     typename        InputIteratorT>
 __device__ __forceinline__ void LoadDirectBlocked(
-    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
+    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
     InputIteratorT  block_itr,                  ///< [in] The thread block's base input iterator for loading from
     InputT          (&items)[ITEMS_PER_THREAD], ///< [out] Data to load
     int             valid_items,                ///< [in] Number of valid items to load
@@ -160,7 +161,7 @@ template <
     typename            T,
     int                 ITEMS_PER_THREAD>
 __device__ __forceinline__ void InternalLoadDirectBlockedVectorized(
-    int    linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
+    int    linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
     T      *block_ptr,                 ///< [in] Input pointer for loading from
     T      (&items)[ITEMS_PER_THREAD]) ///< [out] Data to load
 {
@@ -225,7 +226,7 @@ template <
     typename        T,
     int             ITEMS_PER_THREAD>
 __device__ __forceinline__ void LoadDirectBlockedVectorized(
-    int linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
+    int linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
     T   *block_ptr,                 ///< [in] Input pointer for loading from
     T   (&items)[ITEMS_PER_THREAD]) ///< [out] Data to load
 {
@@ -256,7 +257,7 @@ template <
     int             ITEMS_PER_THREAD,
     typename        InputIteratorT>
 __device__ __forceinline__ void LoadDirectStriped(
-    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
+    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
     InputIteratorT  block_itr,                  ///< [in] The thread block's base input iterator for loading from
     InputT          (&items)[ITEMS_PER_THREAD]) ///< [out] Data to load
 {
@@ -286,7 +287,7 @@ template <
     int             ITEMS_PER_THREAD,
     typename        InputIteratorT>
 __device__ __forceinline__ void LoadDirectStriped(
-    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
+    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
     InputIteratorT  block_itr,                  ///< [in] The thread block's base input iterator for loading from
     InputT          (&items)[ITEMS_PER_THREAD], ///< [out] Data to load
     int             valid_items)                ///< [in] Number of valid items to load
@@ -321,7 +322,7 @@ template <
     int             ITEMS_PER_THREAD,
     typename        InputIteratorT>
 __device__ __forceinline__ void LoadDirectStriped(
-    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
+    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
     InputIteratorT  block_itr,                  ///< [in] The thread block's base input iterator for loading from
     InputT          (&items)[ITEMS_PER_THREAD], ///< [out] Data to load
     int             valid_items,                ///< [in] Number of valid items to load
@@ -360,7 +361,7 @@ template <
     int             ITEMS_PER_THREAD,
     typename        InputIteratorT>
 __device__ __forceinline__ void LoadDirectWarpStriped(
-    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
+    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
     InputIteratorT  block_itr,                  ///< [in] The thread block's base input iterator for loading from
     InputT          (&items)[ITEMS_PER_THREAD]) ///< [out] Data to load
 {
@@ -396,7 +397,7 @@ template <
     int             ITEMS_PER_THREAD,
     typename        InputIteratorT>
 __device__ __forceinline__ void LoadDirectWarpStriped(
-    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
+    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
     InputIteratorT  block_itr,                  ///< [in] The thread block's base input iterator for loading from
     InputT          (&items)[ITEMS_PER_THREAD], ///< [out] Data to load
     int             valid_items)                ///< [in] Number of valid items to load
@@ -437,7 +438,7 @@ template <
     int             ITEMS_PER_THREAD,
     typename        InputIteratorT>
 __device__ __forceinline__ void LoadDirectWarpStriped(
-    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
+    int             linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
     InputIteratorT  block_itr,                  ///< [in] The thread block's base input iterator for loading from
     InputT          (&items)[ITEMS_PER_THREAD], ///< [out] Data to load
     int             valid_items,                ///< [in] Number of valid items to load

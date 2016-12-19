@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -275,7 +276,7 @@ struct AgentSelectIf
             // Out-of-bounds items are selection_flags
             selection_flags[ITEM] = 1;
 
-            if (!IS_LAST_TILE || (OffsetT(threadIdx.x * ITEMS_PER_THREAD) + ITEM < num_tile_items))
+            if (!IS_LAST_TILE || (OffsetT(hipThreadIdx_x * ITEMS_PER_THREAD) + ITEM < num_tile_items))
                 selection_flags[ITEM] = select_op(items[ITEM]);
         }
     }
@@ -336,7 +337,7 @@ struct AgentSelectIf
         else
         {
             OutputT tile_predecessor;
-            if (threadIdx.x == 0)
+            if (hipThreadIdx_x == 0)
                 tile_predecessor = d_in[tile_offset - 1];
 
             __syncthreads();
@@ -349,7 +350,7 @@ struct AgentSelectIf
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
             // Set selection_flags for out-of-bounds items
-            if ((IS_LAST_TILE) && (OffsetT(threadIdx.x * ITEMS_PER_THREAD) + ITEM >= num_tile_items))
+            if ((IS_LAST_TILE) && (OffsetT(hipThreadIdx_x * ITEMS_PER_THREAD) + ITEM >= num_tile_items))
                 selection_flags[ITEM] = 1;
         }
     }
@@ -413,7 +414,7 @@ struct AgentSelectIf
 
         __syncthreads();
 
-        for (int item = threadIdx.x; item < num_tile_selections; item += BLOCK_THREADS)
+        for (int item = hipThreadIdx_x; item < num_tile_selections; item += BLOCK_THREADS)
         {
             d_selected_out[num_selections_prefix + item] = temp_storage.raw_exchange.Alias()[item];
         }
@@ -442,7 +443,7 @@ struct AgentSelectIf
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
-            int item_idx                = (threadIdx.x * ITEMS_PER_THREAD) + ITEM;
+            int item_idx                = (hipThreadIdx_x * ITEMS_PER_THREAD) + ITEM;
             int local_selection_idx     = selection_indices[ITEM] - num_selections_prefix;
             int local_rejection_idx     = item_idx - local_selection_idx;
             int local_scatter_offset    = (selection_flags[ITEM]) ?
@@ -458,7 +459,7 @@ struct AgentSelectIf
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
-            int item_idx            = (ITEM * BLOCK_THREADS) + threadIdx.x;
+            int item_idx            = (ITEM * BLOCK_THREADS) + hipThreadIdx_x;
             int rejection_idx       = item_idx;
             int selection_idx       = item_idx - tile_num_rejections;
             OffsetT scatter_offset  = (item_idx < tile_num_rejections) ?
@@ -550,7 +551,7 @@ struct AgentSelectIf
         OffsetT num_tile_selections;
         BlockScanT(temp_storage.scan).ExclusiveSum(selection_flags, selection_indices, num_tile_selections);
 
-        if (threadIdx.x == 0)
+        if (hipThreadIdx_x == 0)
         {
             // Update tile status if this is not the last tile
             if (!IS_LAST_TILE)
@@ -672,7 +673,7 @@ struct AgentSelectIf
         NumSelectedIteratorT    d_num_selected_out) ///< Output total number selection_flags
     {
         // Blocks are launched in increasing order, so just assign one tile per block
-        int     tile_idx        = (blockIdx.x * gridDim.y) + blockIdx.y;    // Current tile index
+        int     tile_idx        = (hipBlockIdx_x * hipGridDim_y) + hipBlockIdx_y;    // Current tile index
         OffsetT tile_offset     = tile_idx * TILE_ITEMS;                    // Global offset for the current tile
 
         if (tile_idx < num_tiles - 1)
@@ -686,7 +687,7 @@ struct AgentSelectIf
             OffsetT num_remaining   = num_items - tile_offset;
             OffsetT num_selections  = ConsumeTile<true>(num_remaining, tile_idx, tile_offset, tile_state);
 
-            if (threadIdx.x == 0)
+            if (hipThreadIdx_x == 0)
             {
                 // Output the total number of items selection_flags
                 *d_num_selected_out = num_selections;

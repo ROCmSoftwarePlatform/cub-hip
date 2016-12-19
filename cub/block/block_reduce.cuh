@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -427,7 +428,7 @@ public:
      *
      *     // Each thread obtains an input item
      *     int thread_data;
-     *     if (threadIdx.x < num_valid) thread_data = ...
+     *     if (hipThreadIdx_x < num_valid) thread_data = ...
      *
      *     // Compute the block-wide max for thread0
      *     int aggregate = BlockReduce(temp_storage).Reduce(thread_data, cub::Max(), num_valid);
@@ -570,7 +571,7 @@ public:
      *
      *     // Each thread obtains an input item (up to num_items)
      *     int thread_data;
-     *     if (threadIdx.x < num_valid)
+     *     if (hipThreadIdx_x < num_valid)
      *         thread_data = ...
      *
      *     // Compute the block-wide sum for thread0

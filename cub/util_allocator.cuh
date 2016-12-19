@@ -129,8 +129,8 @@ struct CachingDeviceAllocator
         size_t          bytes;              // Size of allocation in bytes
         unsigned int    bin;                // Bin enumeration
         int             device;             // device ordinal
-        cudaStream_t    associated_stream;  // Associated associated_stream
-        cudaEvent_t     ready_event;        // Signal when associated stream has run to the point at which this block was freed
+        hipStream_t    associated_stream;  // Associated associated_stream
+        hipEvent_t     ready_event;        // Signal when associated stream has run to the point at which this block was freed
 
         // Constructor (suitable for searching maps for a specific block, given its pointer and device)
         BlockDescriptor(void *d_ptr, int device) :
@@ -330,7 +330,7 @@ struct CachingDeviceAllocator
      * Changing the ceiling of cached bytes does not cause any allocations (in-use or
      * cached-in-reserve) to be freed.  See \p FreeAllCached().
      */
-    cudaError_t SetMaxCachedBytes(
+    hipError_t SetMaxCachedBytes(
         size_t max_cached_bytes)
     {
         // Lock
@@ -343,7 +343,7 @@ struct CachingDeviceAllocator
         // Unlock
         mutex.Unlock();
 
-        return cudaSuccess;
+        return hipSuccess;
     }
 
 
@@ -354,19 +354,19 @@ struct CachingDeviceAllocator
      * with which it was associated with during allocation, and it becomes available for reuse within other
      * streams when all prior work submitted to \p active_stream has completed.
      */
-    cudaError_t DeviceAllocate(
+    hipError_t DeviceAllocate(
         int             device,             ///< [in] Device on which to place the allocation
         void            **d_ptr,            ///< [out] Reference to pointer to the allocation
         size_t          bytes,              ///< [in] Minimum number of bytes for the allocation
-        cudaStream_t    active_stream = 0)  ///< [in] The stream to be associated with this allocation
+        hipStream_t    active_stream = 0)  ///< [in] The stream to be associated with this allocation
     {
         *d_ptr                          = NULL;
         int entrypoint_device           = INVALID_DEVICE_ORDINAL;
-        cudaError_t error               = cudaSuccess;
+        hipError_t error               = hipSuccess;
 
         if (device == INVALID_DEVICE_ORDINAL)
         {
-            if (CubDebug(error = cudaGetDevice(&entrypoint_device))) return error;
+            if (CubDebug(error = hipGetDevice(&entrypoint_device))) return error;
             device = entrypoint_device;
         }
 
@@ -406,7 +406,7 @@ struct CachingDeviceAllocator
                 // in use by the device, only consider cached blocks that are
                 // either (from the active stream) or (from an idle stream)
                 if ((active_stream == block_itr->associated_stream) ||
-                    (cudaEventQuery(block_itr->ready_event) != cudaErrorNotReady))
+                    (cudaEventQuery(block_itr->ready_event) != hipErrorNotReady))
                 {
                     // Reuse existing cache block.  Insert into live blocks.
                     found = true;
@@ -438,19 +438,19 @@ struct CachingDeviceAllocator
             // Set runtime's current device to specified device (entrypoint may not be set)
             if (device != entrypoint_device)
             {
-                if (CubDebug(error = cudaGetDevice(&entrypoint_device))) return error;
-                if (CubDebug(error = cudaSetDevice(device))) return error;
+                if (CubDebug(error = hipGetDevice(&entrypoint_device))) return error;
+                if (CubDebug(error = hipSetDevice(device))) return error;
             }
 
             // Attempt to allocate
-            if (CubDebug(error = cudaMalloc(&search_key.d_ptr, search_key.bytes)) == cudaErrorMemoryAllocation)
+            if (CubDebug(error = hipMalloc(&search_key.d_ptr, search_key.bytes)) == hipErrorMemoryAllocation)
             {
                 // The allocation attempt failed: free all cached blocks on device and retry
                 if (debug) _CubLog("\tDevice %d failed to allocate %lld bytes for stream %lld, retrying after freeing cached allocations",
                       device, (long long) search_key.bytes, (long long) search_key.associated_stream);
 
-                error = cudaSuccess;    // Reset the error we will return
-                cudaGetLastError();     // Reset CUDART's error
+                error = hipSuccess;    // Reset the error we will return
+                hipGetLastError();     // Reset CUDART's error
 
                 // Lock
                 mutex.Lock();
@@ -461,13 +461,13 @@ struct CachingDeviceAllocator
 
                 while ((block_itr != cached_blocks.end()) && (block_itr->device == device))
                 {
-                    // No need to worry about synchronization with the device: cudaFree is
+                    // No need to worry about synchronization with the device: hipFree is
                     // blocking and will synchronize across all kernels executing
                     // on the current device
 
                     // Free device memory and destroy stream event.
-                    if (CubDebug(error = cudaFree(block_itr->d_ptr))) break;
-                    if (CubDebug(error = cudaEventDestroy(block_itr->ready_event))) break;
+                    if (CubDebug(error = hipFree(block_itr->d_ptr))) break;
+                    if (CubDebug(error = hipEventDestroy(block_itr->ready_event))) break;
 
                     // Reduce balance and erase entry
                     cached_bytes[device].free -= block_itr->bytes;
@@ -487,11 +487,11 @@ struct CachingDeviceAllocator
                 if (error) return error;
 
                 // Try to allocate again
-                if (CubDebug(error = cudaMalloc(&search_key.d_ptr, search_key.bytes))) return error;
+                if (CubDebug(error = hipMalloc(&search_key.d_ptr, search_key.bytes))) return error;
             }
 
             // Create ready event
-            if (CubDebug(error = cudaEventCreateWithFlags(&search_key.ready_event, cudaEventDisableTiming)))
+            if (CubDebug(error = hipEventCreateWithFlags(&search_key.ready_event, cudaEventDisableTiming)))
                 return error;
 
             // Insert into live blocks
@@ -506,7 +506,7 @@ struct CachingDeviceAllocator
             // Attempt to revert back to previous device if necessary
             if ((entrypoint_device != INVALID_DEVICE_ORDINAL) && (entrypoint_device != device))
             {
-                if (CubDebug(error = cudaSetDevice(entrypoint_device))) return error;
+                if (CubDebug(error = hipSetDevice(entrypoint_device))) return error;
             }
         }
 
@@ -527,10 +527,10 @@ struct CachingDeviceAllocator
      * with which it was associated with during allocation, and it becomes available for reuse within other
      * streams when all prior work submitted to \p active_stream has completed.
      */
-    cudaError_t DeviceAllocate(
+    hipError_t DeviceAllocate(
         void            **d_ptr,            ///< [out] Reference to pointer to the allocation
         size_t          bytes,              ///< [in] Minimum number of bytes for the allocation
-        cudaStream_t    active_stream = 0)  ///< [in] The stream to be associated with this allocation
+        hipStream_t    active_stream = 0)  ///< [in] The stream to be associated with this allocation
     {
         return DeviceAllocate(INVALID_DEVICE_ORDINAL, d_ptr, bytes, active_stream);
     }
@@ -543,16 +543,16 @@ struct CachingDeviceAllocator
      * with which it was associated with during allocation, and it becomes available for reuse within other
      * streams when all prior work submitted to \p active_stream has completed.
      */
-    cudaError_t DeviceFree(
+    hipError_t DeviceFree(
         int             device,
         void*           d_ptr)
     {
         int entrypoint_device           = INVALID_DEVICE_ORDINAL;
-        cudaError_t error               = cudaSuccess;
+        hipError_t error               = hipSuccess;
 
         if (device == INVALID_DEVICE_ORDINAL)
         {
-            if (CubDebug(error = cudaGetDevice(&entrypoint_device)))
+            if (CubDebug(error = hipGetDevice(&entrypoint_device)))
                 return error;
             device = entrypoint_device;
         }
@@ -591,20 +591,20 @@ struct CachingDeviceAllocator
         // First set to specified device (entrypoint may not be set)
         if (device != entrypoint_device)
         {
-            if (CubDebug(error = cudaGetDevice(&entrypoint_device))) return error;
-            if (CubDebug(error = cudaSetDevice(device))) return error;
+            if (CubDebug(error = hipGetDevice(&entrypoint_device))) return error;
+            if (CubDebug(error = hipSetDevice(device))) return error;
         }
 
         if (recached)
         {
             // Insert the ready event in the associated stream (must have current device set properly)
-            if (CubDebug(error = cudaEventRecord(search_key.ready_event, search_key.associated_stream))) return error;
+            if (CubDebug(error = hipEventRecord(search_key.ready_event, search_key.associated_stream))) return error;
         }
         else
         {
             // Free the allocation from the runtime and cleanup the event.
-            if (CubDebug(error = cudaFree(d_ptr))) return error;
-            if (CubDebug(error = cudaEventDestroy(search_key.ready_event))) return error;
+            if (CubDebug(error = hipFree(d_ptr))) return error;
+            if (CubDebug(error = hipEventDestroy(search_key.ready_event))) return error;
 
             if (debug) _CubLog("\tDevice %d freed %lld bytes from associated stream %lld.\n\t\t  %lld available blocks cached (%lld bytes), %lld live blocks (%lld bytes) outstanding.\n",
                 device, (long long) search_key.bytes, (long long) search_key.associated_stream, (long long) cached_blocks.size(), (long long) cached_bytes[device].free, (long long) live_blocks.size(), (long long) cached_bytes[device].live);
@@ -613,7 +613,7 @@ struct CachingDeviceAllocator
         // Reset device
         if ((entrypoint_device != INVALID_DEVICE_ORDINAL) && (entrypoint_device != device))
         {
-            if (CubDebug(error = cudaSetDevice(entrypoint_device))) return error;
+            if (CubDebug(error = hipSetDevice(entrypoint_device))) return error;
         }
 
         return error;
@@ -627,7 +627,7 @@ struct CachingDeviceAllocator
      * with which it was associated with during allocation, and it becomes available for reuse within other
      * streams when all prior work submitted to \p active_stream has completed.
      */
-    cudaError_t DeviceFree(
+    hipError_t DeviceFree(
         void*           d_ptr)
     {
         return DeviceFree(INVALID_DEVICE_ORDINAL, d_ptr);
@@ -637,9 +637,9 @@ struct CachingDeviceAllocator
     /**
      * \brief Frees all cached device allocations on all devices
      */
-    cudaError_t FreeAllCached()
+    hipError_t FreeAllCached()
     {
-        cudaError_t error         = cudaSuccess;
+        hipError_t error         = hipSuccess;
         int entrypoint_device     = INVALID_DEVICE_ORDINAL;
         int current_device        = INVALID_DEVICE_ORDINAL;
 
@@ -653,19 +653,19 @@ struct CachingDeviceAllocator
             // Get entry-point device ordinal if necessary
             if (entrypoint_device == INVALID_DEVICE_ORDINAL)
             {
-                if (CubDebug(error = cudaGetDevice(&entrypoint_device))) break;
+                if (CubDebug(error = hipGetDevice(&entrypoint_device))) break;
             }
 
             // Set current device ordinal if necessary
             if (begin->device != current_device)
             {
-                if (CubDebug(error = cudaSetDevice(begin->device))) break;
+                if (CubDebug(error = hipSetDevice(begin->device))) break;
                 current_device = begin->device;
             }
 
             // Free device memory
-            if (CubDebug(error = cudaFree(begin->d_ptr))) break;
-            if (CubDebug(error = cudaEventDestroy(begin->ready_event))) break;
+            if (CubDebug(error = hipFree(begin->d_ptr))) break;
+            if (CubDebug(error = hipEventDestroy(begin->ready_event))) break;
 
             // Reduce balance and erase entry
             cached_bytes[current_device].free -= begin->bytes;
@@ -681,7 +681,7 @@ struct CachingDeviceAllocator
         // Attempt to revert back to entry-point device if necessary
         if (entrypoint_device != INVALID_DEVICE_ORDINAL)
         {
-            if (CubDebug(error = cudaSetDevice(entrypoint_device))) return error;
+            if (CubDebug(error = hipSetDevice(entrypoint_device))) return error;
         }
 
         return error;

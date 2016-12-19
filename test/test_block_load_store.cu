@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -105,7 +106,7 @@ __global__ void Kernel(
     __shared__ TempStorage temp_storage;
 
     // Threadblock work bounds
-    int block_offset = blockIdx.x * TILE_SIZE;
+    int block_offset = hipBlockIdx_x * TILE_SIZE;
     int guarded_elements = num_items - block_offset;
 
     // Tile of items
@@ -172,23 +173,21 @@ void TestKernel(
     typedef typename std::iterator_traits<InputIteratorT>::difference_type OffsetT;
     DiscardOutputIterator<OffsetT> discard_itr;
 
-    Kernel<BLOCK_THREADS, ITEMS_PER_THREAD, LOAD_ALGORITHM, STORE_ALGORITHM>
-        <<<grid_size, BLOCK_THREADS>>>(
+    hipLaunchKernel(HIP_KERNEL_NAME(Kernel<BLOCK_THREADS, ITEMS_PER_THREAD, LOAD_ALGORITHM, STORE_ALGORITHM>), dim3(grid_size), dim3(BLOCK_THREADS), 0, 0, 
             d_in,
             discard_itr,
             discard_itr,
             guarded_elements);
 
     // Test with regular output iterator
-    Kernel<BLOCK_THREADS, ITEMS_PER_THREAD, LOAD_ALGORITHM, STORE_ALGORITHM>
-        <<<grid_size, BLOCK_THREADS>>>(
+    hipLaunchKernel(HIP_KERNEL_NAME(Kernel<BLOCK_THREADS, ITEMS_PER_THREAD, LOAD_ALGORITHM, STORE_ALGORITHM>), dim3(grid_size), dim3(BLOCK_THREADS), 0, 0, 
             d_in,
             d_out_unguarded_itr,
             d_out_guarded_itr,
             guarded_elements);
 
-    CubDebugExit(cudaPeekAtLastError());
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipPeekAtLastError());
+    CubDebugExit(hipDeviceSynchronize());
 
     // Check results
     compare = CompareDeviceResults(h_in, d_out_guarded_ptr, guarded_elements, g_verbose, g_verbose);
@@ -229,15 +228,15 @@ void TestNative(
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_in, sizeof(T) * unguarded_elements));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_out_unguarded, sizeof(T) * unguarded_elements));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_out_guarded, sizeof(T) * guarded_elements));
-    CubDebugExit(cudaMemset(d_out_unguarded, 0, sizeof(T) * unguarded_elements));
-    CubDebugExit(cudaMemset(d_out_guarded, 0, sizeof(T) * guarded_elements));
+    CubDebugExit(hipMemset(d_out_unguarded, 0, sizeof(T) * unguarded_elements));
+    CubDebugExit(hipMemset(d_out_guarded, 0, sizeof(T) * guarded_elements));
 
     // Initialize problem on host and device
     for (int i = 0; i < unguarded_elements; ++i)
     {
         InitValue(INTEGER_SEED, h_in[i], i);
     }
-    CubDebugExit(cudaMemcpy(d_in, h_in, sizeof(T) * unguarded_elements, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_in, h_in, sizeof(T) * unguarded_elements, hipMemcpyHostToDevice));
 
     printf("TestNative "
         "grid_size(%d) "
@@ -313,15 +312,15 @@ void TestIterator(
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_in, sizeof(T) * unguarded_elements));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_out_unguarded, sizeof(T) * unguarded_elements));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_out_guarded, sizeof(T) * guarded_elements));
-    CubDebugExit(cudaMemset(d_out_unguarded, 0, sizeof(T) * unguarded_elements));
-    CubDebugExit(cudaMemset(d_out_guarded, 0, sizeof(T) * guarded_elements));
+    CubDebugExit(hipMemset(d_out_unguarded, 0, sizeof(T) * unguarded_elements));
+    CubDebugExit(hipMemset(d_out_guarded, 0, sizeof(T) * guarded_elements));
 
     // Initialize problem on host and device
     for (int i = 0; i < unguarded_elements; ++i)
     {
         InitValue(INTEGER_SEED, h_in[i], i);
     }
-    CubDebugExit(cudaMemcpy(d_in, h_in, sizeof(T) * unguarded_elements, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_in, h_in, sizeof(T) * unguarded_elements, hipMemcpyHostToDevice));
 
     printf("TestIterator "
         "grid_size(%d) "

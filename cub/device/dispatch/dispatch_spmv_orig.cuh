@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
@@ -76,7 +77,7 @@ __global__ void DeviceSpmv1ColKernel(
 
     VectorValueIteratorT wrapped_vector_x(spmv_params.d_vector_x);
 
-    int row_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
+    int row_idx = (hipBlockIdx_x * hipBlockDim_x) + hipThreadIdx_x;
     if (row_idx < spmv_params.num_rows)
     {
         OffsetT     end_nonzero_idx = spmv_params.d_row_end_offsets[row_idx];
@@ -121,7 +122,7 @@ __global__ void DeviceSpmvSearchKernel(
         RowOffsetsSearchIteratorT;
 
     // Find the starting coordinate for all tiles (plus the end coordinate of the last one)
-    int tile_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
+    int tile_idx = (hipBlockIdx_x * hipBlockDim_x) + hipThreadIdx_x;
     if (tile_idx < num_merge_tiles + 1)
     {
         OffsetT                         diagonal = (tile_idx * TILE_ITEMS);
@@ -541,11 +542,11 @@ struct DispatchSpmv
         typename                SpmvKernelT,                        ///< Function type of cub::AgentSpmvKernel
         typename                SegmentFixupKernelT>                 ///< Function type of cub::DeviceSegmentFixupKernelT
     CUB_RUNTIME_FUNCTION __forceinline__
-    static cudaError_t Dispatch(
+    static hipError_t Dispatch(
         void*                   d_temp_storage,                     ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&                 temp_storage_bytes,                 ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         SpmvParamsT&            spmv_params,                        ///< SpMV input parameter bundle
-        cudaStream_t            stream,                             ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t            stream,                             ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                    debug_synchronous,                  ///< [in] Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
         Spmv1ColKernelT         spmv_1col_kernel,                   ///< [in] Kernel function pointer to parameterization of DeviceSpmv1ColKernel
         SpmvSearchKernelT       spmv_search_kernel,                 ///< [in] Kernel function pointer to parameterization of AgentSpmvSearchKernel
@@ -560,7 +561,7 @@ struct DispatchSpmv
         return CubDebug(cudaErrorNotSupported );
 
 #else
-        cudaError error = cudaSuccess;
+        hipError_t error = hipSuccess;
         do
         {
             if (spmv_params.num_cols == 1)
@@ -576,15 +577,15 @@ struct DispatchSpmv
                 int degen_col_kernel_block_size     = INIT_KERNEL_THREADS;
                 int degen_col_kernel_grid_size      = (spmv_params.num_rows + degen_col_kernel_block_size - 1) / degen_col_kernel_block_size;
 
-                if (debug_synchronous) _CubLog("Invoking spmv_1col_kernel<<<%d, %d, 0, %lld>>>()\n",
+                if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(spmv_1col_kernel), dim3(%d), dim3(%d), 0, %lld, )\n",
                     degen_col_kernel_grid_size, degen_col_kernel_block_size, (long long) stream);
 
                 // Invoke spmv_search_kernel
-                spmv_1col_kernel<<<degen_col_kernel_grid_size, degen_col_kernel_block_size, 0, stream>>>(
+                hipLaunchKernel(HIP_KERNEL_NAME(spmv_1col_kernel), dim3(degen_col_kernel_grid_size), dim3(degen_col_kernel_block_size), 0, stream, 
                     spmv_params);
 
                 // Check for failure to launch
-                if (CubDebug(error = cudaPeekAtLastError())) break;
+                if (CubDebug(error = hipPeekAtLastError())) break;
 
                 // Sync the stream if specified to flush runtime errors
                 if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
@@ -594,15 +595,15 @@ struct DispatchSpmv
 
             // Get device ordinal
             int device_ordinal;
-            if (CubDebug(error = cudaGetDevice(&device_ordinal))) break;
+            if (CubDebug(error = hipGetDevice(&device_ordinal))) break;
 
             // Get SM count
             int sm_count;
-            if (CubDebug(error = cudaDeviceGetAttribute (&sm_count, cudaDevAttrMultiProcessorCount, device_ordinal))) break;
+            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;
 
             // Get max x-dimension of grid
             int max_dim_x;
-            if (CubDebug(error = cudaDeviceGetAttribute(&max_dim_x, cudaDevAttrMaxGridDimX, device_ordinal))) break;;
+            if (CubDebug(error = hipDeviceGetAttribute(&max_dim_x, hipDeviceAttributeMaxGridDimX, device_ordinal))) break;;
 
             // Total number of spmv work items
             int num_merge_items = spmv_params.num_rows + spmv_params.num_nonzeros;
@@ -682,28 +683,28 @@ struct DispatchSpmv
                 // Use separate search kernel if we have enough spmv tiles to saturate the device
 
                 // Log spmv_search_kernel configuration
-                if (debug_synchronous) _CubLog("Invoking spmv_search_kernel<<<%d, %d, 0, %lld>>>()\n",
+                if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(spmv_search_kernel), dim3(%d), dim3(%d), 0, %lld, )\n",
                     search_grid_size, search_block_size, (long long) stream);
 
                 // Invoke spmv_search_kernel
-                spmv_search_kernel<<<search_grid_size, search_block_size, 0, stream>>>(
+                hipLaunchKernel(HIP_KERNEL_NAME(spmv_search_kernel), dim3(search_grid_size), dim3(search_block_size), 0, stream, 
                     num_merge_tiles,
                     d_tile_coordinates,
                     spmv_params);
 
                 // Check for failure to launch
-                if (CubDebug(error = cudaPeekAtLastError())) break;
+                if (CubDebug(error = hipPeekAtLastError())) break;
 
                 // Sync the stream if specified to flush runtime errors
                 if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
             }
 
             // Log spmv_kernel configuration
-            if (debug_synchronous) _CubLog("Invoking spmv_kernel<<<{%d,%d,%d}, %d, 0, %lld>>>(), %d items per thread, %d SM occupancy\n",
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(spmv_kernel), dim3({%d,%d,%d}), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",
                 spmv_grid_size.x, spmv_grid_size.y, spmv_grid_size.z, spmv_config.block_threads, (long long) stream, spmv_config.items_per_thread, spmv_sm_occupancy);
 
             // Invoke spmv_kernel
-            spmv_kernel<<<spmv_grid_size, spmv_config.block_threads, 0, stream>>>(
+            hipLaunchKernel(HIP_KERNEL_NAME(spmv_kernel), dim3(spmv_grid_size), dim3(spmv_config.block_threads), 0, stream, 
                 spmv_params,
                 d_tile_coordinates,
                 d_tile_carry_pairs,
@@ -712,7 +713,7 @@ struct DispatchSpmv
                 num_segment_fixup_tiles);
 
             // Check for failure to launch
-            if (CubDebug(error = cudaPeekAtLastError())) break;
+            if (CubDebug(error = hipPeekAtLastError())) break;
 
             // Sync the stream if specified to flush runtime errors
             if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
@@ -721,11 +722,11 @@ struct DispatchSpmv
             if (num_merge_tiles > 1)
             {
                 // Log segment_fixup_kernel configuration
-                if (debug_synchronous) _CubLog("Invoking segment_fixup_kernel<<<{%d,%d,%d}, %d, 0, %lld>>>(), %d items per thread, %d SM occupancy\n",
+                if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(segment_fixup_kernel), dim3({%d,%d,%d}), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",
                     segment_fixup_grid_size.x, segment_fixup_grid_size.y, segment_fixup_grid_size.z, segment_fixup_config.block_threads, (long long) stream, segment_fixup_config.items_per_thread, segment_fixup_sm_occupancy);
 
                 // Invoke segment_fixup_kernel
-                segment_fixup_kernel<<<segment_fixup_grid_size, segment_fixup_config.block_threads, 0, stream>>>(
+                hipLaunchKernel(HIP_KERNEL_NAME(segment_fixup_kernel), dim3(segment_fixup_grid_size), dim3(segment_fixup_config.block_threads), 0, stream, 
                     d_tile_carry_pairs,
                     spmv_params.d_vector_y,
                     num_merge_tiles,
@@ -733,7 +734,7 @@ struct DispatchSpmv
                     tile_state);
 
                 // Check for failure to launch
-                if (CubDebug(error = cudaPeekAtLastError())) break;
+                if (CubDebug(error = hipPeekAtLastError())) break;
 
                 // Sync the stream if specified to flush runtime errors
                 if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
@@ -756,14 +757,14 @@ struct DispatchSpmv
      * Internal dispatch routine for computing a device-wide reduction
      */
     CUB_RUNTIME_FUNCTION __forceinline__
-    static cudaError_t Dispatch(
+    static hipError_t Dispatch(
         void*                   d_temp_storage,                     ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&                 temp_storage_bytes,                 ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         SpmvParamsT&            spmv_params,                        ///< SpMV input parameter bundle
-        cudaStream_t            stream                  = 0,        ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t            stream                  = 0,        ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                    debug_synchronous       = false)    ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  May cause significant slowdown.  Default is \p false.
     {
-        cudaError error = cudaSuccess;
+        hipError_t error = hipSuccess;
         do
         {
             // Get PTX version

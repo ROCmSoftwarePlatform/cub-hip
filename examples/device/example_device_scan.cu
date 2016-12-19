@@ -150,7 +150,7 @@ int main(int argc, char** argv)
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_in, sizeof(int) * num_items));
 
     // Initialize device input
-    CubDebugExit(cudaMemcpy(d_in, h_in, sizeof(int) * num_items, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_in, h_in, sizeof(int) * num_items, hipMemcpyHostToDevice));
 
     // Allocate device output array
     int *d_out = NULL;

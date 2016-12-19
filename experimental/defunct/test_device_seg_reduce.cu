@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -97,7 +98,7 @@ __device__ __forceinline__ void ParallelMergePathSearch(
     {
         OffsetT a_distance       = a_split_max - a_split_min;
         OffsetT a_slice          = (a_distance + BLOCK_THREADS - 1) >> Log2<BLOCK_THREADS>::VALUE;
-        OffsetT a_split_pivot    = CUB_MIN(a_split_min + (threadIdx.x * a_slice), end.a_idx - 1);
+        OffsetT a_split_pivot    = CUB_MIN(a_split_min + (hipThreadIdx_x * a_slice), end.a_idx - 1);
 
         int move_up = (a[a_split_pivot] <= b[diagonal - a_split_pivot - 1]);
         int num_up = __syncthreads_count(move_up);
@@ -378,7 +379,7 @@ struct BlockSegReduceRegion
 
         // Load a tile's worth of values (using identity for out-of-bounds items)
         Value values[ITEMS_PER_THREAD];
-        LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_values + block_idx.b_idx, values, tile_values, identity);
+        LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_values + block_idx.b_idx, values, tile_values, identity);
 
         // Barrier for smem reuse
         __syncthreads();
@@ -388,7 +389,7 @@ struct BlockSegReduceRegion
         tile_aggregate.key      = block_idx.a_idx;
         tile_aggregate.value    = BlockReduce(temp_storage.reduce).Reduce(values, reduction_op);
 
-        if (threadIdx.x == 0)
+        if (hipThreadIdx_x == 0)
         {
             prefix_op.running_total = scan_op(prefix_op.running_total, tile_aggregate);
         }
@@ -404,7 +405,7 @@ struct BlockSegReduceRegion
     {
         Value segment_reductions[ITEMS_PER_THREAD];
 
-        if (threadIdx.x == 0)
+        if (hipThreadIdx_x == 0)
         {
             // The first segment gets the running segment total
             segment_reductions[0] = prefix_op.running_total.value;
@@ -426,7 +427,7 @@ struct BlockSegReduceRegion
 
         // Store reductions
         OffsetT tile_segments = next_tile_idx.a_idx - block_idx.a_idx;
-        StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_output + block_idx.a_idx, segment_reductions, tile_segments);
+        StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_output + block_idx.a_idx, segment_reductions, tile_segments);
     }
 
 
@@ -512,10 +513,10 @@ struct BlockSegReduceRegion
             OffsetT tile_values = next_tile_idx.b_idx - block_idx.b_idx;
 
             // Load a tile's worth of values (using identity for out-of-bounds items)
-            LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_values + block_idx.b_idx, values, tile_values, identity);
+            LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_values + block_idx.b_idx, values, tile_values, identity);
 
             // Store to shared
-            StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, temp_storage.cached_values, values, tile_values);
+            StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, temp_storage.cached_values, values, tile_values);
 
             // Barrier for smem reuse
             __syncthreads();
@@ -682,25 +683,25 @@ struct BlockSegReduceRegion
         KeyValuePair    &last_tuple)        // [Out] Valid in thread-0
     {
         // Thread block initialization
-        if (threadIdx.x < 2)
+        if (hipThreadIdx_x < 2)
         {
             // Retrieve block starting and ending indices
             IndexPair block_idx = {0, 0};
-            if (gridDim.x > 1)
+            if (hipGridDim_x > 1)
             {
-                block_idx = d_block_idx[blockIdx.x + threadIdx.x];
+                block_idx = d_block_idx[hipBlockIdx_x + hipThreadIdx_x];
             }
-            else if (threadIdx.x > 0)
+            else if (hipThreadIdx_x > 0)
             {
                 block_idx.a_idx = num_segments;
                 block_idx.b_idx = num_values;
             }
 
             // Share block starting and ending indices
-            temp_storage.block_region_idx[threadIdx.x] = block_idx;
+            temp_storage.block_region_idx[hipThreadIdx_x] = block_idx;
 
             // Initialize the block's running prefix
-            if (threadIdx.x == 0)
+            if (hipThreadIdx_x == 0)
             {
                 prefix_op.running_total.key    = block_idx.a_idx;
                 prefix_op.running_total.value  = identity;
@@ -737,14 +738,14 @@ struct BlockSegReduceRegion
 
                 // Load global
                 SegmentOffset segment_offsets[ITEMS_PER_THREAD];
-                LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_segment_end_offsets + block_idx.a_idx, segment_offsets, num_segments, num_values);
+                LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_segment_end_offsets + block_idx.a_idx, segment_offsets, num_segments, num_values);
 
                 // Store to shared
-                StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, temp_storage.cached_segment_end_offsets, segment_offsets);
+                StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, temp_storage.cached_segment_end_offsets, segment_offsets);
 
                 __syncthreads();
 
-                OffsetT next_thread_diagonal = block_diagonal + ((threadIdx.x + 1) * ITEMS_PER_THREAD);
+                OffsetT next_thread_diagonal = block_diagonal + ((hipThreadIdx_x + 1) * ITEMS_PER_THREAD);
 
                 MergePathSearch(
                     next_thread_diagonal,                       // Next thread diagonal
@@ -758,7 +759,7 @@ struct BlockSegReduceRegion
             {
                 // Search in global
 
-                OffsetT next_thread_diagonal = block_diagonal + ((threadIdx.x + 1) * ITEMS_PER_THREAD);
+                OffsetT next_thread_diagonal = block_diagonal + ((hipThreadIdx_x + 1) * ITEMS_PER_THREAD);
 
                 MergePathSearch(
                     next_thread_diagonal,                       // Next thread diagonal
@@ -813,7 +814,7 @@ struct BlockSegReduceRegion
         }
 
         // Get first and last tuples for the region
-        if (threadIdx.x == 0)
+        if (hipThreadIdx_x == 0)
         {
             first_tuple = temp_storage.first_tuple;
             last_tuple = prefix_op.running_total;
@@ -1079,7 +1080,7 @@ struct BlockSegReduceRegionByKey
         OffsetT first_segment_idx,
         OffsetT last_segment_idx)
     {
-        if (threadIdx.x == 0)
+        if (hipThreadIdx_x == 0)
         {
             // Initialize running prefix to the first segment index paired with identity
             prefix_op.running_total.key    = first_segment_idx;
@@ -1138,7 +1139,7 @@ __global__ void SegReducePartitionKernel(
     CountingIterator d_value_offsets(0);
 
     // Initialize even-share to tell us where to start and stop our tile-processing
-    int partition_id = (blockDim.x * blockIdx.x) + threadIdx.x;
+    int partition_id = (hipBlockDim_x * hipBlockIdx_x) + hipThreadIdx_x;
     even_share.Init(partition_id);
 
     // Search for block starting and ending indices
@@ -1178,7 +1179,7 @@ __global__ void SegReduceRegionKernel(
     SegmentOffsetIterator       d_segment_end_offsets,  ///< [in] A sequence of \p num_segments segment end-offsets
     ValueIterator               d_values,               ///< [in] A sequence of \p num_values values
     OutputIteratorT              d_output,               ///< [out] A sequence of \p num_segments segment totals
-    KeyValuePair<OffsetT, Value> *d_tuple_partials,      ///< [out] A sequence of (gridDim.x * 2) partial reduction tuples
+    KeyValuePair<OffsetT, Value> *d_tuple_partials,      ///< [out] A sequence of (hipGridDim_x * 2) partial reduction tuples
     IndexPair<OffsetT>          *d_block_idx,
     OffsetT                     num_values,             ///< [in] Number of values to reduce
     OffsetT                     num_segments,           ///< [in] Number of segments being reduced
@@ -1226,9 +1227,9 @@ __global__ void SegReduceRegionKernel(
         first_tuple,
         last_tuple);
 
-    if (threadIdx.x == 0)
+    if (hipThreadIdx_x == 0)
     {
-        if (gridDim.x > 1)
+        if (hipGridDim_x > 1)
         {
             // Special case where the first segment written and the carry-out are for the same segment
             if (first_tuple.key == last_tuple.key)
@@ -1238,8 +1239,8 @@ __global__ void SegReduceRegionKernel(
 
             // Write the first and last partial products from this thread block so
             // that they can be subsequently "fixed up" in the next kernel.
-            d_tuple_partials[blockIdx.x * 2]          = first_tuple;
-            d_tuple_partials[(blockIdx.x * 2) + 1]    = last_tuple;
+            d_tuple_partials[hipBlockIdx_x * 2]          = first_tuple;
+            d_tuple_partials[(hipBlockIdx_x * 2) + 1]    = last_tuple;
         }
     }
 
@@ -1528,7 +1529,7 @@ struct DeviceSegReduceDispatch
         typename                        SegReduceRegionKernelPtr,               ///< Function type of cub::SegReduceRegionKernel
         typename                        SegReduceRegionByKeyKernelPtr>          ///< Function type of cub::SegReduceRegionByKeyKernel
     __host__ __device__ __forceinline__
-    static cudaError_t Dispatch(
+    static hipError_t Dispatch(
         void*               d_temp_storage,                        ///< [in] %Device allocation of temporary storage.  When NULL, the required allocation size is returned in \p temp_storage_bytes and no work is done.
         size_t                          &temp_storage_bytes,                    ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation.
         ValueIterator                   d_values,                               ///< [in] A sequence of \p num_values data to reduce
@@ -1538,7 +1539,7 @@ struct DeviceSegReduceDispatch
         OffsetT                         num_segments,                           ///< [in] Number of segments being reduced
         Value                           identity,                               ///< [in] Identity value (for zero-length segments)
         ReductionOp                     reduction_op,                           ///< [in] Reduction operator
-        cudaStream_t                    stream,                                 ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t                    stream,                                 ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                            debug_synchronous,                      ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
         int                             sm_version,                             ///< [in] SM version of target device to use when computing SM occupancy
         SegReducePartitionKernelPtr     seg_reduce_partition_kernel,            ///< [in] Kernel function pointer to parameterization of cub::SegReduceRegionKernel
@@ -1554,7 +1555,7 @@ struct DeviceSegReduceDispatch
 
 #else
 
-        cudaError error = cudaSuccess;
+        hipError_t error = hipSuccess;
         do
         {
             // Dispatch two kernels: (1) a multi-block segmented reduction
@@ -1566,11 +1567,11 @@ struct DeviceSegReduceDispatch
 
             // Get device ordinal
             int device_ordinal;
-            if (CubDebug(error = cudaGetDevice(&device_ordinal))) break;
+            if (CubDebug(error = hipGetDevice(&device_ordinal))) break;
 
             // Get SM count
             int sm_count;
-            if (CubDebug(error = cudaDeviceGetAttribute (&sm_count, cudaDevAttrMultiProcessorCount, device_ordinal))) break;
+            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;
 
             // Get SM occupancy for histogram_region_kernel
             int seg_reduce_region_sm_occupancy;
@@ -1612,7 +1613,7 @@ struct DeviceSegReduceDispatch
             if (d_temp_storage == NULL)
             {
                 // Return if the caller is simply requesting the size of the storage allocation
-                return cudaSuccess;
+                return hipSuccess;
             }
 
             // Alias the allocations
@@ -1630,11 +1631,11 @@ struct DeviceSegReduceDispatch
             if (seg_reduce_region_grid_size > 1)
             {
                 // Log seg_reduce_partition_kernel configuration
-                if (debug_synchronous) _CubLog("Invoking seg_reduce_partition_kernel<<<%d, %d, 0, %lld>>>()\n",
+                if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(seg_reduce_partition_kernel), dim3(%d), dim3(%d), 0, %lld, )\n",
                     partition_grid_size, partition_block_size, (long long) stream);
 
                 // Invoke seg_reduce_partition_kernel
-                seg_reduce_partition_kernel<<<partition_grid_size, partition_block_size, 0, stream>>>(
+                hipLaunchKernel(HIP_KERNEL_NAME(seg_reduce_partition_kernel), dim3(partition_grid_size), dim3(partition_block_size), 0, stream, 
                     d_segment_end_offsets,  ///< [in] A sequence of \p num_segments segment end-offsets
                     d_block_idx,
                     num_partition_samples,
@@ -1647,14 +1648,14 @@ struct DeviceSegReduceDispatch
             }
 
             // Log seg_reduce_region_kernel configuration
-            if (debug_synchronous) _CubLog("Invoking seg_reduce_region_kernel<<<%d, %d, 0, %lld>>>(), %d items per thread, %d SM occupancy\n",
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(seg_reduce_region_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",
                 seg_reduce_region_grid_size, seg_reduce_region_config.block_threads, (long long) stream, seg_reduce_region_config.items_per_thread, seg_reduce_region_sm_occupancy);
 
             // Mooch
-            if (CubDebug(error = cudaDeviceSetSharedMemConfig(cudaSharedMemBankSizeEightByte))) break;
+            if (CubDebug(error = hipDeviceSetSharedMemConfig(hipSharedMemBankSizeEightByte))) break;
 
             // Invoke seg_reduce_region_kernel
-            seg_reduce_region_kernel<<<seg_reduce_region_grid_size, seg_reduce_region_config.block_threads, 0, stream>>>(
+            hipLaunchKernel(HIP_KERNEL_NAME(seg_reduce_region_kernel), dim3(seg_reduce_region_grid_size), dim3(seg_reduce_region_config.block_threads), 0, stream, 
                 d_segment_end_offsets,
                 d_values,
                 d_output,
@@ -1673,11 +1674,11 @@ struct DeviceSegReduceDispatch
             if (seg_reduce_region_grid_size > 1)
             {
                 // Log seg_reduce_region_by_key_kernel configuration
-                if (debug_synchronous) _CubLog("Invoking seg_reduce_region_by_key_kernel<<<%d, %d, 0, %lld>>>(), %d items per thread\n",
+                if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(seg_reduce_region_by_key_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread\n",
                     1, seg_reduce_region_by_key_config.block_threads, (long long) stream, seg_reduce_region_by_key_config.items_per_thread);
 
                 // Invoke seg_reduce_region_by_key_kernel
-                seg_reduce_region_by_key_kernel<<<1, seg_reduce_region_by_key_config.block_threads, 0, stream>>>(
+                hipLaunchKernel(HIP_KERNEL_NAME(seg_reduce_region_by_key_kernel), dim3(1), dim3(seg_reduce_region_by_key_config.block_threads), 0, stream, 
                     d_tuple_partials,
                     d_output,
                     num_segments,
@@ -1703,7 +1704,7 @@ struct DeviceSegReduceDispatch
      * Internal dispatch routine for computing a device-wide segmented reduction.
      */
     __host__ __device__ __forceinline__
-    static cudaError_t Dispatch(
+    static hipError_t Dispatch(
         void*               d_temp_storage,                        ///< [in] %Device allocation of temporary storage.  When NULL, the required allocation size is returned in \p temp_storage_bytes and no work is done.
         size_t                          &temp_storage_bytes,                    ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation.
         ValueIterator                   d_values,                               ///< [in] A sequence of \p num_values data to reduce
@@ -1713,10 +1714,10 @@ struct DeviceSegReduceDispatch
         OffsetT                         num_segments,                           ///< [in] Number of segments being reduced
         Value                           identity,                               ///< [in] Identity value (for zero-length segments)
         ReductionOp                     reduction_op,                           ///< [in] Reduction operator
-        cudaStream_t                    stream,                                 ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t                    stream,                                 ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                            debug_synchronous)                      ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     {
-        cudaError error = cudaSuccess;
+        hipError_t error = hipSuccess;
         do
         {
             // Get PTX version
@@ -1806,7 +1807,7 @@ struct DeviceSegReduce
         typename                Value,
         typename                ReductionOp>
     __host__ __device__ __forceinline__
-    static cudaError_t Reduce(
+    static hipError_t Reduce(
         void*               d_temp_storage,                        ///< [in] %Device allocation of temporary storage.  When NULL, the required allocation size is returned in \p temp_storage_bytes and no work is done.
         size_t                  &temp_storage_bytes,                    ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation.
         ValueIterator           d_values,                               ///< [in] A sequence of \p num_values data to reduce
@@ -1816,7 +1817,7 @@ struct DeviceSegReduce
         int                     num_segments,                           ///< [in] Number of segments being reduced
         Value                   identity,                               ///< [in] Identity value (for zero-length segments)
         ReductionOp             reduction_op,                           ///< [in] Reduction operator
-        cudaStream_t            stream              = 0,                ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t            stream              = 0,                ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                    debug_synchronous   = false)            ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     {
         // Signed integer type for global offsets
@@ -1866,7 +1867,7 @@ struct DeviceSegReduce
         typename                SegmentOffsetIterator,
         typename                OutputIteratorT>
     __host__ __device__ __forceinline__
-    static cudaError_t Sum(
+    static hipError_t Sum(
         void*               d_temp_storage,                        ///< [in] %Device allocation of temporary storage.  When NULL, the required allocation size is returned in \p temp_storage_bytes and no work is done.
         size_t                  &temp_storage_bytes,                    ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation.
         ValueIterator           d_values,                               ///< [in] A sequence of \p num_values data to reduce
@@ -1874,7 +1875,7 @@ struct DeviceSegReduce
         OutputIteratorT          d_output,                               ///< [out] A sequence of \p num_segments segment totals
         int                     num_values,                             ///< [in] Total number of values to reduce
         int                     num_segments,                           ///< [in] Number of segments being reduced
-        cudaStream_t            stream              = 0,                ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t            stream              = 0,                ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                    debug_synchronous   = false)            ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     {
         // Signed integer type for global offsets
@@ -2047,8 +2048,8 @@ void Test(
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_values, sizeof(Value) * num_values));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_segment_offsets, sizeof(OffsetT) * (num_segments + 1)));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_output, sizeof(Value) * num_segments));
-    CubDebugExit(cudaMemcpy(d_values, h_values, sizeof(Value) * num_values, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemcpy(d_segment_offsets, h_segment_offsets, sizeof(OffsetT) * (num_segments + 1), cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_values, h_values, sizeof(Value) * num_values, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_segment_offsets, h_segment_offsets, sizeof(OffsetT) * (num_segments + 1), hipMemcpyHostToDevice));
 
     // Request and allocate temporary storage
     void    *d_temp_storage = NULL;
@@ -2057,7 +2058,7 @@ void Test(
     CubDebugExit(g_allocator.DeviceAllocate(&d_temp_storage, temp_storage_bytes));
 
     // Clear device output
-    CubDebugExit(cudaMemset(d_output, 0, sizeof(Value) * num_segments));
+    CubDebugExit(hipMemset(d_output, 0, sizeof(Value) * num_segments));
 
     // Run warmup/correctness iteration
     CubDebugExit(DeviceSegReduce::Sum(d_temp_storage, temp_storage_bytes, d_values, d_segment_offsets, d_output, num_values, num_segments, 0, true));

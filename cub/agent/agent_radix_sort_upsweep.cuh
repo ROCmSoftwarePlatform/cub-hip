@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -227,7 +228,7 @@ struct AgentRadixSortUpsweep
         UnsignedBits row_offset = digit >> LOG_PACKING_RATIO;
 
         // Increment counter
-        temp_storage.digit_counters[row_offset][threadIdx.x][sub_counter]++;
+        temp_storage.digit_counters[row_offset][hipThreadIdx_x][sub_counter]++;
     }
 
 
@@ -239,7 +240,7 @@ struct AgentRadixSortUpsweep
         #pragma unroll
         for (int LANE = 0; LANE < COUNTER_LANES; LANE++)
         {
-            temp_storage.packed_counters[LANE][threadIdx.x] = 0;
+            temp_storage.packed_counters[LANE][hipThreadIdx_x] = 0;
         }
     }
 
@@ -267,8 +268,8 @@ struct AgentRadixSortUpsweep
      */
     __device__ __forceinline__ void UnpackDigitCounts()
     {
-        unsigned int warp_id = threadIdx.x >> LOG_WARP_THREADS;
-        unsigned int warp_tid = threadIdx.x & (WARP_THREADS - 1);
+        unsigned int warp_id = hipThreadIdx_x >> LOG_WARP_THREADS;
+        unsigned int warp_tid = hipThreadIdx_x & (WARP_THREADS - 1);
 
         #pragma unroll
         for (int LANE = 0; LANE < LANES_PER_WARP; LANE++)
@@ -296,8 +297,8 @@ struct AgentRadixSortUpsweep
      */
     __device__ __forceinline__ void ReduceUnpackedCounts(OffsetT &bin_count)
     {
-        unsigned int warp_id = threadIdx.x >> LOG_WARP_THREADS;
-        unsigned int warp_tid = threadIdx.x & (WARP_THREADS - 1);
+        unsigned int warp_id = hipThreadIdx_x >> LOG_WARP_THREADS;
+        unsigned int warp_tid = hipThreadIdx_x & (WARP_THREADS - 1);
 
         // Place unpacked digit counters in shared memory
         #pragma unroll
@@ -320,10 +321,10 @@ struct AgentRadixSortUpsweep
         __syncthreads();
 
         // Rake-reduce bin_count reductions
-        if (threadIdx.x < RADIX_DIGITS)
+        if (hipThreadIdx_x < RADIX_DIGITS)
         {
             bin_count = ThreadReduce<WARP_THREADS>(
-                temp_storage.digit_partials[threadIdx.x],
+                temp_storage.digit_partials[hipThreadIdx_x],
                 Sum());
         }
     }
@@ -337,7 +338,7 @@ struct AgentRadixSortUpsweep
         // Tile of keys
         UnsignedBits keys[KEYS_PER_THREAD];
 
-        LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_keys_in + block_offset, keys);
+        LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_keys_in + block_offset, keys);
 
         // Prevent hoisting
         __syncthreads();
@@ -355,7 +356,7 @@ struct AgentRadixSortUpsweep
         const OffsetT &block_end)
     {
         // Process partial tile if necessary using single loads
-        block_offset += threadIdx.x;
+        block_offset += hipThreadIdx_x;
         while (block_offset < block_end)
         {
             // Load and bucket key

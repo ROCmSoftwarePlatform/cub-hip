@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -197,7 +198,7 @@ public:
 
         __syncthreads();
 
-        unsigned int offset = threadIdx.x + distance;
+        unsigned int offset = hipThreadIdx_x + distance;
         if (offset >= BLOCK_THREADS)
             offset -= BLOCK_THREADS;
 

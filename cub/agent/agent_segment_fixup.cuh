@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -292,7 +293,7 @@ struct AgentSegmentFixup
             BlockScanT(temp_storage.scan).ExclusiveScan(pairs, scatter_pairs, scan_op, tile_aggregate);
 
             // Update tile status if this is not the last tile
-            if (threadIdx.x == 0)
+            if (hipThreadIdx_x == 0)
             {
                 // Set first segment id to not trigger a flush (invalid from exclusive scan)
                 scatter_pairs[0].key = pairs[0].key;
@@ -328,7 +329,7 @@ struct AgentSegmentFixup
         if (IS_LAST_TILE)
         {
             // Last thread will output final count and last item, if necessary
-            if (threadIdx.x == BLOCK_THREADS - 1)
+            if (hipThreadIdx_x == BLOCK_THREADS - 1)
             {
                 // If the last tile is a whole tile, the inclusive prefix contains accumulated value reduction for the last segment
                 if (num_remaining == TILE_ITEMS)
@@ -351,7 +352,7 @@ struct AgentSegmentFixup
         ScanTileStateT&     tile_state)         ///< Global tile state descriptor
     {
         // Blocks are launched in increasing order, so just assign one tile per block
-        int     tile_idx        = (blockIdx.x * gridDim.y) + blockIdx.y;    // Current tile index
+        int     tile_idx        = (hipBlockIdx_x * hipGridDim_y) + hipBlockIdx_y;    // Current tile index
         OffsetT tile_offset     = tile_idx * TILE_ITEMS;                    // Global offset for the current tile
         OffsetT num_remaining   = num_items - tile_offset;                  // Remaining items (including this tile)
 

@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -144,7 +145,7 @@ struct GridEvenShare
      */
     __device__ __forceinline__ void BlockInit()
     {
-        Init(blockIdx.x);
+        Init(hipBlockIdx_x);
     }
 
 
@@ -165,7 +166,7 @@ struct GridEvenShare
             "big_share(%lu)  "
             "normal_share(%lu)\n",
 #if (CUB_PTX_ARCH > 0)
-                blockIdx.x,
+                hipBlockIdx_x,
                 (unsigned long) block_offset,
                 (unsigned long) block_end,
 #endif

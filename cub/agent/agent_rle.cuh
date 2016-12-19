@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -311,7 +312,7 @@ struct AgentRle
 
             // Get the first item from the next tile
             T tile_successor_item;
-            if (threadIdx.x == BLOCK_THREADS - 1)
+            if (hipThreadIdx_x == BLOCK_THREADS - 1)
                 tile_successor_item = d_in[tile_offset + TILE_ITEMS];
 
             BlockDiscontinuityT(temp_storage.discontinuity).FlagHeadsAndTails(
@@ -323,7 +324,7 @@ struct AgentRle
 
             // Get the last item from the previous tile
             T tile_predecessor_item;
-            if (threadIdx.x == 0)
+            if (hipThreadIdx_x == 0)
                 tile_predecessor_item = d_in[tile_offset - 1];
 
             BlockDiscontinuityT(temp_storage.discontinuity).FlagHeadsAndTails(
@@ -333,12 +334,12 @@ struct AgentRle
         {
             // Get the first item from the next tile
             T tile_successor_item;
-            if (threadIdx.x == BLOCK_THREADS - 1)
+            if (hipThreadIdx_x == BLOCK_THREADS - 1)
                 tile_successor_item = d_in[tile_offset + TILE_ITEMS];
 
             // Get the last item from the previous tile
             T tile_predecessor_item;
-            if (threadIdx.x == 0)
+            if (hipThreadIdx_x == 0)
                 tile_predecessor_item = d_in[tile_offset - 1];
 
             BlockDiscontinuityT(temp_storage.discontinuity).FlagHeadsAndTails(
@@ -369,7 +370,7 @@ struct AgentRle
         LengthOffsetPair    (&lengths_and_num_runs)[ITEMS_PER_THREAD])
     {
         // Perform warpscans
-        unsigned int warp_id = ((WARPS == 1) ? 0 : threadIdx.x / WARP_THREADS);
+        unsigned int warp_id = ((WARPS == 1) ? 0 : hipThreadIdx_x / WARP_THREADS);
         int lane_id = LaneId();
 
         LengthOffsetPair identity;
@@ -423,7 +424,7 @@ struct AgentRle
         LengthOffsetPair    (&lengths_and_offsets)[ITEMS_PER_THREAD],
         Int2Type<true>      is_warp_time_slice)
     {
-        unsigned int warp_id = ((WARPS == 1) ? 0 : threadIdx.x / WARP_THREADS);
+        unsigned int warp_id = ((WARPS == 1) ? 0 : hipThreadIdx_x / WARP_THREADS);
         int lane_id = LaneId();
 
         // Locally compact items within the warp (first warp)
@@ -459,7 +460,7 @@ struct AgentRle
                 d_offsets_out[item_offset] = lengths_and_offsets[ITEM].key;
 
                 // Scatter length if not the first (global) length
-                if ((!FIRST_TILE) || (ITEM != 0) || (threadIdx.x > 0))
+                if ((!FIRST_TILE) || (ITEM != 0) || (hipThreadIdx_x > 0))
                 {
                     d_lengths_out[item_offset - 1] = lengths_and_offsets[ITEM].value;
                 }
@@ -480,7 +481,7 @@ struct AgentRle
         LengthOffsetPair    (&lengths_and_offsets)[ITEMS_PER_THREAD],
         Int2Type<false>     is_warp_time_slice)
     {
-        unsigned int warp_id = ((WARPS == 1) ? 0 : threadIdx.x / WARP_THREADS);
+        unsigned int warp_id = ((WARPS == 1) ? 0 : hipThreadIdx_x / WARP_THREADS);
         int lane_id = LaneId();
 
         // Unzip
@@ -518,7 +519,7 @@ struct AgentRle
                 d_offsets_out[item_offset] = run_offsets[ITEM];
 
                 // Scatter length if not the first (global) length
-                if ((!FIRST_TILE) || (ITEM != 0) || (threadIdx.x > 0))
+                if ((!FIRST_TILE) || (ITEM != 0) || (hipThreadIdx_x > 0))
                 {
                     d_lengths_out[item_offset - 1] = run_lengths[ITEM];
                 }
@@ -654,7 +655,7 @@ struct AgentRle
                 lengths_and_num_runs);
 
             // Update tile status if this is not the last tile
-            if (!LAST_TILE && (threadIdx.x == 0))
+            if (!LAST_TILE && (hipThreadIdx_x == 0))
                 tile_status.SetInclusive(0, tile_aggregate);
 
             // Update thread_exclusive_in_warp to fold in warp run-length
@@ -674,7 +675,7 @@ struct AgentRle
             for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
             {
                 lengths_and_offsets[ITEM].value         = lengths_and_num_runs2[ITEM].value;
-                lengths_and_offsets[ITEM].key        = tile_offset + (threadIdx.x * ITEMS_PER_THREAD) + ITEM;
+                lengths_and_offsets[ITEM].key        = tile_offset + (hipThreadIdx_x * ITEMS_PER_THREAD) + ITEM;
                 thread_num_runs_exclusive_in_warp[ITEM] = (lengths_and_num_runs[ITEM].key) ?
                                                                 lengths_and_num_runs2[ITEM].key :         // keep
                                                                 WARP_THREADS * ITEMS_PER_THREAD;            // discard
@@ -735,11 +736,11 @@ struct AgentRle
 
             // First warp computes tile prefix in lane 0
             TilePrefixCallbackOpT prefix_op(tile_status, temp_storage.prefix, Sum(), tile_idx);
-            unsigned int warp_id = ((WARPS == 1) ? 0 : threadIdx.x / WARP_THREADS);
+            unsigned int warp_id = ((WARPS == 1) ? 0 : hipThreadIdx_x / WARP_THREADS);
             if (warp_id == 0)
             {
                 prefix_op(tile_aggregate);
-                if (threadIdx.x == 0)
+                if (hipThreadIdx_x == 0)
                     temp_storage.tile_exclusive = prefix_op.exclusive_prefix;
             }
 
@@ -764,7 +765,7 @@ struct AgentRle
             for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
             {
                 lengths_and_offsets[ITEM].value         = lengths_and_num_runs2[ITEM].value;
-                lengths_and_offsets[ITEM].key        = tile_offset + (threadIdx.x * ITEMS_PER_THREAD) + ITEM;
+                lengths_and_offsets[ITEM].key        = tile_offset + (hipThreadIdx_x * ITEMS_PER_THREAD) + ITEM;
                 thread_num_runs_exclusive_in_warp[ITEM] = (lengths_and_num_runs[ITEM].key) ?
                                                                 lengths_and_num_runs2[ITEM].key :         // keep
                                                                 WARP_THREADS * ITEMS_PER_THREAD;            // discard
@@ -800,7 +801,7 @@ struct AgentRle
         NumRunsIteratorT    d_num_runs_out)         ///< Output pointer for total number of runs identified
     {
         // Blocks are launched in increasing order, so just assign one tile per block
-        int     tile_idx        = (blockIdx.x * gridDim.y) + blockIdx.y;    // Current tile index
+        int     tile_idx        = (hipBlockIdx_x * hipGridDim_y) + hipBlockIdx_y;    // Current tile index
         OffsetT tile_offset     = tile_idx * TILE_ITEMS;                  // Global offset for the current tile
         OffsetT num_remaining   = num_items - tile_offset;                  // Remaining items (including this tile)
 
@@ -814,7 +815,7 @@ struct AgentRle
             // The last tile (possibly partially-full)
             LengthOffsetPair running_total = ConsumeTile<true>(num_items, num_remaining, tile_idx, tile_offset, tile_status);
 
-            if (threadIdx.x == 0)
+            if (hipThreadIdx_x == 0)
             {
                 // Output the total number of items selected
                 *d_num_runs_out = running_total.key;

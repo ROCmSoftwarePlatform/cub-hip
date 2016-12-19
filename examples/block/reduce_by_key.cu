@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 
 
 #include <cub/cub.cuh>
@@ -37,7 +38,7 @@ __global__ void Kernel()
 
 
     // Read data (each thread gets 3 items each, every 9 items is a segment)
-    KeyT    my_keys[3]      = {threadIdx.x / 3, threadIdx.x / 3, threadIdx.x / 3};
+    KeyT    my_keys[3]      = {hipThreadIdx_x / 3, hipThreadIdx_x / 3, hipThreadIdx_x / 3};
     ValueT  my_values[3]    = {1, 1, 1};
 
     // Set head segment head flags

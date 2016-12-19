@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -75,7 +76,7 @@ struct TexVector
     typedef typename If<(Equals<Value, double>::VALUE), uint2, Value>::Type CastType;
 
     // Texture reference type
-    typedef texture<CastType, cudaTextureType1D, cudaReadModeElementType> TexRef;
+    typedef texture<CastType, cudaTextureType1D, hipReadModeElementType> TexRef;
 
     static TexRef ref;
 
@@ -84,12 +85,12 @@ struct TexVector
      */
     static void BindTexture(void *d_in, int elements)
     {
-        cudaChannelFormatDesc tex_desc = cudaCreateChannelDesc<CastType>();
+        hipChannelFormatDesc tex_desc = hipCreateChannelDesc<CastType>();
         if (d_in)
         {
             size_t offset;
             size_t bytes = sizeof(CastType) * elements;
-            CubDebugExit(cudaBindTexture(&offset, ref, d_in, tex_desc, bytes));
+            CubDebugExit(hipBindTexture(&offset, ref, d_in, tex_desc, bytes));
         }
     }
 
@@ -98,7 +99,7 @@ struct TexVector
      */
     static void UnbindTexture()
     {
-        CubDebugExit(cudaUnbindTexture(ref));
+        CubDebugExit(hipUnbindTexture(ref));
     }
 
     /**
@@ -315,7 +316,7 @@ struct PersistentBlockSpmv
         block_end(block_end)
     {
         // Initialize scalar shared memory values
-        if (threadIdx.x == 0)
+        if (hipThreadIdx_x == 0)
         {
             VertexId first_block_row            = d_rows[block_offset];
             VertexId last_block_row             = d_rows[block_end - 1];
@@ -351,17 +352,17 @@ struct PersistentBlockSpmv
         if (FULL_TILE)
         {
             // Unguarded loads
-            LoadDirectWarpStriped<LOAD_DEFAULT>(threadIdx.x, d_columns + block_offset, columns);
-            LoadDirectWarpStriped<LOAD_DEFAULT>(threadIdx.x, d_values + block_offset, values);
-            LoadDirectWarpStriped<LOAD_DEFAULT>(threadIdx.x, d_rows + block_offset, rows);
+            LoadDirectWarpStriped<LOAD_DEFAULT>(hipThreadIdx_x, d_columns + block_offset, columns);
+            LoadDirectWarpStriped<LOAD_DEFAULT>(hipThreadIdx_x, d_values + block_offset, values);
+            LoadDirectWarpStriped<LOAD_DEFAULT>(hipThreadIdx_x, d_rows + block_offset, rows);
         }
         else
         {
             // This is a partial-tile (e.g., the last tile of input).  Extend the coordinates of the last
             // vertex for out-of-bound items, but zero-valued
-            LoadDirectWarpStriped<LOAD_DEFAULT>(threadIdx.x, d_columns + block_offset, columns, guarded_items, VertexId(0));
-            LoadDirectWarpStriped<LOAD_DEFAULT>(threadIdx.x, d_values + block_offset, values, guarded_items, Value(0));
-            LoadDirectWarpStriped<LOAD_DEFAULT>(threadIdx.x, d_rows + block_offset, rows, guarded_items, temp_storage.last_block_row);
+            LoadDirectWarpStriped<LOAD_DEFAULT>(hipThreadIdx_x, d_columns + block_offset, columns, guarded_items, VertexId(0));
+            LoadDirectWarpStriped<LOAD_DEFAULT>(hipThreadIdx_x, d_values + block_offset, values, guarded_items, Value(0));
+            LoadDirectWarpStriped<LOAD_DEFAULT>(hipThreadIdx_x, d_rows + block_offset, rows, guarded_items, temp_storage.last_block_row);
         }
 
         // Load the referenced values from x and compute the dot product partials sums
@@ -451,9 +452,9 @@ struct PersistentBlockSpmv
             ProcessTile<false>(block_offset, guarded_items);
         }
 
-        if (threadIdx.x == 0)
+        if (hipThreadIdx_x == 0)
         {
-            if (gridDim.x == 1)
+            if (hipGridDim_x == 1)
             {
                 // Scatter the final aggregate (this kernel contains only 1 threadblock)
                 d_result[prefix_op.running_prefix.row] = prefix_op.running_prefix.partial;
@@ -467,8 +468,8 @@ struct PersistentBlockSpmv
                 first_product.row       = temp_storage.first_block_row;
                 first_product.partial   = temp_storage.first_product;
 
-                d_block_partials[blockIdx.x * 2]          = first_product;
-                d_block_partials[(blockIdx.x * 2) + 1]    = prefix_op.running_prefix;
+                d_block_partials[hipBlockIdx_x * 2]          = first_product;
+                d_block_partials[(hipBlockIdx_x * 2) + 1]    = prefix_op.running_prefix;
             }
         }
     }
@@ -548,7 +549,7 @@ struct FinalizeSpmvBlock
         num_partials(num_partials)
     {
         // Initialize scalar shared memory values
-        if (threadIdx.x == 0)
+        if (hipThreadIdx_x == 0)
         {
             VertexId first_block_row            = d_block_partials[0].row;
             VertexId last_block_row             = d_block_partials[num_partials - 1].row;
@@ -581,9 +582,9 @@ struct FinalizeSpmvBlock
         {
             // Full tile
 #if CUB_PTX_ARCH >= 350
-            LoadDirectBlocked<LOAD_LDG>(threadIdx.x, d_block_partials + block_offset, partial_sums);
+            LoadDirectBlocked<LOAD_LDG>(hipThreadIdx_x, d_block_partials + block_offset, partial_sums);
 #else
-            LoadDirectBlocked(threadIdx.x, d_block_partials + block_offset, partial_sums);
+            LoadDirectBlocked(hipThreadIdx_x, d_block_partials + block_offset, partial_sums);
 #endif
         }
         else
@@ -594,9 +595,9 @@ struct FinalizeSpmvBlock
             default_sum.partial = Value(0);
 
 #if CUB_PTX_ARCH >= 350
-            LoadDirectBlocked<LOAD_LDG>(threadIdx.x, d_block_partials + block_offset, partial_sums, guarded_items, default_sum);
+            LoadDirectBlocked<LOAD_LDG>(hipThreadIdx_x, d_block_partials + block_offset, partial_sums, guarded_items, default_sum);
 #else
-            LoadDirectBlocked(threadIdx.x, d_block_partials + block_offset, partial_sums, guarded_items, default_sum);
+            LoadDirectBlocked(hipThreadIdx_x, d_block_partials + block_offset, partial_sums, guarded_items, default_sum);
 #endif
         }
 
@@ -657,7 +658,7 @@ struct FinalizeSpmvBlock
         }
 
         // Scatter the final aggregate (this kernel contains only 1 threadblock)
-        if (threadIdx.x == 0)
+        if (hipThreadIdx_x == 0)
         {
             d_result[prefix_op.running_prefix.row] = prefix_op.running_prefix.partial;
         }
@@ -815,24 +816,24 @@ void TestDevice(
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_block_partials,  sizeof(PartialProduct) * num_partials));
 
     // Copy host arrays to device
-    CubDebugExit(cudaMemcpy(d_rows,     h_rows,     sizeof(VertexId) * num_edges,       cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemcpy(d_columns,  h_columns,  sizeof(VertexId) * num_edges,       cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemcpy(d_values,   h_values,   sizeof(Value) * num_edges,          cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemcpy(d_vector,   h_vector,   sizeof(Value) * coo_graph.col_dim,  cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_rows,     h_rows,     sizeof(VertexId) * num_edges,       hipMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_columns,  h_columns,  sizeof(VertexId) * num_edges,       hipMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_values,   h_values,   sizeof(Value) * num_edges,          hipMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_vector,   h_vector,   sizeof(Value) * coo_graph.col_dim,  hipMemcpyHostToDevice));
 
     // Bind textures
     TexVector<Value>::BindTexture(d_vector, coo_graph.col_dim);
 
     // Print debug info
-    printf("CooKernel<%d, %d><<<%d, %d>>>(...), Max SM occupancy: %d\n",
+    printf("hipLaunchKernel(HIP_KERNEL_NAME(CooKernel<%d, %d>), dim3(%d), dim3(%d), 0, 0, ...), Max SM occupancy: %d\n",
         COO_BLOCK_THREADS, COO_ITEMS_PER_THREAD, coo_grid_size, COO_BLOCK_THREADS, coo_sm_occupancy);
     if (coo_grid_size > 1)
     {
-        printf("CooFinalizeKernel<<<1, %d>>>(...)\n", FINALIZE_BLOCK_THREADS);
+        printf("hipLaunchKernel(HIP_KERNEL_NAME(CooFinalizeKernel), dim3(1), dim3(%d), 0, 0, ...)\n", FINALIZE_BLOCK_THREADS);
     }
     fflush(stdout);
 
-    CubDebugExit(cudaDeviceSetSharedMemConfig(cudaSharedMemBankSizeEightByte));
+    CubDebugExit(hipDeviceSetSharedMemConfig(hipSharedMemBankSizeEightByte));
 
     // Run kernel (always run one iteration without timing)
     GpuTimer gpu_timer;
@@ -842,10 +843,10 @@ void TestDevice(
         gpu_timer.Start();
 
         // Initialize output
-        CubDebugExit(cudaMemset(d_result, 0, coo_graph.row_dim * sizeof(Value)));
+        CubDebugExit(hipMemset(d_result, 0, coo_graph.row_dim * sizeof(Value)));
 
         // Run the COO kernel
-        CooKernel<COO_BLOCK_THREADS, COO_ITEMS_PER_THREAD><<<coo_grid_size, COO_BLOCK_THREADS>>>(
+        hipLaunchKernel(HIP_KERNEL_NAME(CooKernel<COO_BLOCK_THREADS, COO_ITEMS_PER_THREAD>), dim3(coo_grid_size), dim3(COO_BLOCK_THREADS), 0, 0, 
             even_share,
             d_block_partials,
             d_rows,
@@ -857,7 +858,7 @@ void TestDevice(
         if (coo_grid_size > 1)
         {
             // Run the COO finalize kernel
-            CooFinalizeKernel<FINALIZE_BLOCK_THREADS, FINALIZE_ITEMS_PER_THREAD><<<1, FINALIZE_BLOCK_THREADS>>>(
+            hipLaunchKernel(HIP_KERNEL_NAME(CooFinalizeKernel<FINALIZE_BLOCK_THREADS, FINALIZE_ITEMS_PER_THREAD>), dim3(1), dim3(FINALIZE_BLOCK_THREADS), 0, 0, 
                 d_block_partials,
                 num_partials,
                 d_result);
@@ -870,7 +871,7 @@ void TestDevice(
     }
 
     // Force any kernel stdio to screen
-    CubDebugExit(cudaThreadSynchronize());
+    CubDebugExit(hipDeviceSynchronize());
     fflush(stdout);
 
     // Display timing

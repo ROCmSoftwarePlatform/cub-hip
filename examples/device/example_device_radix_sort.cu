@@ -191,8 +191,8 @@ int main(int argc, char** argv)
     CubDebugExit(g_allocator.DeviceAllocate(&d_temp_storage, temp_storage_bytes));
 
     // Initialize device arrays
-    CubDebugExit(cudaMemcpy(d_keys.d_buffers[d_keys.selector], h_keys, sizeof(float) * num_items, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemcpy(d_values.d_buffers[d_values.selector], h_values, sizeof(int) * num_items, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_keys.d_buffers[d_keys.selector], h_keys, sizeof(float) * num_items, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_values.d_buffers[d_values.selector], h_values, sizeof(int) * num_items, hipMemcpyHostToDevice));
 
     // Run
     CubDebugExit(DeviceRadixSort::SortPairs(d_temp_storage, temp_storage_bytes, d_keys, d_values, num_items));

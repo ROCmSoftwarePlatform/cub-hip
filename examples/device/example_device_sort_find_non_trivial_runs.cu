@@ -264,8 +264,8 @@ int main(int argc, char** argv)
         CubDebugExit(g_allocator.DeviceAllocate((void**)&d_values.d_buffers[0], sizeof(Value) * num_items));
         CubDebugExit(g_allocator.DeviceAllocate((void**)&d_values.d_buffers[1], sizeof(Value) * num_items));
 
-        CubDebugExit(cudaMemcpy(d_keys.d_buffers[d_keys.selector], h_keys, sizeof(float) * num_items, cudaMemcpyHostToDevice));
-        CubDebugExit(cudaMemcpy(d_values.d_buffers[d_values.selector], h_values, sizeof(int) * num_items, cudaMemcpyHostToDevice));
+        CubDebugExit(hipMemcpy(d_keys.d_buffers[d_keys.selector], h_keys, sizeof(float) * num_items, hipMemcpyHostToDevice));
+        CubDebugExit(hipMemcpy(d_values.d_buffers[d_values.selector], h_values, sizeof(int) * num_items, hipMemcpyHostToDevice));
 
         // Start timer
         gpu_timer.Start();

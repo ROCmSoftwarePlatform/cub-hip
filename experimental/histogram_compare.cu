@@ -419,7 +419,7 @@ void TestMethods(
     PixelType* d_pixels;
     size_t pixel_bytes = width * height * sizeof(PixelType);
     CubDebugExit(g_allocator.DeviceAllocate((void**) &d_pixels, pixel_bytes));
-    CubDebugExit(cudaMemcpy(d_pixels, h_pixels, pixel_bytes, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_pixels, h_pixels, pixel_bytes, hipMemcpyHostToDevice));
 
     if (g_report) printf("%.3f, ", double(pixel_bytes) / bandwidth_GBs / 1000);
 
@@ -565,9 +565,9 @@ int main(int argc, char **argv)
 
     // Get GPU device bandwidth (GB/s)
     int device_ordinal, bus_width, mem_clock_khz;
-    CubDebugExit(cudaGetDevice(&device_ordinal));
-    CubDebugExit(cudaDeviceGetAttribute(&bus_width, cudaDevAttrGlobalMemoryBusWidth, device_ordinal));
-    CubDebugExit(cudaDeviceGetAttribute(&mem_clock_khz, cudaDevAttrMemoryClockRate, device_ordinal));
+    CubDebugExit(hipGetDevice(&device_ordinal));
+    CubDebugExit(hipDeviceGetAttribute(&bus_width, hipDeviceAttributeMemoryBusWidth, device_ordinal));
+    CubDebugExit(hipDeviceGetAttribute(&mem_clock_khz, hipDeviceAttributeMemoryClockRate, device_ordinal));
     double bandwidth_GBs = double(bus_width) * mem_clock_khz * 2 / 8 / 1000 / 1000;
 
     // Run test(s)
@@ -628,7 +628,7 @@ int main(int argc, char **argv)
 
     free(uchar4_pixels);
 
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipDeviceSynchronize());
     printf("\n\n");
 
     return 0;

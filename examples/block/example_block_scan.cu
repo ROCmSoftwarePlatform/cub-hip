@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -122,7 +123,7 @@ __global__ void BlockPrefixSumKernel(
     BlockStoreT(temp_storage.store).Store(d_out, data);
 
     // Store aggregate and elapsed clocks
-    if (threadIdx.x == 0)
+    if (hipThreadIdx_x == 0)
     {
         *d_elapsed = (start > stop) ? start - stop : stop - start;
         d_out[BLOCK_THREADS * ITEMS_PER_THREAD] = aggregate;
@@ -181,9 +182,9 @@ void Test()
     int *d_in           = NULL;
     int *d_out          = NULL;
     clock_t *d_elapsed  = NULL;
-    cudaMalloc((void**)&d_in,          sizeof(int) * TILE_SIZE);
-    cudaMalloc((void**)&d_out,         sizeof(int) * (TILE_SIZE + 1));
-    cudaMalloc((void**)&d_elapsed,     sizeof(clock_t));
+    hipMalloc((void**)&d_in,          sizeof(int) * TILE_SIZE);
+    hipMalloc((void**)&d_out,         sizeof(int) * (TILE_SIZE + 1));
+    hipMalloc((void**)&d_elapsed,     sizeof(clock_t));
 
     // Display input problem data
     if (g_verbose)
@@ -199,14 +200,14 @@ void Test()
     CubDebugExit(MaxSmOccupancy(max_sm_occupancy, BlockPrefixSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>, BLOCK_THREADS));
 
     // Copy problem to device
-    cudaMemcpy(d_in, h_in, sizeof(int) * TILE_SIZE, cudaMemcpyHostToDevice);
+    hipMemcpy(d_in, h_in, sizeof(int) * TILE_SIZE, hipMemcpyHostToDevice);
 
     printf("BlockScan algorithm %s on %d items (%d timing iterations, %d blocks, %d threads, %d items per thread, %d SM occupancy):\n",
         (ALGORITHM == BLOCK_SCAN_RAKING) ? "BLOCK_SCAN_RAKING" : (ALGORITHM == BLOCK_SCAN_RAKING_MEMOIZE) ? "BLOCK_SCAN_RAKING_MEMOIZE" : "BLOCK_SCAN_WARP_SCANS",
         TILE_SIZE, g_timing_iterations, g_grid_size, BLOCK_THREADS, ITEMS_PER_THREAD, max_sm_occupancy);
 
     // Run aggregate/prefix kernel
-    BlockPrefixSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM><<<g_grid_size, BLOCK_THREADS>>>(
+    hipLaunchKernel(HIP_KERNEL_NAME(BlockPrefixSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0, 
         d_in,
         d_out,
         d_elapsed);
@@ -231,12 +232,12 @@ void Test()
     for (int i = 0; i < g_timing_iterations; ++i)
     {
         // Copy problem to device
-        cudaMemcpy(d_in, h_in, sizeof(int) * TILE_SIZE, cudaMemcpyHostToDevice);
+        hipMemcpy(d_in, h_in, sizeof(int) * TILE_SIZE, hipMemcpyHostToDevice);
 
         timer.Start();
 
         // Run aggregate/prefix kernel
-        BlockPrefixSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM><<<g_grid_size, BLOCK_THREADS>>>(
+        hipLaunchKernel(HIP_KERNEL_NAME(BlockPrefixSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0, 
             d_in,
             d_out,
             d_elapsed);
@@ -246,14 +247,14 @@ void Test()
 
         // Copy clocks from device
         clock_t clocks;
-        CubDebugExit(cudaMemcpy(&clocks, d_elapsed, sizeof(clock_t), cudaMemcpyDeviceToHost));
+        CubDebugExit(hipMemcpy(&clocks, d_elapsed, sizeof(clock_t), hipMemcpyDeviceToHost));
         elapsed_clocks += clocks;
 
     }
 
     // Check for kernel errors and STDIO from the kernel, if any
-    CubDebugExit(cudaPeekAtLastError());
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipPeekAtLastError());
+    CubDebugExit(hipDeviceSynchronize());
 
     // Display timing results
     float avg_millis            = elapsed_millis / g_timing_iterations;
@@ -270,9 +271,9 @@ void Test()
     if (h_in) delete[] h_in;
     if (h_reference) delete[] h_reference;
     if (h_gpu) delete[] h_gpu;
-    if (d_in) cudaFree(d_in);
-    if (d_out) cudaFree(d_out);
-    if (d_elapsed) cudaFree(d_elapsed);
+    if (d_in) hipFree(d_in);
+    if (d_out) hipFree(d_out);
+    if (d_elapsed) hipFree(d_elapsed);
 }
 
 

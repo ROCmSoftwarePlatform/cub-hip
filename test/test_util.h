@@ -36,7 +36,7 @@
     #include <sys/resource.h>
 #endif
 
-#include <cuda_runtime.h>
+#include <hip/hip_runtime.h>
 
 #include <stdio.h>
 #include <math.h>
@@ -78,7 +78,7 @@ struct CommandLineArgs
     std::vector<std::string>    keys;
     std::vector<std::string>    values;
     std::vector<std::string>    args;
-    cudaDeviceProp              deviceProp;
+    hipDeviceProp_t              deviceProp;
     float                       device_giga_bandwidth;
     size_t                      device_free_physmem;
     size_t                      device_total_physmem;
@@ -239,14 +239,14 @@ struct CommandLineArgs
     /**
      * Initialize device
      */
-    cudaError_t DeviceInit(int dev = -1)
+    hipError_t DeviceInit(int dev = -1)
     {
-        cudaError_t error = cudaSuccess;
+        hipError_t error = hipSuccess;
 
         do
         {
             int deviceCount;
-            error = CubDebug(cudaGetDeviceCount(&deviceCount));
+            error = CubDebug(hipGetDeviceCount(&deviceCount));
             if (error) break;
 
             if (deviceCount == 0) {
@@ -262,16 +262,16 @@ struct CommandLineArgs
                 dev = 0;
             }
 
-            error = CubDebug(cudaSetDevice(dev));
+            error = CubDebug(hipSetDevice(dev));
             if (error) break;
 
-            CubDebugExit(cudaMemGetInfo(&device_free_physmem, &device_total_physmem));
+            CubDebugExit(hipMemGetInfo(&device_free_physmem, &device_total_physmem));
 
             int ptx_version;
             error = CubDebug(cub::PtxVersion(ptx_version));
             if (error) break;
 
-            error = CubDebug(cudaGetDeviceProperties(&deviceProp, dev));
+            error = CubDebug(hipGetDeviceProperties(&deviceProp, dev));
             if (error) break;
 
             if (deviceProp.major < 1) {
@@ -1344,7 +1344,7 @@ int CompareDeviceResults(
     T *h_data = (T*) malloc(num_items * sizeof(T));
 
     // Copy data back
-    cudaMemcpy(h_data, d_data, sizeof(T) * num_items, cudaMemcpyDeviceToHost);
+    hipMemcpy(h_data, d_data, sizeof(T) * num_items, hipMemcpyDeviceToHost);
 
     // Display data
     if (display_data)
@@ -1389,8 +1389,8 @@ int CompareDeviceDeviceResults(
     T *h_data = (T*) malloc(num_items * sizeof(T));
 
     // Copy data back
-    cudaMemcpy(h_reference, d_reference, sizeof(T) * num_items, cudaMemcpyDeviceToHost);
-    cudaMemcpy(h_data, d_data, sizeof(T) * num_items, cudaMemcpyDeviceToHost);
+    hipMemcpy(h_reference, d_reference, sizeof(T) * num_items, hipMemcpyDeviceToHost);
+    hipMemcpy(h_data, d_data, sizeof(T) * num_items, hipMemcpyDeviceToHost);
 
     // Display data
     if (display_data) {
@@ -1456,7 +1456,7 @@ void DisplayDeviceResults(
     T *h_data = (T*) malloc(num_items * sizeof(T));
 
     // Copy data back
-    cudaMemcpy(h_data, d_data, sizeof(T) * num_items, cudaMemcpyDeviceToHost);
+    hipMemcpy(h_data, d_data, sizeof(T) * num_items, hipMemcpyDeviceToHost);
 
     DisplayResults(h_data, num_items);
 
@@ -1565,36 +1565,36 @@ struct CpuTimer
 
 struct GpuTimer
 {
-    cudaEvent_t start;
-    cudaEvent_t stop;
+    hipEvent_t start;
+    hipEvent_t stop;
 
     GpuTimer()
     {
-        cudaEventCreate(&start);
-        cudaEventCreate(&stop);
+        hipEventCreate(&start);
+        hipEventCreate(&stop);
     }
 
     ~GpuTimer()
     {
-        cudaEventDestroy(start);
-        cudaEventDestroy(stop);
+        hipEventDestroy(start);
+        hipEventDestroy(stop);
     }
 
     void Start()
     {
-        cudaEventRecord(start, 0);
+        hipEventRecord(start, 0);
     }
 
     void Stop()
     {
-        cudaEventRecord(stop, 0);
+        hipEventRecord(stop, 0);
     }
 
     float ElapsedMillis()
     {
         float elapsed;
-        cudaEventSynchronize(stop);
-        cudaEventElapsedTime(&elapsed, start, stop);
+        hipEventSynchronize(stop);
+        hipEventElapsedTime(&elapsed, start, stop);
         return elapsed;
     }
 };

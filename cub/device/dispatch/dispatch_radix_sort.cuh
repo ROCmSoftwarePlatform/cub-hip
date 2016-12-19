@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
@@ -99,13 +100,13 @@ __global__ void DeviceRadixSortUpsweepKernel(
         bin_count);
 
     // Write out digit counts (striped)
-    if (threadIdx.x < AgentRadixSortUpsweepT::RADIX_DIGITS)
+    if (hipThreadIdx_x < AgentRadixSortUpsweepT::RADIX_DIGITS)
     {
         int bin_idx = (IS_DESCENDING) ?
-            AgentRadixSortUpsweepT::RADIX_DIGITS - threadIdx.x - 1 :
-            threadIdx.x;
+            AgentRadixSortUpsweepT::RADIX_DIGITS - hipThreadIdx_x - 1 :
+            hipThreadIdx_x;
 
-        d_spine[(gridDim.x * bin_idx) + blockIdx.x] = bin_count;
+        d_spine[(hipGridDim_x * bin_idx) + hipBlockIdx_x] = bin_count;
     }
 }
 
@@ -294,7 +295,7 @@ __global__ void DeviceRadixSortSingleTileKernel(
     #pragma unroll
     for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
     {
-        int item_offset = ITEM * BLOCK_THREADS + threadIdx.x;
+        int item_offset = ITEM * BLOCK_THREADS + hipThreadIdx_x;
         if (item_offset < num_items)
         {
             d_keys_out[item_offset] = keys[ITEM];
@@ -378,8 +379,8 @@ __global__ void DeviceSegmentedRadixSortKernel(
 
     } temp_storage;
 
-    OffsetT segment_begin   = d_begin_offsets[blockIdx.x];
-    OffsetT segment_end     = d_end_offsets[blockIdx.x];
+    OffsetT segment_begin   = d_begin_offsets[hipBlockIdx_x];
+    OffsetT segment_end     = d_end_offsets[hipBlockIdx_x];
     OffsetT num_items       = segment_end - segment_begin;
 
     // Check if empty segment
@@ -398,13 +399,13 @@ __global__ void DeviceSegmentedRadixSortKernel(
     if (IS_DESCENDING)
     {
         // Reverse bin counts
-        if (threadIdx.x < RADIX_DIGITS)
-            temp_storage.reverse_counts_in[threadIdx.x] = bin_count;
+        if (hipThreadIdx_x < RADIX_DIGITS)
+            temp_storage.reverse_counts_in[hipThreadIdx_x] = bin_count;
 
         __syncthreads();
 
-        if (threadIdx.x < RADIX_DIGITS)
-            bin_count = temp_storage.reverse_counts_in[RADIX_DIGITS - threadIdx.x - 1];
+        if (hipThreadIdx_x < RADIX_DIGITS)
+            bin_count = temp_storage.reverse_counts_in[RADIX_DIGITS - hipThreadIdx_x - 1];
     }
 
     // Scan
@@ -415,13 +416,13 @@ __global__ void DeviceSegmentedRadixSortKernel(
     if (IS_DESCENDING)
     {
         // Reverse bin offsets
-        if (threadIdx.x < RADIX_DIGITS)
-            temp_storage.reverse_counts_out[threadIdx.x] = bin_offset;
+        if (hipThreadIdx_x < RADIX_DIGITS)
+            temp_storage.reverse_counts_out[hipThreadIdx_x] = bin_offset;
 
         __syncthreads();
 
-        if (threadIdx.x < RADIX_DIGITS)
-            bin_offset = temp_storage.reverse_counts_out[RADIX_DIGITS - threadIdx.x - 1];
+        if (hipThreadIdx_x < RADIX_DIGITS)
+            bin_offset = temp_storage.reverse_counts_out[RADIX_DIGITS - hipThreadIdx_x - 1];
     }
 
     __syncthreads();
@@ -783,7 +784,7 @@ struct DispatchRadixSort :
     OffsetT                 num_items;              ///< [in] Number of items to sort
     int                     begin_bit;              ///< [in] The beginning (least-significant) bit index needed for key comparison
     int                     end_bit;                ///< [in] The past-the-end (most-significant) bit index needed for key comparison
-    cudaStream_t            stream;                 ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+    hipStream_t            stream;                 ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
     bool                    debug_synchronous;      ///< [in] Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     int                     ptx_version;            ///< [in] PTX version
     bool                    is_overwrite_okay;      ///< [in] Whether is okay to overwrite source buffers
@@ -804,7 +805,7 @@ struct DispatchRadixSort :
         int                     begin_bit,
         int                     end_bit,
         bool                    is_overwrite_okay,
-        cudaStream_t            stream,
+        hipStream_t            stream,
         bool                    debug_synchronous,
         int                     ptx_version)
     :
@@ -831,7 +832,7 @@ struct DispatchRadixSort :
         typename                ActivePolicyT,          ///< Umbrella policy active for the target device
         typename                SingleTileKernelT>      ///< Function type of cub::DeviceRadixSortSingleTileKernel
     CUB_RUNTIME_FUNCTION __forceinline__
-    cudaError_t InvokeSingleTile(
+    hipError_t InvokeSingleTile(
         SingleTileKernelT       single_tile_kernel)     ///< [in] Kernel function pointer to parameterization of cub::DeviceRadixSortSingleTileKernel
     {
 #ifndef CUB_RUNTIME_ENABLED
@@ -839,7 +840,7 @@ struct DispatchRadixSort :
         // Kernel launch not supported from this device
         return CubDebug(cudaErrorNotSupported );
 #else
-        cudaError error = cudaSuccess;
+        hipError_t error = hipSuccess;
         do
         {
             // Return if the caller is simply requesting the size of the storage allocation
@@ -855,12 +856,12 @@ struct DispatchRadixSort :
 
             // Log single_tile_kernel configuration
             if (debug_synchronous)
-                _CubLog("Invoking single_tile_kernel<<<%d, %d, 0, %lld>>>(), %d items per thread, %d SM occupancy, current bit %d, bit_grain %d\n",
+                _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(single_tile_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy, current bit %d, bit_grain %d\n",
                     1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, (long long) stream,
                     ActivePolicyT::SingleTilePolicy::ITEMS_PER_THREAD, 1, begin_bit, ActivePolicyT::SingleTilePolicy::RADIX_BITS);
 
             // Invoke upsweep_kernel with same grid size as downsweep_kernel
-            single_tile_kernel<<<1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream>>>(
+            hipLaunchKernel(HIP_KERNEL_NAME(single_tile_kernel), dim3(1), dim3(ActivePolicyT::SingleTilePolicy::BLOCK_THREADS), 0, stream, 
                 d_keys.Current(),
                 d_keys.Alternate(),
                 d_values.Current(),
@@ -870,7 +871,7 @@ struct DispatchRadixSort :
                 end_bit);
 
             // Check for failure to launch
-            if (CubDebug(error = cudaPeekAtLastError())) break;
+            if (CubDebug(error = hipPeekAtLastError())) break;
 
             // Sync the stream if specified to flush runtime errors
             if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
@@ -896,7 +897,7 @@ struct DispatchRadixSort :
      */
     template <typename PassConfigT>
     CUB_RUNTIME_FUNCTION __forceinline__
-    cudaError_t InvokePass(
+    hipError_t InvokePass(
         const KeyT      *d_keys_in,
         KeyT            *d_keys_out,
         const ValueT    *d_values_in,
@@ -906,19 +907,19 @@ struct DispatchRadixSort :
         int             &current_bit,
         PassConfigT     &pass_config)
     {
-        cudaError error = cudaSuccess;
+        hipError_t error = hipSuccess;
         do
         {
             int pass_bits = CUB_MIN(pass_config.radix_bits, (end_bit - current_bit));
 
             // Log upsweep_kernel configuration
             if (debug_synchronous)
-                _CubLog("Invoking upsweep_kernel<<<%d, %d, 0, %lld>>>(), %d items per thread, %d SM occupancy, current bit %d, bit_grain %d\n",
+                _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(upsweep_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy, current bit %d, bit_grain %d\n",
                 pass_config.even_share.grid_size, pass_config.upsweep_config.block_threads, (long long) stream,
                 pass_config.upsweep_config.items_per_thread, pass_config.upsweep_config.sm_occupancy, current_bit, pass_bits);
 
             // Invoke upsweep_kernel with same grid size as downsweep_kernel
-            pass_config.upsweep_kernel<<<pass_config.even_share.grid_size, pass_config.upsweep_config.block_threads, 0, stream>>>(
+            pass_config.hipLaunchKernel(HIP_KERNEL_NAME(upsweep_kernel), dim3(pass_config.even_share.grid_size), dim3(pass_config.upsweep_config.block_threads), 0, stream, 
                 d_keys_in,
                 d_spine,
                 num_items,
@@ -927,33 +928,33 @@ struct DispatchRadixSort :
                 pass_config.even_share);
 
             // Check for failure to launch
-            if (CubDebug(error = cudaPeekAtLastError())) break;
+            if (CubDebug(error = hipPeekAtLastError())) break;
 
             // Sync the stream if specified to flush runtime errors
             if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
 
             // Log scan_kernel configuration
-            if (debug_synchronous) _CubLog("Invoking scan_kernel<<<%d, %d, 0, %lld>>>(), %d items per thread\n",
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(scan_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread\n",
                 1, pass_config.scan_config.block_threads, (long long) stream, pass_config.scan_config.items_per_thread);
 
             // Invoke scan_kernel
-            pass_config.scan_kernel<<<1, pass_config.scan_config.block_threads, 0, stream>>>(
+            pass_config.hipLaunchKernel(HIP_KERNEL_NAME(scan_kernel), dim3(1), dim3(pass_config.scan_config.block_threads), 0, stream, 
                 d_spine,
                 spine_length);
 
             // Check for failure to launch
-            if (CubDebug(error = cudaPeekAtLastError())) break;
+            if (CubDebug(error = hipPeekAtLastError())) break;
 
             // Sync the stream if specified to flush runtime errors
             if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
 
             // Log downsweep_kernel configuration
-            if (debug_synchronous) _CubLog("Invoking downsweep_kernel<<<%d, %d, 0, %lld>>>(), %d items per thread, %d SM occupancy\n",
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(downsweep_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",
                 pass_config.even_share.grid_size, pass_config.downsweep_config.block_threads, (long long) stream,
                 pass_config.downsweep_config.items_per_thread, pass_config.downsweep_config.sm_occupancy);
 
             // Invoke downsweep_kernel
-            pass_config.downsweep_kernel<<<pass_config.even_share.grid_size, pass_config.downsweep_config.block_threads, 0, stream>>>(
+            pass_config.hipLaunchKernel(HIP_KERNEL_NAME(downsweep_kernel), dim3(pass_config.even_share.grid_size), dim3(pass_config.downsweep_config.block_threads), 0, stream, 
                 d_keys_in,
                 d_keys_out,
                 d_values_in,
@@ -965,7 +966,7 @@ struct DispatchRadixSort :
                 pass_config.even_share);
 
             // Check for failure to launch
-            if (CubDebug(error = cudaPeekAtLastError())) break;
+            if (CubDebug(error = hipPeekAtLastError())) break;
 
             // Sync the stream if specified to flush runtime errors
             if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
@@ -1004,7 +1005,7 @@ struct DispatchRadixSort :
             typename ScanPolicyT,
             typename DownsweepPolicyT>
         CUB_RUNTIME_FUNCTION __forceinline__
-        cudaError_t InitPassConfig(
+        hipError_t InitPassConfig(
             UpsweepKernelT      upsweep_kernel,
             ScanKernelT         scan_kernel,
             DownsweepKernelT    downsweep_kernel,
@@ -1012,7 +1013,7 @@ struct DispatchRadixSort :
             int                 sm_count,
             int                 num_items)
         {
-            cudaError error = cudaSuccess;
+            hipError_t error = hipSuccess;
             do
             {
                 this->upsweep_kernel    = upsweep_kernel;
@@ -1047,7 +1048,7 @@ struct DispatchRadixSort :
         typename            ScanKernelT,            ///< Function type of cub::SpineScanKernel
         typename            DownsweepKernelT>       ///< Function type of cub::DeviceRadixSortDownsweepKernel
     CUB_RUNTIME_FUNCTION __forceinline__
-    cudaError_t InvokePasses(
+    hipError_t InvokePasses(
         UpsweepKernelT      upsweep_kernel,         ///< [in] Kernel function pointer to parameterization of cub::DeviceRadixSortUpsweepKernel
         UpsweepKernelT      alt_upsweep_kernel,     ///< [in] Alternate kernel function pointer to parameterization of cub::DeviceRadixSortUpsweepKernel
         ScanKernelT         scan_kernel,            ///< [in] Kernel function pointer to parameterization of cub::SpineScanKernel
@@ -1065,16 +1066,16 @@ struct DispatchRadixSort :
         return CubDebug(cudaErrorNotSupported );
 #else
 
-        cudaError error = cudaSuccess;
+        hipError_t error = hipSuccess;
         do
         {
             // Get device ordinal
             int device_ordinal;
-            if (CubDebug(error = cudaGetDevice(&device_ordinal))) break;
+            if (CubDebug(error = hipGetDevice(&device_ordinal))) break;
 
             // Get SM count
             int sm_count;
-            if (CubDebug(error = cudaDeviceGetAttribute (&sm_count, cudaDevAttrMultiProcessorCount, device_ordinal))) break;
+            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;
 
             // Init regular and alternate-digit kernel configurations
             PassConfig<UpsweepKernelT, ScanKernelT, DownsweepKernelT> pass_config, alt_pass_config;
@@ -1108,7 +1109,7 @@ struct DispatchRadixSort :
 
             // Return if the caller is simply requesting the size of the storage allocation
             if (d_temp_storage == NULL)
-                return cudaSuccess;
+                return hipSuccess;
 
             // Pass planning.  Run passes of the alternate digit-size configuration until we have an even multiple of our preferred digit size
             int num_bits            = end_bit - begin_bit;
@@ -1173,7 +1174,7 @@ struct DispatchRadixSort :
     /// Invocation
     template <typename ActivePolicyT>
     CUB_RUNTIME_FUNCTION __forceinline__
-    cudaError_t Invoke()
+    hipError_t Invoke()
     {
         typedef typename DispatchRadixSort::MaxPolicy       MaxPolicyT;
         typedef typename ActivePolicyT::SingleTilePolicy    SingleTilePolicyT;
@@ -1206,7 +1207,7 @@ struct DispatchRadixSort :
      * Internal dispatch routine
      */
     CUB_RUNTIME_FUNCTION __forceinline__
-    static cudaError_t Dispatch(
+    static hipError_t Dispatch(
         void*                   d_temp_storage,         ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t                  &temp_storage_bytes,    ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         DoubleBuffer<KeyT>      &d_keys,                ///< [in,out] Double-buffer whose current buffer contains the unsorted input keys and, upon return, is updated to point to the sorted output keys
@@ -1215,12 +1216,12 @@ struct DispatchRadixSort :
         int                     begin_bit,              ///< [in] The beginning (least-significant) bit index needed for key comparison
         int                     end_bit,                ///< [in] The past-the-end (most-significant) bit index needed for key comparison
         bool                    is_overwrite_okay,      ///< [in] Whether is okay to overwrite source buffers
-        cudaStream_t            stream,                 ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t            stream,                 ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                    debug_synchronous)      ///< [in] Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     {
         typedef typename DispatchRadixSort::MaxPolicy MaxPolicyT;
 
-        cudaError_t error;
+        hipError_t error;
         do {
             // Get PTX version
             int ptx_version;
@@ -1285,7 +1286,7 @@ struct DispatchSegmentedRadixSort :
     const OffsetT           *d_end_offsets;         ///< [in] %Device-accessible pointer to the sequence of ending offsets of length \p num_segments, such that <tt>d_end_offsets[i]-1</tt> is the last element of the <em>i</em><sup>th</sup> data segment in <tt>d_keys_*</tt> and <tt>d_values_*</tt>.  If <tt>d_end_offsets[i]-1</tt> <= <tt>d_begin_offsets[i]</tt>, the <em>i</em><sup>th</sup> is considered empty.
     int                     begin_bit;              ///< [in] The beginning (least-significant) bit index needed for key comparison
     int                     end_bit;                ///< [in] The past-the-end (most-significant) bit index needed for key comparison
-    cudaStream_t            stream;                 ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+    hipStream_t            stream;                 ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
     bool                    debug_synchronous;      ///< [in] Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     int                     ptx_version;            ///< [in] PTX version
     bool                    is_overwrite_okay;      ///< [in] Whether is okay to overwrite source buffers
@@ -1309,7 +1310,7 @@ struct DispatchSegmentedRadixSort :
         int                     begin_bit,
         int                     end_bit,
         bool                    is_overwrite_okay,
-        cudaStream_t            stream,
+        hipStream_t            stream,
         bool                    debug_synchronous,
         int                     ptx_version)
     :
@@ -1337,7 +1338,7 @@ struct DispatchSegmentedRadixSort :
     /// Invoke a three-kernel sorting pass at the current bit.
     template <typename PassConfigT>
     CUB_RUNTIME_FUNCTION __forceinline__
-    cudaError_t InvokePass(
+    hipError_t InvokePass(
         const KeyT      *d_keys_in,
         KeyT            *d_keys_out,
         const ValueT    *d_values_in,
@@ -1345,25 +1346,25 @@ struct DispatchSegmentedRadixSort :
         int             &current_bit,
         PassConfigT     &pass_config)
     {
-        cudaError error = cudaSuccess;
+        hipError_t error = hipSuccess;
         do
         {
             int pass_bits = CUB_MIN(pass_config.radix_bits, (end_bit - current_bit));
 
             // Log kernel configuration
             if (debug_synchronous)
-                _CubLog("Invoking segmented_kernels<<<%d, %d, 0, %lld>>>(), %d items per thread, %d SM occupancy, current bit %d, bit_grain %d\n",
+                _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(segmented_kernels), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy, current bit %d, bit_grain %d\n",
                     num_segments, pass_config.segmented_config.block_threads, (long long) stream,
                 pass_config.segmented_config.items_per_thread, pass_config.segmented_config.sm_occupancy, current_bit, pass_bits);
 
-            pass_config.segmented_kernel<<<num_segments, pass_config.segmented_config.block_threads, 0, stream>>>(
+            pass_config.hipLaunchKernel(HIP_KERNEL_NAME(segmented_kernel), dim3(num_segments), dim3(pass_config.segmented_config.block_threads), 0, stream, 
                 d_keys_in, d_keys_out,
                 d_values_in,  d_values_out,
                 d_begin_offsets, d_end_offsets, num_segments,
                 current_bit, pass_bits);
 
             // Check for failure to launch
-            if (CubDebug(error = cudaPeekAtLastError())) break;
+            if (CubDebug(error = hipPeekAtLastError())) break;
 
             // Sync the stream if specified to flush runtime errors
             if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
@@ -1389,7 +1390,7 @@ struct DispatchSegmentedRadixSort :
         /// Initialize pass configuration
         template <typename SegmentedPolicyT>
         CUB_RUNTIME_FUNCTION __forceinline__
-        cudaError_t InitPassConfig(SegmentedKernelT segmented_kernel)
+        hipError_t InitPassConfig(SegmentedKernelT segmented_kernel)
         {
             this->segmented_kernel  = segmented_kernel;
             this->radix_bits        = SegmentedPolicyT::RADIX_BITS;
@@ -1405,7 +1406,7 @@ struct DispatchSegmentedRadixSort :
         typename                ActivePolicyT,          ///< Umbrella policy active for the target device
         typename                SegmentedKernelT>       ///< Function type of cub::DeviceSegmentedRadixSortKernel
     CUB_RUNTIME_FUNCTION __forceinline__
-    cudaError_t InvokePasses(
+    hipError_t InvokePasses(
         SegmentedKernelT     segmented_kernel,          ///< [in] Kernel function pointer to parameterization of cub::DeviceSegmentedRadixSortKernel
         SegmentedKernelT     alt_segmented_kernel)      ///< [in] Alternate kernel function pointer to parameterization of cub::DeviceSegmentedRadixSortKernel
     {
@@ -1417,7 +1418,7 @@ struct DispatchSegmentedRadixSort :
         return CubDebug(cudaErrorNotSupported );
 #else
 
-        cudaError error = cudaSuccess;
+        hipError_t error = hipSuccess;
         do
         {
             // Init regular and alternate kernel configurations
@@ -1441,7 +1442,7 @@ struct DispatchSegmentedRadixSort :
             {
                 if (temp_storage_bytes == 0)
                     temp_storage_bytes = 1;
-                return cudaSuccess;
+                return hipSuccess;
             }
 
             // Pass planning.  Run passes of the alternate digit-size configuration until we have an even multiple of our preferred digit size
@@ -1507,7 +1508,7 @@ struct DispatchSegmentedRadixSort :
     /// Invocation
     template <typename ActivePolicyT>
     CUB_RUNTIME_FUNCTION __forceinline__
-    cudaError_t Invoke()
+    hipError_t Invoke()
     {
         typedef typename DispatchSegmentedRadixSort::MaxPolicy MaxPolicyT;
 
@@ -1525,7 +1526,7 @@ struct DispatchSegmentedRadixSort :
 
     /// Internal dispatch routine
     CUB_RUNTIME_FUNCTION __forceinline__
-    static cudaError_t Dispatch(
+    static hipError_t Dispatch(
         void*                   d_temp_storage,         ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t                  &temp_storage_bytes,    ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         DoubleBuffer<KeyT>      &d_keys,                ///< [in,out] Double-buffer whose current buffer contains the unsorted input keys and, upon return, is updated to point to the sorted output keys
@@ -1537,12 +1538,12 @@ struct DispatchSegmentedRadixSort :
         int                     begin_bit,              ///< [in] The beginning (least-significant) bit index needed for key comparison
         int                     end_bit,                ///< [in] The past-the-end (most-significant) bit index needed for key comparison
         bool                    is_overwrite_okay,      ///< [in] Whether is okay to overwrite source buffers
-        cudaStream_t            stream,                 ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t            stream,                 ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                    debug_synchronous)      ///< [in] Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     {
         typedef typename DispatchSegmentedRadixSort::MaxPolicy MaxPolicyT;
 
-        cudaError_t error;
+        hipError_t error;
         do {
             // Get PTX version
             int ptx_version;

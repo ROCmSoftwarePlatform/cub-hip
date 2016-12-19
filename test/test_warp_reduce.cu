@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -202,7 +203,7 @@ __global__ void FullWarpReduceKernel(
     __shared__ typename WarpReduce::TempStorage temp_storage[WARPS];
 
     // Per-thread tile data
-    T input = d_in[threadIdx.x];
+    T input = d_in[hipThreadIdx_x];
 
     // Record elapsed clocks
     __threadfence_block();      // workaround to prevent clock hoisting
@@ -210,7 +211,7 @@ __global__ void FullWarpReduceKernel(
     __threadfence_block();      // workaround to prevent clock hoisting
 
     // Test warp reduce
-    int warp_id = threadIdx.x / LOGICAL_WARP_THREADS;
+    int warp_id = hipThreadIdx_x / LOGICAL_WARP_THREADS;
 
     T output = DeviceTest<T, ReductionOp, WarpReduce>::Reduce(
         temp_storage[warp_id], input, reduction_op);
@@ -223,7 +224,7 @@ __global__ void FullWarpReduceKernel(
     *d_elapsed = stop - start;
 
     // Store aggregate
-    d_out[threadIdx.x] = (threadIdx.x % LOGICAL_WARP_THREADS == 0) ?
+    d_out[hipThreadIdx_x] = (hipThreadIdx_x % LOGICAL_WARP_THREADS == 0) ?
         output :
         input;
 }
@@ -250,7 +251,7 @@ __global__ void PartialWarpReduceKernel(
     __shared__ typename WarpReduce::TempStorage temp_storage[WARPS];
 
     // Per-thread tile data
-    T input = d_in[threadIdx.x];
+    T input = d_in[hipThreadIdx_x];
 
     // Record elapsed clocks
     __threadfence_block();      // workaround to prevent clock hoisting
@@ -258,7 +259,7 @@ __global__ void PartialWarpReduceKernel(
     __threadfence_block();      // workaround to prevent clock hoisting
 
     // Test partial-warp reduce
-    int warp_id = threadIdx.x / LOGICAL_WARP_THREADS;
+    int warp_id = hipThreadIdx_x / LOGICAL_WARP_THREADS;
     T output = DeviceTest<T, ReductionOp, WarpReduce>::Reduce(
         temp_storage[warp_id], input, reduction_op, valid_warp_threads);
 
@@ -270,7 +271,7 @@ __global__ void PartialWarpReduceKernel(
     *d_elapsed = stop - start;
 
     // Store aggregate
-    d_out[threadIdx.x] = (threadIdx.x % LOGICAL_WARP_THREADS == 0) ?
+    d_out[hipThreadIdx_x] = (hipThreadIdx_x % LOGICAL_WARP_THREADS == 0) ?
         output :
         input;
 }
@@ -299,8 +300,8 @@ __global__ void WarpHeadSegmentedReduceKernel(
     __shared__ typename WarpReduce::TempStorage temp_storage[WARPS];
 
     // Per-thread tile data
-    T       input       = d_in[threadIdx.x];
-    FlagT   head_flag   = d_head_flags[threadIdx.x];
+    T       input       = d_in[hipThreadIdx_x];
+    FlagT   head_flag   = d_head_flags[hipThreadIdx_x];
 
     // Record elapsed clocks
     __threadfence_block();      // workaround to prevent clock hoisting
@@ -308,7 +309,7 @@ __global__ void WarpHeadSegmentedReduceKernel(
     __threadfence_block();      // workaround to prevent clock hoisting
 
     // Test segmented warp reduce
-    int warp_id = threadIdx.x / LOGICAL_WARP_THREADS;
+    int warp_id = hipThreadIdx_x / LOGICAL_WARP_THREADS;
     T output = DeviceTest<T, ReductionOp, WarpReduce>::HeadSegmentedReduce(
         temp_storage[warp_id], input, head_flag, reduction_op);
 
@@ -320,7 +321,7 @@ __global__ void WarpHeadSegmentedReduceKernel(
     *d_elapsed = stop - start;
 
     // Store aggregate
-    d_out[threadIdx.x] = ((threadIdx.x % LOGICAL_WARP_THREADS == 0) || head_flag) ?
+    d_out[hipThreadIdx_x] = ((hipThreadIdx_x % LOGICAL_WARP_THREADS == 0) || head_flag) ?
         output :
         input;
 }
@@ -349,11 +350,11 @@ __global__ void WarpTailSegmentedReduceKernel(
     __shared__ typename WarpReduce::TempStorage temp_storage[WARPS];
 
     // Per-thread tile data
-    T       input       = d_in[threadIdx.x];
-    FlagT    tail_flag   = d_tail_flags[threadIdx.x];
-    FlagT    head_flag   = (threadIdx.x == 0) ?
+    T       input       = d_in[hipThreadIdx_x];
+    FlagT    tail_flag   = d_tail_flags[hipThreadIdx_x];
+    FlagT    head_flag   = (hipThreadIdx_x == 0) ?
                             0 :
-                            d_tail_flags[threadIdx.x - 1];
+                            d_tail_flags[hipThreadIdx_x - 1];
 
     // Record elapsed clocks
     __threadfence_block();      // workaround to prevent clock hoisting
@@ -361,7 +362,7 @@ __global__ void WarpTailSegmentedReduceKernel(
     __threadfence_block();      // workaround to prevent clock hoisting
 
     // Test segmented warp reduce
-    int warp_id = threadIdx.x / LOGICAL_WARP_THREADS;
+    int warp_id = hipThreadIdx_x / LOGICAL_WARP_THREADS;
     T output = DeviceTest<T, ReductionOp, WarpReduce>::TailSegmentedReduce(
         temp_storage[warp_id], input, tail_flag, reduction_op);
 
@@ -373,7 +374,7 @@ __global__ void WarpTailSegmentedReduceKernel(
     *d_elapsed = stop - start;
 
     // Store aggregate
-    d_out[threadIdx.x] = ((threadIdx.x % LOGICAL_WARP_THREADS == 0) || head_flag) ?
+    d_out[hipThreadIdx_x] = ((hipThreadIdx_x % LOGICAL_WARP_THREADS == 0) || head_flag) ?
         output :
         input;
 }
@@ -493,8 +494,8 @@ void TestReduce(
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_in, sizeof(T) * BLOCK_THREADS));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_out, sizeof(T) * BLOCK_THREADS));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_elapsed, sizeof(clock_t)));
-    CubDebugExit(cudaMemcpy(d_in, h_in, sizeof(T) * BLOCK_THREADS, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemset(d_out, 0, sizeof(T) * BLOCK_THREADS));
+    CubDebugExit(hipMemcpy(d_in, h_in, sizeof(T) * BLOCK_THREADS, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemset(d_out, 0, sizeof(T) * BLOCK_THREADS));
 
     if (g_verbose)
     {
@@ -516,7 +517,7 @@ void TestReduce(
     if (valid_warp_threads == LOGICAL_WARP_THREADS)
     {
         // Run full-warp kernel
-        FullWarpReduceKernel<WARPS, LOGICAL_WARP_THREADS><<<1, BLOCK_THREADS>>>(
+        hipLaunchKernel(HIP_KERNEL_NAME(FullWarpReduceKernel<WARPS, LOGICAL_WARP_THREADS>), dim3(1), dim3(BLOCK_THREADS), 0, 0, 
             d_in,
             d_out,
             reduction_op,
@@ -525,7 +526,7 @@ void TestReduce(
     else
     {
         // Run partial-warp kernel
-        PartialWarpReduceKernel<WARPS, LOGICAL_WARP_THREADS><<<1, BLOCK_THREADS>>>(
+        hipLaunchKernel(HIP_KERNEL_NAME(PartialWarpReduceKernel<WARPS, LOGICAL_WARP_THREADS>), dim3(1), dim3(BLOCK_THREADS), 0, 0, 
             d_in,
             d_out,
             reduction_op,
@@ -533,8 +534,8 @@ void TestReduce(
             valid_warp_threads);
     }
 
-    CubDebugExit(cudaPeekAtLastError());
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipPeekAtLastError());
+    CubDebugExit(hipDeviceSynchronize());
 
     // Copy out and display results
     printf("\tReduction results: ");
@@ -592,10 +593,10 @@ void TestSegmentedReduce(
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_head_out, sizeof(T) * BLOCK_THREADS));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_tail_out, sizeof(T) * BLOCK_THREADS));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_elapsed, sizeof(clock_t)));
-    CubDebugExit(cudaMemcpy(d_in, h_in, sizeof(T) * BLOCK_THREADS, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemcpy(d_flags, h_flags, sizeof(int) * BLOCK_THREADS, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemset(d_head_out, 0, sizeof(T) * BLOCK_THREADS));
-    CubDebugExit(cudaMemset(d_tail_out, 0, sizeof(T) * BLOCK_THREADS));
+    CubDebugExit(hipMemcpy(d_in, h_in, sizeof(T) * BLOCK_THREADS, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_flags, h_flags, sizeof(int) * BLOCK_THREADS, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemset(d_head_out, 0, sizeof(T) * BLOCK_THREADS));
+    CubDebugExit(hipMemset(d_tail_out, 0, sizeof(T) * BLOCK_THREADS));
 
     if (g_verbose)
     {
@@ -618,15 +619,15 @@ void TestSegmentedReduce(
     fflush(stdout);
 
     // Run head-based kernel
-    WarpHeadSegmentedReduceKernel<WARPS, LOGICAL_WARP_THREADS><<<1, BLOCK_THREADS>>>(
+    hipLaunchKernel(HIP_KERNEL_NAME(WarpHeadSegmentedReduceKernel<WARPS, LOGICAL_WARP_THREADS>), dim3(1), dim3(BLOCK_THREADS), 0, 0, 
         d_in,
         d_flags,
         d_head_out,
         reduction_op,
         d_elapsed);
 
-    CubDebugExit(cudaPeekAtLastError());
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipPeekAtLastError());
+    CubDebugExit(hipDeviceSynchronize());
 
     // Copy out and display results
     printf("\tHead-based segmented reduction results: ");
@@ -637,15 +638,15 @@ void TestSegmentedReduce(
     DisplayDeviceResults(d_elapsed, 1);
 
     // Run tail-based kernel
-    WarpTailSegmentedReduceKernel<WARPS, LOGICAL_WARP_THREADS><<<1, BLOCK_THREADS>>>(
+    hipLaunchKernel(HIP_KERNEL_NAME(WarpTailSegmentedReduceKernel<WARPS, LOGICAL_WARP_THREADS>), dim3(1), dim3(BLOCK_THREADS), 0, 0, 
         d_in,
         d_flags,
         d_tail_out,
         reduction_op,
         d_elapsed);
 
-    CubDebugExit(cudaPeekAtLastError());
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipPeekAtLastError());
+    CubDebugExit(hipDeviceSynchronize());
 
     // Copy out and display results
     printf("\tTail-based segmented reduction results: ");

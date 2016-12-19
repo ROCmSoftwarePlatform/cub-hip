@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
  *
@@ -118,7 +119,7 @@ __global__ void NonZeroIoKernel(
 
     ValueT nonzero = 0.0;
 
-    int tile_idx = blockIdx.x;
+    int tile_idx = hipBlockIdx_x;
 
     OffsetT block_offset = tile_idx * TILE_ITEMS;
 
@@ -128,7 +129,7 @@ __global__ void NonZeroIoKernel(
     #pragma unroll
     for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
     {
-        OffsetT nonzero_idx = block_offset + (ITEM * BLOCK_THREADS) + threadIdx.x;
+        OffsetT nonzero_idx = block_offset + (ITEM * BLOCK_THREADS) + hipThreadIdx_x;
 
         OffsetT* ci = params.d_column_indices + nonzero_idx;
         ValueT*a = params.d_values + nonzero_idx;
@@ -154,7 +155,7 @@ __global__ void NonZeroIoKernel(
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
-            OffsetT row_idx = block_offset + (ITEM * BLOCK_THREADS) + threadIdx.x;
+            OffsetT row_idx = block_offset + (ITEM * BLOCK_THREADS) + hipThreadIdx_x;
             if (row_idx < params.num_rows)
             {
                 OffsetT row_end_offset = ThreadLoad<LOAD_DEFAULT>(params.d_row_end_offsets + row_idx);
@@ -197,7 +198,7 @@ float TestGpuCsrIoProxy(
 
     // Get device ordinal
     int device_ordinal;
-    CubDebugExit(cudaGetDevice(&device_ordinal));
+    CubDebugExit(hipGetDevice(&device_ordinal));
 
     // Get device SM version
     int sm_version;
@@ -213,10 +214,10 @@ float TestGpuCsrIoProxy(
         printf("NonZeroIoKernel<%d,%d><<<%d, %d>>>, sm occupancy %d\n", BLOCK_THREADS, ITEMS_PER_THREAD, blocks, BLOCK_THREADS, spmv_sm_occupancy);
 
     // Warmup
-    NonZeroIoKernel<BLOCK_THREADS, ITEMS_PER_THREAD><<<blocks, BLOCK_THREADS, smem>>>(params, x_itr);
+    hipLaunchKernel(HIP_KERNEL_NAME(NonZeroIoKernel<BLOCK_THREADS, ITEMS_PER_THREAD>), dim3(blocks), dim3(BLOCK_THREADS), smem, 0, params, x_itr);
 
     // Check for failures
-    CubDebugExit(cudaPeekAtLastError());
+    CubDebugExit(hipPeekAtLastError());
     CubDebugExit(SyncStream(0));
 
     // Timing
@@ -225,7 +226,7 @@ float TestGpuCsrIoProxy(
     timer.Start();
     for (int it = 0; it < timing_iterations; ++it)
     {
-        NonZeroIoKernel<BLOCK_THREADS, ITEMS_PER_THREAD><<<blocks, BLOCK_THREADS, smem>>>(params, x_itr);
+        hipLaunchKernel(HIP_KERNEL_NAME(NonZeroIoKernel<BLOCK_THREADS, ITEMS_PER_THREAD>), dim3(blocks), dim3(BLOCK_THREADS), smem, 0, params, x_itr);
     }
     timer.Stop();
     elapsed_millis += timer.ElapsedMillis();
@@ -271,13 +272,13 @@ float TestCusparseHybmv(
         CUSPARSE_HYB_PARTITION_AUTO);
     AssertEquals(CUSPARSE_STATUS_SUCCESS, status);
 
-    cudaDeviceSynchronize();
+    hipDeviceSynchronize();
     cpu_timer.Stop();
     float elapsed_millis = cpu_timer.ElapsedMillis();
     printf("HYB setup ms, %.5f, ", elapsed_millis);
 
     // Reset input/output vector y
-    CubDebugExit(cudaMemcpy(params.d_vector_y, vector_y_in, sizeof(float) * params.num_rows, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(params.d_vector_y, vector_y_in, sizeof(float) * params.num_rows, hipMemcpyHostToDevice));
 
     // Warmup
     AssertEquals(CUSPARSE_STATUS_SUCCESS, cusparseShybmv(
@@ -347,13 +348,13 @@ float TestCusparseHybmv(
         0,
         CUSPARSE_HYB_PARTITION_AUTO));
 
-    cudaDeviceSynchronize();
+    hipDeviceSynchronize();
     cpu_timer.Stop();
     float elapsed_millis = cpu_timer.ElapsedMillis();
     printf("HYB setup ms, %.5f, ", elapsed_millis);
 
     // Reset input/output vector y
-    CubDebugExit(cudaMemcpy(params.d_vector_y, vector_y_in, sizeof(float) * params.num_rows, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(params.d_vector_y, vector_y_in, sizeof(float) * params.num_rows, hipMemcpyHostToDevice));
 
     // Warmup
     AssertEquals(CUSPARSE_STATUS_SUCCESS, cusparseDhybmv(
@@ -415,7 +416,7 @@ float TestCusparseCsrmv(
     AssertEquals(CUSPARSE_STATUS_SUCCESS, cusparseCreateMatDescr(&desc));
 
     // Reset input/output vector y
-    CubDebugExit(cudaMemcpy(params.d_vector_y, vector_y_in, sizeof(float) * params.num_rows, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(params.d_vector_y, vector_y_in, sizeof(float) * params.num_rows, hipMemcpyHostToDevice));
 
     // Warmup
     AssertEquals(CUSPARSE_STATUS_SUCCESS, cusparseScsrmv(
@@ -467,7 +468,7 @@ float TestCusparseCsrmv(
     AssertEquals(CUSPARSE_STATUS_SUCCESS, cusparseCreateMatDescr(&desc));
 
     // Reset input/output vector y
-    CubDebugExit(cudaMemcpy(params.d_vector_y, vector_y_in, sizeof(float) * params.num_rows, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(params.d_vector_y, vector_y_in, sizeof(float) * params.num_rows, hipMemcpyHostToDevice));
 
     // Warmup
     AssertEquals(CUSPARSE_STATUS_SUCCESS, cusparseDcsrmv(
@@ -529,13 +530,13 @@ float TestGpuMergeCsrmv(
         params.d_vector_x, params.d_vector_y,
         params.num_rows, params.num_cols, params.num_nonzeros,
 // params.alpha, params.beta,
-        (cudaStream_t) 0, false));
+        (hipStream_t) 0, false));
 
     // Allocate
     CubDebugExit(g_allocator.DeviceAllocate(&d_temp_storage, temp_storage_bytes));
 
     // Reset input/output vector y
-    CubDebugExit(cudaMemcpy(params.d_vector_y, vector_y_in, sizeof(ValueT) * params.num_rows, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(params.d_vector_y, vector_y_in, sizeof(ValueT) * params.num_rows, hipMemcpyHostToDevice));
 
     // Warmup
     CubDebugExit(DeviceSpmv::CsrMV(
@@ -544,7 +545,7 @@ float TestGpuMergeCsrmv(
         params.d_vector_x, params.d_vector_y,
         params.num_rows, params.num_cols, params.num_nonzeros, 
 // params.alpha, params.beta,
-        (cudaStream_t) 0, !g_quiet));
+        (hipStream_t) 0, !g_quiet));
 
     if (!g_quiet)
     {
@@ -565,7 +566,7 @@ float TestGpuMergeCsrmv(
             params.d_vector_x, params.d_vector_y,
             params.num_rows, params.num_cols, params.num_nonzeros, 
 // params.alpha, params.beta,
-            (cudaStream_t) 0, false));
+            (hipStream_t) 0, false));
     }
     timer.Stop();
     elapsed_millis += timer.ElapsedMillis();
@@ -708,10 +709,10 @@ void RunTest(
     params.alpha            = alpha;
     params.beta             = beta;
 
-    CubDebugExit(cudaMemcpy(params.d_values,            csr_matrix.values,          sizeof(ValueT) * csr_matrix.num_nonzeros, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemcpy(params.d_row_end_offsets,   csr_matrix.row_offsets,     sizeof(OffsetT) * (csr_matrix.num_rows + 1), cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemcpy(params.d_column_indices,    csr_matrix.column_indices,  sizeof(OffsetT) * csr_matrix.num_nonzeros, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemcpy(params.d_vector_x,          vector_x,                   sizeof(ValueT) * csr_matrix.num_cols, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(params.d_values,            csr_matrix.values,          sizeof(ValueT) * csr_matrix.num_nonzeros, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(params.d_row_end_offsets,   csr_matrix.row_offsets,     sizeof(OffsetT) * (csr_matrix.num_rows + 1), hipMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(params.d_column_indices,    csr_matrix.column_indices,  sizeof(OffsetT) * csr_matrix.num_nonzeros, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(params.d_vector_x,          vector_x,                   sizeof(ValueT) * csr_matrix.num_cols, hipMemcpyHostToDevice));
 
     if (!g_quiet) printf("\n\n");
     printf("GPU CSR I/O Prox, "); fflush(stdout);
@@ -910,7 +911,7 @@ int main(int argc, char **argv)
         RunTests<float, int>(rcm_relabel, alpha, beta, mtx_filename, grid2d, grid3d, wheel, dense, timing_iterations, args);
     }
 
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipDeviceSynchronize());
     printf("\n");
 
     return 0;

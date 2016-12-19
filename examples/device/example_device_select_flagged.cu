@@ -190,8 +190,8 @@ int main(int argc, char** argv)
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_flags, sizeof(unsigned char) * num_items));
 
     // Initialize device input
-    CubDebugExit(cudaMemcpy(d_in, h_in, sizeof(int) * num_items, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemcpy(d_flags, h_flags, sizeof(unsigned char) * num_items, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_in, h_in, sizeof(int) * num_items, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_flags, h_flags, sizeof(unsigned char) * num_items, hipMemcpyHostToDevice));
 
     // Allocate device output array and num selected
     int     *d_out            = NULL;

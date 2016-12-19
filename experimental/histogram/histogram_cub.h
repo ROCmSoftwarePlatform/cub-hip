@@ -78,10 +78,10 @@ double run_cub_histogram(
         lower_level,
         upper_level,
         width * height, 
-        (cudaStream_t) 0,
+        (hipStream_t) 0,
         is_warmup);
 
-    cudaMalloc(&d_temp_storage, temp_storage_bytes);
+    hipMalloc(&d_temp_storage, temp_storage_bytes);
 
     GpuTimer gpu_timer;
     gpu_timer.Start();
@@ -96,13 +96,13 @@ double run_cub_histogram(
         lower_level,
         upper_level,
         width * height, 
-        (cudaStream_t) 0,
+        (hipStream_t) 0,
         is_warmup);
 
     gpu_timer.Stop();
     float elapsed_millis = gpu_timer.ElapsedMillis();
 
-    cudaFree(d_temp_storage);
+    hipFree(d_temp_storage);
 
     return elapsed_millis;
 }

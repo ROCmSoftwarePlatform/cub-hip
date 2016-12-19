@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -455,7 +456,7 @@ public:
      *
      *     // Have thread0 obtain the predecessor item for the entire tile
      *     int tile_predecessor_item;
-     *     if (threadIdx.x == 0) tile_predecessor_item == ...
+     *     if (hipThreadIdx_x == 0) tile_predecessor_item == ...
      *
      *     // Collectively compute head flags for discontinuities in the segment
      *     int head_flags[4];
@@ -612,7 +613,7 @@ public:
      *
      *     // Have thread127 obtain the successor item for the entire tile
      *     int tile_successor_item;
-     *     if (threadIdx.x == 127) tile_successor_item == ...
+     *     if (hipThreadIdx_x == 127) tile_successor_item == ...
      *
      *     // Collectively compute tail flags for discontinuities in the segment
      *     int tail_flags[4];
@@ -823,7 +824,7 @@ public:
      *
      *     // Have thread127 obtain the successor item for the entire tile
      *     int tile_successor_item;
-     *     if (threadIdx.x == 127) tile_successor_item == ...
+     *     if (hipThreadIdx_x == 127) tile_successor_item == ...
      *
      *     // Collectively compute head and flags for discontinuities in the segment
      *     int head_flags[4];
@@ -941,11 +942,11 @@ public:
      *
      *     // Have thread0 obtain the predecessor item for the entire tile
      *     int tile_predecessor_item;
-     *     if (threadIdx.x == 0) tile_predecessor_item == ...
+     *     if (hipThreadIdx_x == 0) tile_predecessor_item == ...
      *
      *     // Have thread127 obtain the successor item for the entire tile
      *     int tile_successor_item;
-     *     if (threadIdx.x == 127) tile_successor_item == ...
+     *     if (hipThreadIdx_x == 127) tile_successor_item == ...
      *
      *     // Collectively compute head and flags for discontinuities in the segment
      *     int head_flags[4];
@@ -1060,11 +1061,11 @@ public:
      *
      *     // Have thread0 obtain the predecessor item for the entire tile
      *     int tile_predecessor_item;
-     *     if (threadIdx.x == 0) tile_predecessor_item == ...
+     *     if (hipThreadIdx_x == 0) tile_predecessor_item == ...
      *
      *     // Have thread127 obtain the successor item for the entire tile
      *     int tile_successor_item;
-     *     if (threadIdx.x == 127) tile_successor_item == ...
+     *     if (hipThreadIdx_x == 127) tile_successor_item == ...
      *
      *     // Collectively compute head and flags for discontinuities in the segment
      *     int head_flags[4];

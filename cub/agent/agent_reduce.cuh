@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -226,7 +227,7 @@ struct AgentReduce
         OutputT items[ITEMS_PER_THREAD];
 
         // Load items in striped fashion
-        LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_wrapped_in + block_offset, items);
+        LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_wrapped_in + block_offset, items);
 
         // Reduce items within each thread stripe
         thread_aggregate = (IS_FIRST_TILE) ?
@@ -250,7 +251,7 @@ struct AgentReduce
         enum { WORDS =  ITEMS_PER_THREAD / VECTOR_LOAD_LENGTH };
 
         // Fabricate a vectorized input iterator
-        InputT *d_in_unqualified = const_cast<InputT*>(d_in) + block_offset + (threadIdx.x * VECTOR_LOAD_LENGTH);
+        InputT *d_in_unqualified = const_cast<InputT*>(d_in) + block_offset + (hipThreadIdx_x * VECTOR_LOAD_LENGTH);
         CacheModifiedInputIterator<AgentReducePolicy::LOAD_MODIFIER, VectorT, OffsetT> d_vec_in(
             reinterpret_cast<VectorT*>(d_in_unqualified));
 
@@ -286,7 +287,7 @@ struct AgentReduce
         Int2Type<CAN_VECTORIZE> /*can_vectorize*/)  ///< Whether or not we can vectorize loads
     {
         // Partial tile
-        int thread_offset = threadIdx.x;
+        int thread_offset = hipThreadIdx_x;
 
         // Read first item
         if ((IS_FIRST_TILE) && (thread_offset < valid_items))
@@ -398,8 +399,8 @@ struct AgentReduce
     {
         // We give each thread block at least one tile of input.
         OutputT thread_aggregate;
-        OffsetT block_offset = blockIdx.x * TILE_ITEMS;
-        OffsetT even_share_base = gridDim.x * TILE_ITEMS;
+        OffsetT block_offset = hipBlockIdx_x * TILE_ITEMS;
+        OffsetT even_share_base = hipGridDim_x * TILE_ITEMS;
 
         if (block_offset + TILE_ITEMS > num_items)
         {
@@ -415,7 +416,7 @@ struct AgentReduce
         if (num_items > even_share_base)
         {
             // Dequeue a tile of items
-            if (threadIdx.x == 0)
+            if (hipThreadIdx_x == 0)
                 temp_storage.dequeue_offset = queue.Drain(TILE_ITEMS) + even_share_base;
 
             __syncthreads();
@@ -431,7 +432,7 @@ struct AgentReduce
                 __syncthreads();
 
                 // Dequeue a tile of items
-                if (threadIdx.x == 0)
+                if (hipThreadIdx_x == 0)
                     temp_storage.dequeue_offset = queue.Drain(TILE_ITEMS) + even_share_base;
 
                 __syncthreads();

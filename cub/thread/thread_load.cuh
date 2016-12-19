@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -85,20 +86,20 @@ enum CacheLoadModifier
  *
  * // 32-bit load using cache-global modifier:
  * int *d_in;
- * int val = cub::ThreadLoad<cub::LOAD_CA>(d_in + threadIdx.x);
+ * int val = cub::ThreadLoad<cub::LOAD_CA>(d_in + hipThreadIdx_x);
  *
  * // 16-bit load using default modifier
  * short *d_in;
- * short val = cub::ThreadLoad<cub::LOAD_DEFAULT>(d_in + threadIdx.x);
+ * short val = cub::ThreadLoad<cub::LOAD_DEFAULT>(d_in + hipThreadIdx_x);
  *
  * // 256-bit load using cache-volatile modifier
  * double4 *d_in;
- * double4 val = cub::ThreadLoad<cub::LOAD_CV>(d_in + threadIdx.x);
+ * double4 val = cub::ThreadLoad<cub::LOAD_CV>(d_in + hipThreadIdx_x);
  *
  * // 96-bit load using cache-streaming modifier
  * struct TestFoo { bool a; short b; };
  * TestFoo *d_struct;
- * TestFoo val = cub::ThreadLoad<cub::LOAD_CS>(d_in + threadIdx.x);
+ * TestFoo val = cub::ThreadLoad<cub::LOAD_CS>(d_in + hipThreadIdx_x);
  * \endcode
  *
  * \tparam MODIFIER             <b>[inferred]</b> CacheLoadModifier enumeration

@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -75,8 +76,8 @@ __device__ __forceinline__ void TestBlockSort(
 {
     BlockRadixSort(temp_storage).SortDescending(keys, values, begin_bit, end_bit);
     stop = clock();
-    StoreDirectBlocked(threadIdx.x, d_keys, keys);
-    StoreDirectBlocked(threadIdx.x, d_values, values);
+    StoreDirectBlocked(hipThreadIdx_x, d_keys, keys);
+    StoreDirectBlocked(hipThreadIdx_x, d_values, values);
 }
 
 /// Specialized descending, blocked -> striped
@@ -95,8 +96,8 @@ __device__ __forceinline__ void TestBlockSort(
 {
     BlockRadixSort(temp_storage).SortDescendingBlockedToStriped(keys, values, begin_bit, end_bit);
     stop = clock();
-    StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_keys, keys);
-    StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_values, values);
+    StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_keys, keys);
+    StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_values, values);
 }
 
 /// Specialized ascending, blocked -> blocked
@@ -115,8 +116,8 @@ __device__ __forceinline__ void TestBlockSort(
 {
     BlockRadixSort(temp_storage).Sort(keys, values, begin_bit, end_bit);
     stop = clock();
-    StoreDirectBlocked(threadIdx.x, d_keys, keys);
-    StoreDirectBlocked(threadIdx.x, d_values, values);
+    StoreDirectBlocked(hipThreadIdx_x, d_keys, keys);
+    StoreDirectBlocked(hipThreadIdx_x, d_values, values);
 }
 
 /// Specialized ascending, blocked -> striped
@@ -135,8 +136,8 @@ __device__ __forceinline__ void TestBlockSort(
 {
     BlockRadixSort(temp_storage).SortBlockedToStriped(keys, values, begin_bit, end_bit);
     stop = clock();
-    StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_keys, keys);
-    StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_values, values);
+    StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_keys, keys);
+    StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_values, values);
 }
 
 
@@ -150,7 +151,7 @@ template <
     int                 RADIX_BITS,
     bool                MEMOIZE_OUTER_SCAN,
     BlockScanAlgorithm  INNER_SCAN_ALGORITHM,
-    cudaSharedMemConfig SMEM_CONFIG,
+    hipSharedMemConfig SMEM_CONFIG,
     int                 DESCENDING,
     int                 BLOCKED_OUTPUT,
     typename            Key,
@@ -182,8 +183,8 @@ __global__ void Kernel(
     Key     keys[ITEMS_PER_THREAD];
     Value   values[ITEMS_PER_THREAD];
 
-    LoadDirectBlocked(threadIdx.x, d_keys, keys);
-    LoadDirectBlocked(threadIdx.x, d_values, values);
+    LoadDirectBlocked(hipThreadIdx_x, d_keys, keys);
+    LoadDirectBlocked(hipThreadIdx_x, d_values, values);
 
     // Start cycle timer
     clock_t stop;
@@ -193,7 +194,7 @@ __global__ void Kernel(
         temp_storage, keys, values, d_keys, d_values, begin_bit, end_bit, stop, Int2Type<DESCENDING>(), Int2Type<BLOCKED_OUTPUT>());
 
     // Store time
-    if (threadIdx.x == 0)
+    if (hipThreadIdx_x == 0)
         *d_elapsed = (start > stop) ? start - stop : stop - start;
 }
 
@@ -314,7 +315,7 @@ template <
     int                     RADIX_BITS,
     bool                    MEMOIZE_OUTER_SCAN,
     BlockScanAlgorithm      INNER_SCAN_ALGORITHM,
-    cudaSharedMemConfig     SMEM_CONFIG,
+    hipSharedMemConfig     SMEM_CONFIG,
     bool                    DESCENDING,
     bool                    BLOCKED_OUTPUT,
     typename                Key,
@@ -350,8 +351,8 @@ void TestDriver(
         TILE_SIZE, entropy_reduction, begin_bit, end_bit);
 
     // Copy problem to device
-    CubDebugExit(cudaMemcpy(d_keys, h_keys, sizeof(Key) * TILE_SIZE, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemcpy(d_values, h_values, sizeof(Value) * TILE_SIZE, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_keys, h_keys, sizeof(Key) * TILE_SIZE, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_values, h_values, sizeof(Value) * TILE_SIZE, hipMemcpyHostToDevice));
 
     printf("%s "
         "BLOCK_THREADS(%d) "
@@ -387,15 +388,15 @@ void TestDriver(
             g_num_rand_samples);
 
     // Set shared memory config
-    cudaDeviceSetSharedMemConfig(SMEM_CONFIG);
+    hipDeviceSetSharedMemConfig(SMEM_CONFIG);
 
     // Run kernel
-    Kernel<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, SMEM_CONFIG, DESCENDING, BLOCKED_OUTPUT><<<1, BLOCK_THREADS>>>(
+    hipLaunchKernel(HIP_KERNEL_NAME(Kernel<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, SMEM_CONFIG, DESCENDING, BLOCKED_OUTPUT>), dim3(1), dim3(BLOCK_THREADS), 0, 0, 
         d_keys, d_values, begin_bit, end_bit, d_elapsed);
 
     // Flush kernel output / errors
-    CubDebugExit(cudaPeekAtLastError());
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipPeekAtLastError());
+    CubDebugExit(hipDeviceSynchronize());
 
     // Check keys results
     printf("\tKeys: ");
@@ -437,7 +438,7 @@ template <
     int                     RADIX_BITS,
     bool                    MEMOIZE_OUTER_SCAN,
     BlockScanAlgorithm      INNER_SCAN_ALGORITHM,
-    cudaSharedMemConfig     SMEM_CONFIG,
+    hipSharedMemConfig     SMEM_CONFIG,
     bool                    DESCENDING,
     bool                    BLOCKED_OUTPUT,
     typename                Key,
@@ -478,7 +479,7 @@ template <
     int                     RADIX_BITS,
     bool                    MEMOIZE_OUTER_SCAN,
     BlockScanAlgorithm      INNER_SCAN_ALGORITHM,
-    cudaSharedMemConfig     SMEM_CONFIG,
+    hipSharedMemConfig     SMEM_CONFIG,
     bool                    DESCENDING,
     bool                    BLOCKED_OUTPUT,
     typename                Key,
@@ -496,7 +497,7 @@ template <
     int                     RADIX_BITS,
     bool                    MEMOIZE_OUTER_SCAN,
     BlockScanAlgorithm      INNER_SCAN_ALGORITHM,
-    cudaSharedMemConfig     SMEM_CONFIG,
+    hipSharedMemConfig     SMEM_CONFIG,
     typename                Key,
     typename                Value>
 void Test()
@@ -535,9 +536,9 @@ template <
 void TestKeys()
 {
     // Test keys-only sorting with both smem configs
-    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeFourByte, Key, NullType>();    // Keys-only (4-byte smem bank config)
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, NullType>();    // Keys-only (4-byte smem bank config)
 #if !defined(SM100) && !defined(SM110) && !defined(SM130) && !defined(SM200)
-    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeEightByte, Key, NullType>();   // Keys-only (8-byte smem bank config)
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeEightByte, Key, NullType>();   // Keys-only (8-byte smem bank config)
 #endif
 }
 
@@ -555,9 +556,9 @@ template <
 void TestKeysAndPairs()
 {
     // Test pairs sorting with only 4-byte configs
-    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeFourByte, Key, char>();        // With small-values
-    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeFourByte, Key, Key>();         // With same-values
-    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeFourByte, Key, TestFoo>();     // With large values
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, char>();        // With small-values
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, Key>();         // With same-values
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, TestFoo>();     // With large values
 }
 
 
@@ -690,14 +691,14 @@ int main(int argc, char** argv)
 
     {
         typedef float T;
-        TestDriver<32, 4, 4, true, BLOCK_SCAN_WARP_SCANS, cudaSharedMemBankSizeFourByte, false, false, T, NullType>(INTEGER_SEED, 0, 0, sizeof(T) * 8);
+        TestDriver<32, 4, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(INTEGER_SEED, 0, 0, sizeof(T) * 8);
     }
 /*
     // Compile/run quick tests
     typedef unsigned int T;
-    TestDriver<64, 17, 4, true, BLOCK_SCAN_WARP_SCANS, cudaSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
-    TestDriver<96, 8, 4, true, BLOCK_SCAN_WARP_SCANS, cudaSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
-    TestDriver<128, 2, 4, true, BLOCK_SCAN_WARP_SCANS, cudaSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
+    TestDriver<64, 17, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
+    TestDriver<96, 8, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
+    TestDriver<128, 2, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
 */
 
 #else

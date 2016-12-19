@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -61,12 +62,12 @@ namespace cub {
 
 
 /**
- * \brief %If \p CUB_STDERR is defined and \p error is not \p cudaSuccess, the corresponding error message is printed to \p stderr (or \p stdout in device code) along with the supplied source context.
+ * \brief %If \p CUB_STDERR is defined and \p error is not \p hipSuccess, the corresponding error message is printed to \p stderr (or \p stdout in device code) along with the supplied source context.
  *
  * \return The CUDA error.
  */
-__host__ __device__ __forceinline__ cudaError_t Debug(
-    cudaError_t     error,
+__host__ __device__ __forceinline__ hipError_t Debug(
+    hipError_t     error,
     const char*     filename,
     int             line)
 {
@@ -76,10 +77,10 @@ __host__ __device__ __forceinline__ cudaError_t Debug(
     if (error)
     {
     #if (CUB_PTX_ARCH == 0)
-        fprintf(stderr, "CUDA error %d [%s, %d]: %s\n", error, filename, line, cudaGetErrorString(error));
+        fprintf(stderr, "CUDA error %d [%s, %d]: %s\n", error, filename, line, hipGetErrorString(error));
         fflush(stderr);
     #elif (CUB_PTX_ARCH >= 200)
-        printf("CUDA error %d [block (%d,%d,%d) thread (%d,%d,%d), %s, %d]\n", error, blockIdx.z, blockIdx.y, blockIdx.x, threadIdx.z, threadIdx.y, threadIdx.x, filename, line);
+        printf("CUDA error %d [block (%d,%d,%d) thread (%d,%d,%d), %s, %d]\n", error, hipBlockIdx_z, hipBlockIdx_y, hipBlockIdx_x, hipThreadIdx_z, hipThreadIdx_y, hipThreadIdx_x, filename, line);
     #endif
     }
 #endif
@@ -111,7 +112,7 @@ __host__ __device__ __forceinline__ cudaError_t Debug(
     #if (CUB_PTX_ARCH == 0)
         #define _CubLog(format, ...) printf(format,__VA_ARGS__);
     #elif (CUB_PTX_ARCH >= 200)
-        #define _CubLog(format, ...) printf("[block (%d,%d,%d), thread (%d,%d,%d)]: " format, blockIdx.z, blockIdx.y, blockIdx.x, threadIdx.z, threadIdx.y, threadIdx.x, __VA_ARGS__);
+        #define _CubLog(format, ...) printf("[block (%d,%d,%d), thread (%d,%d,%d)]: " format, hipBlockIdx_z, hipBlockIdx_y, hipBlockIdx_x, hipThreadIdx_z, hipThreadIdx_y, hipThreadIdx_x, __VA_ARGS__);
     #endif
 #else
 // XXX shameless hack for clang around variadic printf... 
@@ -123,7 +124,7 @@ __host__ __device__ __forceinline__ cudaError_t Debug(
     inline __host__ __device__ void va_printf(char const* format, Args const&... args)
     {
 #ifdef __CUDA_ARCH__
-      printf(format, blockIdx.z, blockIdx.y, blockIdx.x, threadIdx.z, threadIdx.y, threadIdx.x, args...);
+      printf(format, hipBlockIdx_z, hipBlockIdx_y, hipBlockIdx_x, hipThreadIdx_z, hipThreadIdx_y, hipThreadIdx_x, args...);
 #else
       printf(format, args...);
 #endif

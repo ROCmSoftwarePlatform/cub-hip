@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -254,7 +255,7 @@ __global__ void WarpScanKernel(
     __shared__ typename WarpScanT::TempStorage temp_storage;
 
     // Per-thread tile data
-    T data = d_in[threadIdx.x];
+    T data = d_in[hipThreadIdx_x];
 
     // Start cycle timer
     __threadfence_block();      // workaround to prevent clock hoisting
@@ -280,16 +281,16 @@ __global__ void WarpScanKernel(
     __threadfence_block();      // workaround to prevent clock hoisting
 
     // Store data
-    d_out[threadIdx.x] = data;
+    d_out[hipThreadIdx_x] = data;
 
     if (TEST_MODE != BASIC)
     {
         // Store aggregate
-        d_aggregate[threadIdx.x] = aggregate;
+        d_aggregate[hipThreadIdx_x] = aggregate;
     }
 
     // Store time
-    if (threadIdx.x == 0)
+    if (hipThreadIdx_x == 0)
     {
         *d_elapsed = (start > stop) ? start - stop : stop - start;
     }
@@ -413,9 +414,9 @@ void Test(
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_out, sizeof(T) * (LOGICAL_WARP_THREADS + 1)));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_aggregate, sizeof(T) * LOGICAL_WARP_THREADS));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_elapsed, sizeof(clock_t)));
-    CubDebugExit(cudaMemcpy(d_in, h_in, sizeof(T) * LOGICAL_WARP_THREADS, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemset(d_out, 0, sizeof(T) * (LOGICAL_WARP_THREADS + 1)));
-    CubDebugExit(cudaMemset(d_aggregate, 0, sizeof(T) * LOGICAL_WARP_THREADS));
+    CubDebugExit(hipMemcpy(d_in, h_in, sizeof(T) * LOGICAL_WARP_THREADS, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemset(d_out, 0, sizeof(T) * (LOGICAL_WARP_THREADS + 1)));
+    CubDebugExit(hipMemset(d_aggregate, 0, sizeof(T) * LOGICAL_WARP_THREADS));
 
     // Run kernel
     printf("Test-mode %d (%s), gen-mode %d (%s), %s warpscan, %d warp threads, %s (%d bytes) elements:\n",
@@ -428,7 +429,7 @@ void Test(
     fflush(stdout);
 
     // Run aggregate/prefix kernel
-    WarpScanKernel<LOGICAL_WARP_THREADS, TEST_MODE><<<1, LOGICAL_WARP_THREADS>>>(
+    hipLaunchKernel(HIP_KERNEL_NAME(WarpScanKernel<LOGICAL_WARP_THREADS, TEST_MODE>), dim3(1), dim3(LOGICAL_WARP_THREADS), 0, 0, 
         d_in,
         d_out,
         d_aggregate,
@@ -439,8 +440,8 @@ void Test(
     printf("\tElapsed clocks: ");
     DisplayDeviceResults(d_elapsed, 1);
 
-    CubDebugExit(cudaPeekAtLastError());
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipPeekAtLastError());
+    CubDebugExit(hipDeviceSynchronize());
 
     // Copy out and display results
     printf("\tScan results: ");
@@ -502,7 +503,7 @@ void Test(GenMode gen_mode)
 {
     // Get device ordinal
     int device_ordinal;
-    CubDebugExit(cudaGetDevice(&device_ordinal));
+    CubDebugExit(hipGetDevice(&device_ordinal));
 
     // Get ptx version
     int ptx_version;

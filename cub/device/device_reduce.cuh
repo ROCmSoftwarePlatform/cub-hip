@@ -120,7 +120,7 @@ struct DeviceReduce
      * cub::DeviceReduce::Reduce(d_temp_storage, temp_storage_bytes, d_in, d_out, num_items, min_op, init);
      *
      * // Allocate temporary storage
-     * cudaMalloc(&d_temp_storage, temp_storage_bytes);
+     * hipMalloc(&d_temp_storage, temp_storage_bytes);
      *
      * // Run reduction
      * cub::DeviceReduce::Reduce(d_temp_storage, temp_storage_bytes, d_in, d_out, num_items, min_op, init);
@@ -140,7 +140,7 @@ struct DeviceReduce
         typename                    ReductionOpT,
         typename                    T>
     CUB_RUNTIME_FUNCTION
-    static cudaError_t Reduce(
+    static hipError_t Reduce(
         void                        *d_temp_storage,                    ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t                      &temp_storage_bytes,                ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         InputIteratorT              d_in,                               ///< [in] Pointer to the input sequence of data items
@@ -148,7 +148,7 @@ struct DeviceReduce
         int                         num_items,                          ///< [in] Total number of input items (i.e., length of \p d_in)
         ReductionOpT                reduction_op,                       ///< [in] Binary reduction functor
         T                           init,                               ///< [in] Initial value of the reduction
-        cudaStream_t                stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t                stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                        debug_synchronous   = false)        ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     {
         // Signed integer type for global offsets
@@ -200,7 +200,7 @@ struct DeviceReduce
      * cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_in, d_out, num_items);
      *
      * // Allocate temporary storage
-     * cudaMalloc(&d_temp_storage, temp_storage_bytes);
+     * hipMalloc(&d_temp_storage, temp_storage_bytes);
      *
      * // Run sum-reduction
      * cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_in, d_out, num_items);
@@ -216,13 +216,13 @@ struct DeviceReduce
         typename                    InputIteratorT,
         typename                    OutputIteratorT>
     CUB_RUNTIME_FUNCTION
-    static cudaError_t Sum(
+    static hipError_t Sum(
         void                        *d_temp_storage,                    ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t                      &temp_storage_bytes,                ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         InputIteratorT              d_in,                               ///< [in] Pointer to the input sequence of data items
         OutputIteratorT             d_out,                              ///< [out] Pointer to the output aggregate
         int                         num_items,                          ///< [in] Total number of input items (i.e., length of \p d_in)
-        cudaStream_t                stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t                stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                        debug_synchronous   = false)        ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     {
         // Signed integer type for global offsets
@@ -272,7 +272,7 @@ struct DeviceReduce
      * cub::DeviceReduce::Min(d_temp_storage, temp_storage_bytes, d_in, d_out, num_items);
      *
      * // Allocate temporary storage
-     * cudaMalloc(&d_temp_storage, temp_storage_bytes);
+     * hipMalloc(&d_temp_storage, temp_storage_bytes);
      *
      * // Run min-reduction
      * cub::DeviceReduce::Min(d_temp_storage, temp_storage_bytes, d_in, d_out, num_items);
@@ -288,13 +288,13 @@ struct DeviceReduce
         typename                    InputIteratorT,
         typename                    OutputIteratorT>
     CUB_RUNTIME_FUNCTION
-    static cudaError_t Min(
+    static hipError_t Min(
         void                        *d_temp_storage,                    ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t                      &temp_storage_bytes,                ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         InputIteratorT              d_in,                               ///< [in] Pointer to the input sequence of data items
         OutputIteratorT             d_out,                              ///< [out] Pointer to the output aggregate
         int                         num_items,                          ///< [in] Total number of input items (i.e., length of \p d_in)
-        cudaStream_t                stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t                stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                        debug_synchronous   = false)        ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     {
         // Signed integer type for global offsets
@@ -344,7 +344,7 @@ struct DeviceReduce
      * cub::DeviceReduce::ArgMin(d_temp_storage, temp_storage_bytes, d_in, d_argmin, num_items);
      *
      * // Allocate temporary storage
-     * cudaMalloc(&d_temp_storage, temp_storage_bytes);
+     * hipMalloc(&d_temp_storage, temp_storage_bytes);
      *
      * // Run argmin-reduction
      * cub::DeviceReduce::ArgMin(d_temp_storage, temp_storage_bytes, d_in, d_argmin, num_items);
@@ -360,13 +360,13 @@ struct DeviceReduce
         typename                    InputIteratorT,
         typename                    OutputIteratorT>
     CUB_RUNTIME_FUNCTION
-    static cudaError_t ArgMin(
+    static hipError_t ArgMin(
         void                        *d_temp_storage,                    ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t                      &temp_storage_bytes,                ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         InputIteratorT              d_in,                               ///< [in] Pointer to the input sequence of data items
         OutputIteratorT             d_out,                              ///< [out] Pointer to the output aggregate
         int                         num_items,                          ///< [in] Total number of input items (i.e., length of \p d_in)
-        cudaStream_t                stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t                stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                        debug_synchronous   = false)        ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     {
         // Signed integer type for global offsets
@@ -429,7 +429,7 @@ struct DeviceReduce
      * cub::DeviceReduce::Max(d_temp_storage, temp_storage_bytes, d_in, d_max, num_items);
      *
      * // Allocate temporary storage
-     * cudaMalloc(&d_temp_storage, temp_storage_bytes);
+     * hipMalloc(&d_temp_storage, temp_storage_bytes);
      *
      * // Run max-reduction
      * cub::DeviceReduce::Max(d_temp_storage, temp_storage_bytes, d_in, d_max, num_items);
@@ -445,13 +445,13 @@ struct DeviceReduce
         typename                    InputIteratorT,
         typename                    OutputIteratorT>
     CUB_RUNTIME_FUNCTION
-    static cudaError_t Max(
+    static hipError_t Max(
         void                        *d_temp_storage,                    ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t                      &temp_storage_bytes,                ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         InputIteratorT              d_in,                               ///< [in] Pointer to the input sequence of data items
         OutputIteratorT             d_out,                              ///< [out] Pointer to the output aggregate
         int                         num_items,                          ///< [in] Total number of input items (i.e., length of \p d_in)
-        cudaStream_t                stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t                stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                        debug_synchronous   = false)        ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     {
         // Signed integer type for global offsets
@@ -501,7 +501,7 @@ struct DeviceReduce
      * cub::DeviceReduce::ArgMax(d_temp_storage, temp_storage_bytes, d_in, d_argmax, num_items);
      *
      * // Allocate temporary storage
-     * cudaMalloc(&d_temp_storage, temp_storage_bytes);
+     * hipMalloc(&d_temp_storage, temp_storage_bytes);
      *
      * // Run argmax-reduction
      * cub::DeviceReduce::ArgMax(d_temp_storage, temp_storage_bytes, d_in, d_argmax, num_items);
@@ -517,13 +517,13 @@ struct DeviceReduce
         typename                    InputIteratorT,
         typename                    OutputIteratorT>
     CUB_RUNTIME_FUNCTION
-    static cudaError_t ArgMax(
+    static hipError_t ArgMax(
         void                        *d_temp_storage,                    ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t                      &temp_storage_bytes,                ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         InputIteratorT              d_in,                               ///< [in] Pointer to the input sequence of data items
         OutputIteratorT             d_out,                              ///< [out] Pointer to the output aggregate
         int                         num_items,                          ///< [in] Total number of input items (i.e., length of \p d_in)
-        cudaStream_t                stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t                stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                        debug_synchronous   = false)        ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     {
         // Signed integer type for global offsets
@@ -623,7 +623,7 @@ struct DeviceReduce
      * cub::DeviceReduce::ReduceByKey(d_temp_storage, temp_storage_bytes, d_keys_in, d_unique_out, d_values_in, d_aggregates_out, d_num_runs_out, reduction_op, num_items);
      *
      * // Allocate temporary storage
-     * cudaMalloc(&d_temp_storage, temp_storage_bytes);
+     * hipMalloc(&d_temp_storage, temp_storage_bytes);
      *
      * // Run reduce-by-key
      * cub::DeviceReduce::ReduceByKey(d_temp_storage, temp_storage_bytes, d_keys_in, d_unique_out, d_values_in, d_aggregates_out, d_num_runs_out, reduction_op, num_items);
@@ -649,7 +649,7 @@ struct DeviceReduce
         typename                    NumRunsOutputIteratorT,
         typename                    ReductionOpT>
     CUB_RUNTIME_FUNCTION __forceinline__
-    static cudaError_t ReduceByKey(
+    static hipError_t ReduceByKey(
         void                        *d_temp_storage,                ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t                      &temp_storage_bytes,            ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         KeysInputIteratorT          d_keys_in,                      ///< [in] Pointer to the input sequence of keys
@@ -659,7 +659,7 @@ struct DeviceReduce
         NumRunsOutputIteratorT      d_num_runs_out,                 ///< [out] Pointer to total number of runs encountered (i.e., the length of d_unique_out)
         ReductionOpT                reduction_op,                   ///< [in] Binary reduction functor
         int                         num_items,                      ///< [in] Total number of associated key+value pairs (i.e., the length of \p d_in_keys and \p d_in_values)
-        cudaStream_t                stream             = 0,         ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t                stream             = 0,         ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                        debug_synchronous  = false)     ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  May cause significant slowdown.  Default is \p false.
     {
         // Signed integer type for global offsets

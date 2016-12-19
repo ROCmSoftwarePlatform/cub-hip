@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -342,7 +343,7 @@ struct AgentReduceByKey
 
         __syncthreads();
 
-        for (int item = threadIdx.x; item < num_tile_segments; item += BLOCK_THREADS)
+        for (int item = hipThreadIdx_x; item < num_tile_segments; item += BLOCK_THREADS)
         {
             KeyValuePairT pair                                  = temp_storage.raw_exchange.Alias()[item];
             d_unique_out[num_tile_segments_prefix + item]       = pair.key;
@@ -411,7 +412,7 @@ struct AgentReduceByKey
 
         // Load tile predecessor key in first thread
         KeyOutputT tile_predecessor;
-        if (threadIdx.x == 0)
+        if (hipThreadIdx_x == 0)
         {
             tile_predecessor = (tile_idx == 0) ?
                 keys[0] :                       // First tile gets repeat of first item (thus first item will not be flagged as a head)
@@ -461,7 +462,7 @@ struct AgentReduceByKey
             num_segments_prefix = 0;
 
             // Update tile status if there are successor tiles
-            if ((!IS_LAST_TILE) && (threadIdx.x == 0))
+            if ((!IS_LAST_TILE) && (hipThreadIdx_x == 0))
                 tile_state.SetInclusive(0, block_aggregate);
         }
         else
@@ -493,7 +494,7 @@ struct AgentReduceByKey
         Scatter(scatter_items, head_flags, segment_indices, num_tile_segments, num_segments_prefix);
 
         // Last thread in last tile will output final count (and last pair, if necessary)
-        if ((IS_LAST_TILE) && (threadIdx.x == BLOCK_THREADS - 1))
+        if ((IS_LAST_TILE) && (hipThreadIdx_x == BLOCK_THREADS - 1))
         {
             OffsetT num_segments = num_segments_prefix + num_tile_segments;
 
@@ -520,7 +521,7 @@ struct AgentReduceByKey
         int                 start_tile)         ///< The starting tile for the current grid
     {
         // Blocks are launched in increasing order, so just assign one tile per block
-        int     tile_idx        = start_tile + blockIdx.x;          // Current tile index
+        int     tile_idx        = start_tile + hipBlockIdx_x;          // Current tile index
         OffsetT tile_offset     = OffsetT(TILE_ITEMS) * tile_idx;   // Global offset for the current tile
         OffsetT num_remaining   = num_items - tile_offset;          // Remaining items (including this tile)
 

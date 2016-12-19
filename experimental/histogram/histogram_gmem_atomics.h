@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
  *
@@ -71,17 +72,17 @@ namespace histogram_gmem_atomics
         unsigned int *out)
     {
         // global position and size
-        int x = blockIdx.x * blockDim.x + threadIdx.x;
-        int y = blockIdx.y * blockDim.y + threadIdx.y;
-        int nx = blockDim.x * gridDim.x;
-        int ny = blockDim.y * gridDim.y;
+        int x = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        int y = hipBlockIdx_y * hipBlockDim_y + hipThreadIdx_y;
+        int nx = hipBlockDim_x * hipGridDim_x;
+        int ny = hipBlockDim_y * hipGridDim_y;
 
         // threads in workgroup
-        int t = threadIdx.x + threadIdx.y * blockDim.x; // thread index in workgroup, linear in 0..nt-1
-        int nt = blockDim.x * blockDim.y; // total threads in workgroup
+        int t = hipThreadIdx_x + hipThreadIdx_y * hipBlockDim_x; // thread index in workgroup, linear in 0..nt-1
+        int nt = hipBlockDim_x * hipBlockDim_y; // total threads in workgroup
 
         // group index in 0..ngroups-1
-        int g = blockIdx.x + blockIdx.y * gridDim.x;
+        int g = hipBlockIdx_x + hipBlockIdx_y * hipGridDim_x;
 
         // initialize smem
         unsigned int *gmem = out + g * NUM_PARTS;
@@ -116,7 +117,7 @@ namespace histogram_gmem_atomics
         int n,
         unsigned int *out)
     {
-        int i = blockIdx.x * blockDim.x + threadIdx.x;
+        int i = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         if (i > ACTIVE_CHANNELS * NUM_BINS)
             return; // out of range
 
@@ -147,8 +148,8 @@ double run_gmem_atomics(
         NUM_PARTS = 1024
     };
 
-    cudaDeviceProp props;
-    cudaGetDeviceProperties(&props, 0);
+    hipDeviceProp_t props;
+    hipGetDeviceProperties(&props, 0);
 
     dim3 block(32, 4);
     dim3 grid(16, 16);
@@ -156,7 +157,7 @@ double run_gmem_atomics(
 
     // allocate partial histogram
     unsigned int *d_part_hist;
-    cudaMalloc(&d_part_hist, total_blocks * NUM_PARTS * sizeof(unsigned int));
+    hipMalloc(&d_part_hist, total_blocks * NUM_PARTS * sizeof(unsigned int));
 
     dim3 block2(128);
     dim3 grid2((3 * NUM_BINS + block.x - 1) / block.x);
@@ -164,13 +165,13 @@ double run_gmem_atomics(
     GpuTimer gpu_timer;
     gpu_timer.Start();
 
-    histogram_gmem_atomics::histogram_gmem_atomics<NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS><<<grid, block>>>(
+    histogram_gmem_atomics::hipLaunchKernel(HIP_KERNEL_NAME(histogram_gmem_atomics<NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>), dim3(grid), dim3(block), 0, 0, 
         d_image,
         width,
         height,
         d_part_hist);
 
-    histogram_gmem_atomics::histogram_gmem_accum<NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS><<<grid2, block2>>>(
+    histogram_gmem_atomics::hipLaunchKernel(HIP_KERNEL_NAME(histogram_gmem_accum<NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>), dim3(grid2), dim3(block2), 0, 0, 
         d_part_hist,
         total_blocks,
         d_hist);
@@ -178,7 +179,7 @@ double run_gmem_atomics(
     gpu_timer.Stop();
     float elapsed_millis = gpu_timer.ElapsedMillis();
 
-    cudaFree(d_part_hist);
+    hipFree(d_part_hist);
 
     return elapsed_millis;
 }

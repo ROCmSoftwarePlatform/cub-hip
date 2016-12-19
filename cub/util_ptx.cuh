@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -294,9 +295,9 @@ __device__ __forceinline__ void ThreadTrap() {
  */
 __device__ __forceinline__ int RowMajorTid(int block_dim_x, int block_dim_y, int block_dim_z)
 {
-    return ((block_dim_z == 1) ? 0 : (threadIdx.z * block_dim_x * block_dim_y)) +
-            ((block_dim_y == 1) ? 0 : (threadIdx.y * block_dim_x)) +
-            threadIdx.x;
+    return ((block_dim_z == 1) ? 0 : (hipThreadIdx_z * block_dim_x * block_dim_y)) +
+            ((block_dim_y == 1) ? 0 : (hipThreadIdx_y * block_dim_x)) +
+            hipThreadIdx_x;
 }
 
 

@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -285,7 +286,7 @@ struct AgentSpmv
 
             ValueT nonzero = 0.0;
 
-            OffsetT                 local_nonzero_idx   = (ITEM * BLOCK_THREADS) + threadIdx.x;
+            OffsetT                 local_nonzero_idx   = (ITEM * BLOCK_THREADS) + hipThreadIdx_x;
             OffsetT                 nonzero_idx         = tile_nonzero_idx + local_nonzero_idx;
 
             bool in_range = nonzero_idx < tile_nonzero_idx_end;
@@ -329,7 +330,7 @@ struct AgentSpmv
         KeyValuePairT scan_items[NNZ_PER_THREAD];
         for (int ITEM = 0; ITEM < NNZ_PER_THREAD; ++ITEM)
         {
-            int     local_nonzero_idx   = (threadIdx.x * NNZ_PER_THREAD) + ITEM;
+            int     local_nonzero_idx   = (hipThreadIdx_x * NNZ_PER_THREAD) + ITEM;
             ValueT  value               = temp_storage.nonzeros[local_nonzero_idx];
             bool    is_nan              = (value != value);
 
@@ -343,7 +344,7 @@ struct AgentSpmv
         BlockScanT(temp_storage.scan).ExclusiveScan(scan_items, scan_items_out, scan_op, tile_aggregate, prefix_op);
 
         // Save the inclusive sum for the last row
-        if (threadIdx.x == 0)
+        if (hipThreadIdx_x == 0)
         {
             temp_storage.nonzeros[TILE_ITEMS] = prefix_op.running_total.value;
         }
@@ -351,7 +352,7 @@ struct AgentSpmv
         // Store segment totals
         for (int ITEM = 0; ITEM < NNZ_PER_THREAD; ++ITEM)
         {
-            int local_nonzero_idx = (threadIdx.x * NNZ_PER_THREAD) + ITEM;
+            int local_nonzero_idx = (hipThreadIdx_x * NNZ_PER_THREAD) + ITEM;
 
             if (scan_items[ITEM].key)
                 temp_storage.nonzeros[local_nonzero_idx] = scan_items_out[ITEM].value;
@@ -391,7 +392,7 @@ struct AgentSpmv
         OffsetT tile_row_idx_end    = CUB_MIN(tile_row_idx + rows_per_tile, spmv_params.num_rows);
 
         // Thread's row
-        OffsetT row_idx             = tile_row_idx + threadIdx.x;
+        OffsetT row_idx             = tile_row_idx + hipThreadIdx_x;
         ValueT  row_total           = 0.0;
         ValueT  row_start           = 0.0;
 
@@ -405,7 +406,7 @@ struct AgentSpmv
             row_nonzero_idx_end = wd_row_end_offsets[row_idx];
 
             // Share block's starting nonzero offset
-            if (threadIdx.x == 0)
+            if (hipThreadIdx_x == 0)
                 temp_storage.tile_nonzero_idx = row_nonzero_idx;
 
             // Share block's ending nonzero offset

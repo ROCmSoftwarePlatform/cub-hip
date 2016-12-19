@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -83,12 +84,12 @@ enum Backend
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<false>         is_descending,
     Int2Type<CUB>           dispatch_to,
     int                     *d_selector,
     size_t                  *d_temp_storage_bytes,
-    cudaError_t             *d_cdp_error,
+    hipError_t             *d_cdp_error,
 
     void*                   d_temp_storage,
     size_t&                 temp_storage_bytes,
@@ -99,7 +100,7 @@ cudaError_t Dispatch(
     const int               *d_segment_offsets,
     int                     begin_bit,
     int                     end_bit,
-    cudaStream_t            stream,
+    hipStream_t            stream,
     bool                    debug_synchronous)
 {
     return DeviceRadixSort::SortPairs(
@@ -114,12 +115,12 @@ cudaError_t Dispatch(
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<false>             is_descending,
     Int2Type<CUB_NO_OVERWRITE>  dispatch_to,
     int                         *d_selector,
     size_t                      *d_temp_storage_bytes,
-    cudaError_t                 *d_cdp_error,
+    hipError_t                 *d_cdp_error,
 
     void*                   d_temp_storage,
     size_t&                 temp_storage_bytes,
@@ -130,13 +131,13 @@ cudaError_t Dispatch(
     const int               *d_segment_offsets,
     int                     begin_bit,
     int                     end_bit,
-    cudaStream_t            stream,
+    hipStream_t            stream,
     bool                    debug_synchronous)
 {
     KeyT      const *const_keys_itr     = d_keys.Current();
     ValueT    const *const_values_itr   = d_values.Current();
 
-    cudaError_t retval = DeviceRadixSort::SortPairs(
+    hipError_t retval = DeviceRadixSort::SortPairs(
         d_temp_storage, temp_storage_bytes,
         const_keys_itr, d_keys.Alternate(), const_values_itr, d_values.Alternate(),
         num_items, begin_bit, end_bit, stream, debug_synchronous);
@@ -152,12 +153,12 @@ cudaError_t Dispatch(
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<true>          is_descending,
     Int2Type<CUB>           dispatch_to,
     int                     *d_selector,
     size_t                  *d_temp_storage_bytes,
-    cudaError_t             *d_cdp_error,
+    hipError_t             *d_cdp_error,
 
     void*                   d_temp_storage,
     size_t&                 temp_storage_bytes,
@@ -168,7 +169,7 @@ cudaError_t Dispatch(
     const int               *d_segment_offsets,
     int                     begin_bit,
     int                     end_bit,
-    cudaStream_t            stream,
+    hipStream_t            stream,
     bool                    debug_synchronous)
 {
     return DeviceRadixSort::SortPairsDescending(
@@ -184,12 +185,12 @@ cudaError_t Dispatch(
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<true>              is_descending,
     Int2Type<CUB_NO_OVERWRITE>  dispatch_to,
     int                         *d_selector,
     size_t                      *d_temp_storage_bytes,
-    cudaError_t                 *d_cdp_error,
+    hipError_t                 *d_cdp_error,
 
     void*                   d_temp_storage,
     size_t&                 temp_storage_bytes,
@@ -200,13 +201,13 @@ cudaError_t Dispatch(
     const int               *d_segment_offsets,
     int                     begin_bit,
     int                     end_bit,
-    cudaStream_t            stream,
+    hipStream_t            stream,
     bool                    debug_synchronous)
 {
     KeyT      const *const_keys_itr     = d_keys.Current();
     ValueT    const *const_values_itr   = d_values.Current();
 
-    cudaError_t retval = DeviceRadixSort::SortPairsDescending(
+    hipError_t retval = DeviceRadixSort::SortPairsDescending(
         d_temp_storage, temp_storage_bytes,
         const_keys_itr, d_keys.Alternate(), const_values_itr, d_values.Alternate(),
         num_items, begin_bit, end_bit, stream, debug_synchronous);
@@ -226,12 +227,12 @@ cudaError_t Dispatch(
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<false>         is_descending,
     Int2Type<CUB_SEGMENTED> dispatch_to,
     int                     *d_selector,
     size_t                  *d_temp_storage_bytes,
-    cudaError_t             *d_cdp_error,
+    hipError_t             *d_cdp_error,
 
     void*                   d_temp_storage,
     size_t&                 temp_storage_bytes,
@@ -242,7 +243,7 @@ cudaError_t Dispatch(
     const int               *d_segment_offsets,
     int                     begin_bit,
     int                     end_bit,
-    cudaStream_t            stream,
+    hipStream_t            stream,
     bool                    debug_synchronous)
 {
     return DeviceSegmentedRadixSort::SortPairs(
@@ -258,12 +259,12 @@ cudaError_t Dispatch(
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<false>                         is_descending,
     Int2Type<CUB_SEGMENTED_NO_OVERWRITE>    dispatch_to,
     int                                     *d_selector,
     size_t                                  *d_temp_storage_bytes,
-    cudaError_t                             *d_cdp_error,
+    hipError_t                             *d_cdp_error,
 
     void*                   d_temp_storage,
     size_t&                 temp_storage_bytes,
@@ -274,13 +275,13 @@ cudaError_t Dispatch(
     const int               *d_segment_offsets,
     int                     begin_bit,
     int                     end_bit,
-    cudaStream_t            stream,
+    hipStream_t            stream,
     bool                    debug_synchronous)
 {
     KeyT      const *const_keys_itr     = d_keys.Current();
     ValueT    const *const_values_itr   = d_values.Current();
 
-    cudaError_t retval = DeviceSegmentedRadixSort::SortPairs(
+    hipError_t retval = DeviceSegmentedRadixSort::SortPairs(
         d_temp_storage, temp_storage_bytes,
         const_keys_itr, d_keys.Alternate(), const_values_itr, d_values.Alternate(),
         num_items, num_segments, d_segment_offsets, d_segment_offsets + 1,
@@ -298,12 +299,12 @@ cudaError_t Dispatch(
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<true>          is_descending,
     Int2Type<CUB_SEGMENTED> dispatch_to,
     int                     *d_selector,
     size_t                  *d_temp_storage_bytes,
-    cudaError_t             *d_cdp_error,
+    hipError_t             *d_cdp_error,
 
     void*                   d_temp_storage,
     size_t&                 temp_storage_bytes,
@@ -314,7 +315,7 @@ cudaError_t Dispatch(
     const int               *d_segment_offsets,
     int                     begin_bit,
     int                     end_bit,
-    cudaStream_t            stream,
+    hipStream_t            stream,
     bool                    debug_synchronous)
 {
     return DeviceSegmentedRadixSort::SortPairsDescending(
@@ -330,12 +331,12 @@ cudaError_t Dispatch(
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<true>                          is_descending,
     Int2Type<CUB_SEGMENTED_NO_OVERWRITE>    dispatch_to,
     int                                     *d_selector,
     size_t                                  *d_temp_storage_bytes,
-    cudaError_t                             *d_cdp_error,
+    hipError_t                             *d_cdp_error,
 
     void*                   d_temp_storage,
     size_t&                 temp_storage_bytes,
@@ -346,13 +347,13 @@ cudaError_t Dispatch(
     const int               *d_segment_offsets,
     int                     begin_bit,
     int                     end_bit,
-    cudaStream_t            stream,
+    hipStream_t            stream,
     bool                    debug_synchronous)
 {
     KeyT      const *const_keys_itr     = d_keys.Current();
     ValueT    const *const_values_itr   = d_values.Current();
 
-    cudaError_t retval = DeviceSegmentedRadixSort::SortPairsDescending(
+    hipError_t retval = DeviceSegmentedRadixSort::SortPairsDescending(
         d_temp_storage, temp_storage_bytes,
         const_keys_itr, d_keys.Alternate(), const_values_itr, d_values.Alternate(),
         num_items, num_segments, d_segment_offsets, d_segment_offsets + 1,
@@ -372,12 +373,12 @@ cudaError_t Dispatch(
  * Dispatch keys-only to Thrust sorting entrypoint
  */
 template <int IS_DESCENDING, typename KeyT>
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<IS_DESCENDING> is_descending,
     Int2Type<THRUST>        dispatch_to,
     int                     *d_selector,
     size_t                  *d_temp_storage_bytes,
-    cudaError_t             *d_cdp_error,
+    hipError_t             *d_cdp_error,
 
     void                    *d_temp_storage,
     size_t                  &temp_storage_bytes,
@@ -388,7 +389,7 @@ cudaError_t Dispatch(
     const int               *d_segment_offsets,
     int                     begin_bit,
     int                     end_bit,
-    cudaStream_t            stream,
+    hipStream_t            stream,
     bool                    debug_synchronous)
 {
 
@@ -405,7 +406,7 @@ cudaError_t Dispatch(
         if (IS_DESCENDING) thrust::reverse(d_keys_wrapper, d_keys_wrapper + num_items);
     }
 
-    return cudaSuccess;
+    return hipSuccess;
 }
 
 
@@ -413,12 +414,12 @@ cudaError_t Dispatch(
  * Dispatch key-value pairs to Thrust sorting entrypoint
  */
 template <int IS_DESCENDING, typename KeyT, typename ValueT>
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<IS_DESCENDING> is_descending,
     Int2Type<THRUST>        dispatch_to,
     int                     *d_selector,
     size_t                  *d_temp_storage_bytes,
-    cudaError_t             *d_cdp_error,
+    hipError_t             *d_cdp_error,
 
     void                    *d_temp_storage,
     size_t                  &temp_storage_bytes,
@@ -429,7 +430,7 @@ cudaError_t Dispatch(
     const int               *d_segment_offsets,
     int                     begin_bit,
     int                     end_bit,
-    cudaStream_t            stream,
+    hipStream_t            stream,
     bool                    debug_synchronous)
 {
 
@@ -455,7 +456,7 @@ cudaError_t Dispatch(
         }
     }
 
-    return cudaSuccess;
+    return hipSuccess;
 }
 
 
@@ -471,7 +472,7 @@ __global__ void CnpDispatchKernel(
     Int2Type<IS_DESCENDING> is_descending,
     int                     *d_selector,
     size_t                  *d_temp_storage_bytes,
-    cudaError_t             *d_cdp_error,
+    hipError_t             *d_cdp_error,
 
     void                    *d_temp_storage,
     size_t                  temp_storage_bytes,
@@ -502,12 +503,12 @@ __global__ void CnpDispatchKernel(
  * Dispatch to CDP kernel
  */
 template <int IS_DESCENDING, typename KeyT, typename ValueT>
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<IS_DESCENDING> is_descending,
     Int2Type<CDP>           dispatch_to,
     int                     *d_selector,
     size_t                  *d_temp_storage_bytes,
-    cudaError_t             *d_cdp_error,
+    hipError_t             *d_cdp_error,
 
     void                    *d_temp_storage,
     size_t                  &temp_storage_bytes,
@@ -518,26 +519,26 @@ cudaError_t Dispatch(
     const int               *d_segment_offsets,
     int                     begin_bit,
     int                     end_bit,
-    cudaStream_t            stream,
+    hipStream_t            stream,
     bool                    debug_synchronous)
 {
     // Invoke kernel to invoke device-side dispatch
-    CnpDispatchKernel<<<1,1>>>(
+    hipLaunchKernel(HIP_KERNEL_NAME(CnpDispatchKernel), dim3(1), dim3(1), 0, 0, 
         is_descending, d_selector, d_temp_storage_bytes, d_cdp_error,
         d_temp_storage, temp_storage_bytes, d_keys, d_values,
         num_items, num_segments, d_segment_offsets,
         begin_bit, end_bit, debug_synchronous);
 
     // Copy out selector
-    CubDebugExit(cudaMemcpy(&d_keys.selector, d_selector, sizeof(int) * 1, cudaMemcpyDeviceToHost));
+    CubDebugExit(hipMemcpy(&d_keys.selector, d_selector, sizeof(int) * 1, hipMemcpyDeviceToHost));
     d_values.selector = d_keys.selector;
 
     // Copy out temp_storage_bytes
-    CubDebugExit(cudaMemcpy(&temp_storage_bytes, d_temp_storage_bytes, sizeof(size_t) * 1, cudaMemcpyDeviceToHost));
+    CubDebugExit(hipMemcpy(&temp_storage_bytes, d_temp_storage_bytes, sizeof(size_t) * 1, hipMemcpyDeviceToHost));
 
     // Copy out error
-    cudaError_t retval;
-    CubDebugExit(cudaMemcpy(&retval, d_cdp_error, sizeof(cudaError_t) * 1, cudaMemcpyDeviceToHost));
+    hipError_t retval;
+    CubDebugExit(hipMemcpy(&retval, d_cdp_error, sizeof(hipError_t) * 1, hipMemcpyDeviceToHost));
     return retval;
 }
 
@@ -737,13 +738,13 @@ void Test(
     int                 *d_selector;
     int                 *d_segment_offsets;
     size_t              *d_temp_storage_bytes;
-    cudaError_t         *d_cdp_error;
+    hipError_t         *d_cdp_error;
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_keys.d_buffers[0], sizeof(KeyT) * num_items));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_keys.d_buffers[1], sizeof(KeyT) * num_items));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_selector, sizeof(int) * 1));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_segment_offsets, sizeof(int) * (num_segments + 1)));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_temp_storage_bytes, sizeof(size_t) * 1));
-    CubDebugExit(g_allocator.DeviceAllocate((void**)&d_cdp_error, sizeof(cudaError_t) * 1));
+    CubDebugExit(g_allocator.DeviceAllocate((void**)&d_cdp_error, sizeof(hipError_t) * 1));
     if (!KEYS_ONLY)
     {
         CubDebugExit(g_allocator.DeviceAllocate((void**)&d_values.d_buffers[0], sizeof(ValueT) * num_items));
@@ -764,15 +765,15 @@ void Test(
 
     // Initialize/clear device arrays
     d_keys.selector = 0;
-    CubDebugExit(cudaMemcpy(d_keys.d_buffers[0], h_keys, sizeof(KeyT) * num_items, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemset(d_keys.d_buffers[1], 0, sizeof(KeyT) * num_items));
+    CubDebugExit(hipMemcpy(d_keys.d_buffers[0], h_keys, sizeof(KeyT) * num_items, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemset(d_keys.d_buffers[1], 0, sizeof(KeyT) * num_items));
     if (!KEYS_ONLY)
     {
         d_values.selector = 0;
-        CubDebugExit(cudaMemcpy(d_values.d_buffers[0], h_values, sizeof(ValueT) * num_items, cudaMemcpyHostToDevice));
-        CubDebugExit(cudaMemset(d_values.d_buffers[1], 0, sizeof(ValueT) * num_items));
+        CubDebugExit(hipMemcpy(d_values.d_buffers[0], h_values, sizeof(ValueT) * num_items, hipMemcpyHostToDevice));
+        CubDebugExit(hipMemset(d_values.d_buffers[1], 0, sizeof(ValueT) * num_items));
     }
-    CubDebugExit(cudaMemcpy(d_segment_offsets, h_segment_offsets, sizeof(int) * (num_segments + 1), cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_segment_offsets, h_segment_offsets, sizeof(int) * (num_segments + 1), hipMemcpyHostToDevice));
 
     // Run warmup/correctness iteration
     CubDebugExit(Dispatch(
@@ -812,12 +813,12 @@ void Test(
     for (int i = 0; i < g_timing_iterations; ++i)
     {
         // Initialize/clear device arrays
-        CubDebugExit(cudaMemcpy(d_keys.d_buffers[d_keys.selector], h_keys, sizeof(KeyT) * num_items, cudaMemcpyHostToDevice));
-        CubDebugExit(cudaMemset(d_keys.d_buffers[d_keys.selector ^ 1], 0, sizeof(KeyT) * num_items));
+        CubDebugExit(hipMemcpy(d_keys.d_buffers[d_keys.selector], h_keys, sizeof(KeyT) * num_items, hipMemcpyHostToDevice));
+        CubDebugExit(hipMemset(d_keys.d_buffers[d_keys.selector ^ 1], 0, sizeof(KeyT) * num_items));
         if (!KEYS_ONLY)
         {
-            CubDebugExit(cudaMemcpy(d_values.d_buffers[d_values.selector], h_values, sizeof(ValueT) * num_items, cudaMemcpyHostToDevice));
-            CubDebugExit(cudaMemset(d_values.d_buffers[d_values.selector ^ 1], 0, sizeof(ValueT) * num_items));
+            CubDebugExit(hipMemcpy(d_values.d_buffers[d_values.selector], h_values, sizeof(ValueT) * num_items, hipMemcpyHostToDevice));
+            CubDebugExit(hipMemset(d_values.d_buffers[d_values.selector ^ 1], 0, sizeof(ValueT) * num_items));
         }
 
         gpu_timer.Start();

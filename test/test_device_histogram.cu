@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -80,13 +81,13 @@ CachingDeviceAllocator  g_allocator(true);
  */
 template <typename CounterT, typename LevelT, typename OffsetT>
 CUB_RUNTIME_FUNCTION __forceinline__
-cudaError_t DispatchEven(
+hipError_t DispatchEven(
     Int2Type<1>             num_channels,
     Int2Type<1>             num_active_channels,
     Int2Type<NPP>           dispatch_to,
     int                     timing_timing_iterations,
     size_t                  *d_temp_storage_bytes,
-    cudaError_t             *d_cdp_error,
+    hipError_t             *d_cdp_error,
 
     void*               d_temp_storage,
     size_t&             temp_storage_bytes,
@@ -98,12 +99,12 @@ cudaError_t DispatchEven(
     OffsetT             num_row_pixels,           ///< [in] The number of multi-channel pixels per row in the region of interest
     OffsetT             num_rows,                 ///< [in] The number of rows in the region of interest
     OffsetT             row_stride_bytes,         ///< [in] The number of bytes between starts of consecutive rows in the region of interest
-    cudaStream_t        stream,
+    hipStream_t        stream,
     bool                debug_synchronous)
 {
     typedef unsigned char SampleT;
 
-    cudaError_t error = cudaSuccess;
+    hipError_t error = hipSuccess;
     NppiSize oSizeROI = {
         num_row_pixels,
         num_rows
@@ -141,13 +142,13 @@ cudaError_t DispatchEven(
  */
 template <typename CounterT, typename LevelT, typename OffsetT>
 CUB_RUNTIME_FUNCTION __forceinline__
-cudaError_t DispatchEven(
+hipError_t DispatchEven(
     Int2Type<4>          num_channels,
     Int2Type<3>   num_active_channels,
     Int2Type<NPP>           dispatch_to,
     int                     timing_timing_iterations,
     size_t                  *d_temp_storage_bytes,
-    cudaError_t             *d_cdp_error,
+    hipError_t             *d_cdp_error,
 
     void*               d_temp_storage,
     size_t&             temp_storage_bytes,
@@ -159,12 +160,12 @@ cudaError_t DispatchEven(
     OffsetT             num_row_pixels,           ///< [in] The number of multi-channel pixels per row in the region of interest
     OffsetT             num_rows,                 ///< [in] The number of rows in the region of interest
     OffsetT             row_stride_bytes,         ///< [in] The number of bytes between starts of consecutive rows in the region of interest
-    cudaStream_t        stream,
+    hipStream_t        stream,
     bool                debug_synchronous)
 {
     typedef unsigned char SampleT;
 
-    cudaError_t error = cudaSuccess;
+    hipError_t error = hipSuccess;
     NppiSize oSizeROI = {
         num_row_pixels,
         num_rows
@@ -205,13 +206,13 @@ cudaError_t DispatchEven(
  */
 template <typename SampleIteratorT, typename CounterT, typename LevelT, typename OffsetT>
 CUB_RUNTIME_FUNCTION __forceinline__
-cudaError_t DispatchEven(
+hipError_t DispatchEven(
     Int2Type<1>             num_channels,
     Int2Type<1>             num_active_channels,
     Int2Type<CUB>           dispatch_to,
     int                     timing_timing_iterations,
     size_t                  *d_temp_storage_bytes,
-    cudaError_t             *d_cdp_error,
+    hipError_t             *d_cdp_error,
 
     void*               d_temp_storage,
     size_t&             temp_storage_bytes,
@@ -223,12 +224,12 @@ cudaError_t DispatchEven(
     OffsetT             num_row_pixels,                             ///< [in] The number of multi-channel pixels per row in the region of interest
     OffsetT             num_rows,                                   ///< [in] The number of rows in the region of interest
     OffsetT             row_stride_bytes,                                 ///< [in] The number of bytes between starts of consecutive rows in the region of interest
-    cudaStream_t        stream,
+    hipStream_t        stream,
     bool                debug_synchronous)
 {
     typedef typename std::iterator_traits<SampleIteratorT>::value_type SampleT;
 
-    cudaError_t error = cudaSuccess;
+    hipError_t error = hipSuccess;
     for (int i = 0; i < timing_timing_iterations; ++i)
     {
         error = DeviceHistogram::HistogramEven(
@@ -253,13 +254,13 @@ cudaError_t DispatchEven(
  */
 template <int NUM_ACTIVE_CHANNELS, int NUM_CHANNELS, typename SampleIteratorT, typename CounterT, typename LevelT, typename OffsetT>
 CUB_RUNTIME_FUNCTION __forceinline__
-cudaError_t DispatchEven(
+hipError_t DispatchEven(
     Int2Type<NUM_CHANNELS>          num_channels,
     Int2Type<NUM_ACTIVE_CHANNELS>   num_active_channels,
     Int2Type<CUB>           dispatch_to,
     int                     timing_timing_iterations,
     size_t                  *d_temp_storage_bytes,
-    cudaError_t             *d_cdp_error,
+    hipError_t             *d_cdp_error,
 
     void*               d_temp_storage,
     size_t&             temp_storage_bytes,
@@ -271,12 +272,12 @@ cudaError_t DispatchEven(
     OffsetT             num_row_pixels,                             ///< [in] The number of multi-channel pixels per row in the region of interest
     OffsetT             num_rows,                                   ///< [in] The number of rows in the region of interest
     OffsetT             row_stride_bytes,                                 ///< [in] The number of bytes between starts of consecutive rows in the region of interest
-    cudaStream_t        stream,
+    hipStream_t        stream,
     bool                debug_synchronous)
 {
     typedef typename std::iterator_traits<SampleIteratorT>::value_type SampleT;
 
-    cudaError_t error = cudaSuccess;
+    hipError_t error = hipSuccess;
     for (int i = 0; i < timing_timing_iterations; ++i)
     {
         error = DeviceHistogram::MultiHistogramEven<NUM_CHANNELS, NUM_ACTIVE_CHANNELS>(
@@ -302,13 +303,13 @@ cudaError_t DispatchEven(
  */
 template <typename SampleIteratorT, typename CounterT, typename LevelT, typename OffsetT>
 CUB_RUNTIME_FUNCTION __forceinline__
-cudaError_t DispatchRange(
+hipError_t DispatchRange(
     Int2Type<1>             num_channels,
     Int2Type<1>             num_active_channels,
     Int2Type<CUB>           dispatch_to,
     int                     timing_timing_iterations,
     size_t                  *d_temp_storage_bytes,
-    cudaError_t             *d_cdp_error,
+    hipError_t             *d_cdp_error,
 
     void*               d_temp_storage,
     size_t&             temp_storage_bytes,
@@ -319,12 +320,12 @@ cudaError_t DispatchRange(
     OffsetT             num_row_pixels,                             ///< [in] The number of multi-channel pixels per row in the region of interest
     OffsetT             num_rows,                                   ///< [in] The number of rows in the region of interest
     OffsetT             row_stride_bytes,                                 ///< [in] The number of bytes between starts of consecutive rows in the region of interest
-    cudaStream_t        stream,
+    hipStream_t        stream,
     bool                debug_synchronous)
 {
     typedef typename std::iterator_traits<SampleIteratorT>::value_type SampleT;
 
-    cudaError_t error = cudaSuccess;
+    hipError_t error = hipSuccess;
     for (int i = 0; i < timing_timing_iterations; ++i)
     {
         error = DeviceHistogram::HistogramRange(
@@ -349,13 +350,13 @@ cudaError_t DispatchRange(
  */
 template <int NUM_ACTIVE_CHANNELS, int NUM_CHANNELS, typename SampleIteratorT, typename CounterT, typename LevelT, typename OffsetT>
 CUB_RUNTIME_FUNCTION __forceinline__
-cudaError_t DispatchRange(
+hipError_t DispatchRange(
     Int2Type<NUM_CHANNELS>          num_channels,
     Int2Type<NUM_ACTIVE_CHANNELS>   num_active_channels,
     Int2Type<CUB>           dispatch_to,
     int                     timing_timing_iterations,
     size_t                  *d_temp_storage_bytes,
-    cudaError_t             *d_cdp_error,
+    hipError_t             *d_cdp_error,
 
     void*               d_temp_storage,
     size_t&             temp_storage_bytes,
@@ -366,12 +367,12 @@ cudaError_t DispatchRange(
     OffsetT             num_row_pixels,                             ///< [in] The number of multi-channel pixels per row in the region of interest
     OffsetT             num_rows,                                   ///< [in] The number of rows in the region of interest
     OffsetT             row_stride_bytes,                                 ///< [in] The number of bytes between starts of consecutive rows in the region of interest
-    cudaStream_t        stream,
+    hipStream_t        stream,
     bool                debug_synchronous)
 {
     typedef typename std::iterator_traits<SampleIteratorT>::value_type SampleT;
 
-    cudaError_t error = cudaSuccess;
+    hipError_t error = hipSuccess;
     for (int i = 0; i < timing_timing_iterations; ++i)
     {
         error = DeviceHistogram::MultiHistogramRange<NUM_CHANNELS, NUM_ACTIVE_CHANNELS>(
@@ -404,7 +405,7 @@ __global__ void CnpDispatchKernel(
     Int2Type<ALGORITHM> algorithm,
     int                 timing_timing_iterations,
     size_t              *d_temp_storage_bytes,
-    cudaError_t         *d_cdp_error,
+    hipError_t         *d_cdp_error,
 
     void*               d_temp_storage,
     size_t              temp_storage_bytes,
@@ -427,12 +428,12 @@ __global__ void CnpDispatchKernel(
  * Dispatch to CDP kernel
  * /
 template <int BINS, int NUM_CHANNELS, int NUM_ACTIVE_CHANNELS, typename SampleT, typename SampleIteratorT, typename CounterT, int ALGORITHM>
-cudaError_t Dispatch(
+hipError_t Dispatch(
     Int2Type<ALGORITHM> algorithm,
     Int2Type<true>      use_cdp,
     int                 timing_timing_iterations,
     size_t              *d_temp_storage_bytes,
-    cudaError_t         *d_cdp_error,
+    hipError_t         *d_cdp_error,
 
     void*               d_temp_storage,
     size_t&             temp_storage_bytes,
@@ -440,7 +441,7 @@ cudaError_t Dispatch(
     SampleIteratorT      d_sample_itr,
     CounterT        *d_histograms[NUM_ACTIVE_CHANNELS],
     int                 num_samples,
-    cudaStream_t        stream,
+    hipStream_t        stream,
     bool                debug_synchronous)
 {
     // Setup array wrapper for histogram channel output (because we can't pass static arrays as kernel parameters)
@@ -449,14 +450,14 @@ cudaError_t Dispatch(
         d_histo_wrapper.array[CHANNEL] = d_histograms[CHANNEL];
 
     // Invoke kernel to invoke device-side dispatch
-    CnpDispatchKernel<BINS, NUM_CHANNELS, NUM_ACTIVE_CHANNELS, SampleIteratorT, CounterT, ALGORITHM><<<1,1>>>(algorithm, timing_timing_iterations, d_temp_storage_bytes, d_cdp_error, d_temp_storage, temp_storage_bytes, d_samples, d_sample_itr, d_histo_wrapper, num_samples, debug_synchronous);
+    hipLaunchKernel(HIP_KERNEL_NAME(CnpDispatchKernel<BINS, NUM_CHANNELS, NUM_ACTIVE_CHANNELS, SampleIteratorT, CounterT, ALGORITHM>), dim3(1), dim3(1), 0, 0, algorithm, timing_timing_iterations, d_temp_storage_bytes, d_cdp_error, d_temp_storage, temp_storage_bytes, d_samples, d_sample_itr, d_histo_wrapper, num_samples, debug_synchronous);
 
     // Copy out temp_storage_bytes
-    CubDebugExit(cudaMemcpy(&temp_storage_bytes, d_temp_storage_bytes, sizeof(size_t) * 1, cudaMemcpyDeviceToHost));
+    CubDebugExit(hipMemcpy(&temp_storage_bytes, d_temp_storage_bytes, sizeof(size_t) * 1, hipMemcpyDeviceToHost));
 
     // Copy out error
-    cudaError_t retval;
-    CubDebugExit(cudaMemcpy(&retval, d_cdp_error, sizeof(cudaError_t) * 1, cudaMemcpyDeviceToHost));
+    hipError_t retval;
+    CubDebugExit(hipMemcpy(&retval, d_cdp_error, sizeof(hipError_t) * 1, hipMemcpyDeviceToHost));
     return retval;
 }
 */
@@ -715,18 +716,18 @@ void TestEven(
     CounterT*       d_histogram[NUM_ACTIVE_CHANNELS];
 
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_samples, sizeof(SampleT) * total_samples));
-    CubDebugExit(cudaMemcpy(d_samples, h_samples, sizeof(SampleT) * total_samples, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_samples, h_samples, sizeof(SampleT) * total_samples, hipMemcpyHostToDevice));
     for (int channel = 0; channel < NUM_ACTIVE_CHANNELS; ++channel)
     {
         CubDebugExit(g_allocator.DeviceAllocate((void**)&d_histogram[channel], sizeof(CounterT) * (num_levels[channel] - 1)));
-        CubDebugExit(cudaMemset(d_histogram[channel], 0, sizeof(CounterT) * (num_levels[channel] - 1)));
+        CubDebugExit(hipMemset(d_histogram[channel], 0, sizeof(CounterT) * (num_levels[channel] - 1)));
     }
 
     // Allocate CDP device arrays
     size_t          *d_temp_storage_bytes = NULL;
-    cudaError_t     *d_cdp_error = NULL;
+    hipError_t     *d_cdp_error = NULL;
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_temp_storage_bytes,  sizeof(size_t) * 1));
-    CubDebugExit(g_allocator.DeviceAllocate((void**)&d_cdp_error,           sizeof(cudaError_t) * 1));
+    CubDebugExit(g_allocator.DeviceAllocate((void**)&d_cdp_error,           sizeof(hipError_t) * 1));
 
     // Allocate temporary storage
     void            *d_temp_storage = NULL;
@@ -746,7 +747,7 @@ void TestEven(
 
     memset(canary_zone, canary_token, canary_bytes);
     CubDebugExit(g_allocator.DeviceAllocate(&d_temp_storage, temp_storage_bytes + (canary_bytes * 2)));
-    CubDebugExit(cudaMemset(d_temp_storage, canary_token, temp_storage_bytes + (canary_bytes * 2)));
+    CubDebugExit(hipMemset(d_temp_storage, canary_token, temp_storage_bytes + (canary_bytes * 2)));
 
     // Run warmup/correctness iteration
     DispatchEven(
@@ -763,8 +764,8 @@ void TestEven(
     AssertEquals(0, error);
 
     // Flush any stdout/stderr
-    CubDebugExit(cudaPeekAtLastError());
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipPeekAtLastError());
+    CubDebugExit(hipDeviceSynchronize());
     fflush(stdout);
     fflush(stderr);
 
@@ -902,24 +903,24 @@ void TestRange(
     CounterT*       d_histogram[NUM_ACTIVE_CHANNELS];
 
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_samples, sizeof(SampleT) * total_samples));
-    CubDebugExit(cudaMemcpy(d_samples, h_samples, sizeof(SampleT) * total_samples, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_samples, h_samples, sizeof(SampleT) * total_samples, hipMemcpyHostToDevice));
 
     for (int channel = 0; channel < NUM_ACTIVE_CHANNELS; ++channel)
     {
         CubDebugExit(g_allocator.DeviceAllocate((void**)&d_levels[channel], sizeof(LevelT) * num_levels[channel]));
-        CubDebugExit(cudaMemcpy(d_levels[channel], levels[channel],         sizeof(LevelT) * num_levels[channel], cudaMemcpyHostToDevice));
+        CubDebugExit(hipMemcpy(d_levels[channel], levels[channel],         sizeof(LevelT) * num_levels[channel], hipMemcpyHostToDevice));
 
         int bins = num_levels[channel] - 1;
         CubDebugExit(g_allocator.DeviceAllocate((void**)&d_histogram[channel],  sizeof(CounterT) * bins));
-        CubDebugExit(cudaMemset(d_histogram[channel], 0,                        sizeof(CounterT) * bins));
+        CubDebugExit(hipMemset(d_histogram[channel], 0,                        sizeof(CounterT) * bins));
     }
 
     // Allocate CDP device arrays
     size_t          *d_temp_storage_bytes = NULL;
-    cudaError_t     *d_cdp_error = NULL;
+    hipError_t     *d_cdp_error = NULL;
 
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_temp_storage_bytes,  sizeof(size_t) * 1));
-    CubDebugExit(g_allocator.DeviceAllocate((void**)&d_cdp_error,           sizeof(cudaError_t) * 1));
+    CubDebugExit(g_allocator.DeviceAllocate((void**)&d_cdp_error,           sizeof(hipError_t) * 1));
 
     // Allocate temporary storage
     void            *d_temp_storage = NULL;
@@ -939,7 +940,7 @@ void TestRange(
 
     memset(canary_zone, canary_token, canary_bytes);
     CubDebugExit(g_allocator.DeviceAllocate(&d_temp_storage, temp_storage_bytes + (canary_bytes * 2)));
-    CubDebugExit(cudaMemset(d_temp_storage, canary_token, temp_storage_bytes + (canary_bytes * 2)));
+    CubDebugExit(hipMemset(d_temp_storage, canary_token, temp_storage_bytes + (canary_bytes * 2)));
 
     // Run warmup/correctness iteration
     DispatchRange(
@@ -956,8 +957,8 @@ void TestRange(
     AssertEquals(0, error);
 
     // Flush any stdout/stderr
-    CubDebugExit(cudaPeekAtLastError());
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipPeekAtLastError());
+    CubDebugExit(hipDeviceSynchronize());
     fflush(stdout);
     fflush(stderr);
 

@@ -369,7 +369,7 @@ struct Schmoo
         ReductionOp             reduction_op)
     {
         // Clear output
-        if (g_verify) CubDebugExit(cudaMemset(d_out, 0, sizeof(T)));
+        if (g_verify) CubDebugExit(hipMemset(d_out, 0, sizeof(T)));
 
         // Allocate temporary storage
         void            *d_temp_storage = NULL;
@@ -402,7 +402,7 @@ struct Schmoo
             num_items,
             reduction_op));
 
-        if (g_verify) CubDebugExit(cudaDeviceSynchronize());
+        if (g_verify) CubDebugExit(hipDeviceSynchronize());
 
         // Copy out and display results
         int compare = (g_verify) ?
@@ -434,7 +434,7 @@ struct Schmoo
         }
 
         // Mooch
-        CubDebugExit(cudaDeviceSynchronize());
+        CubDebugExit(hipDeviceSynchronize());
 
         float avg_elapsed = elapsed_millis / g_timing_iterations;
         float avg_throughput = float(num_items) / avg_elapsed / 1000.0 / 1000.0;
@@ -743,7 +743,7 @@ int main(int argc, char** argv)
     T *d_out = NULL;
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_in, sizeof(T) * g_max_items));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_out, sizeof(T) * 1));
-    CubDebugExit(cudaMemcpy(d_in, h_in, sizeof(T) * g_max_items, cudaMemcpyHostToDevice));
+    CubDebugExit(hipMemcpy(d_in, h_in, sizeof(T) * g_max_items, hipMemcpyHostToDevice));
 
     // Test kernels
     if (g_single)
