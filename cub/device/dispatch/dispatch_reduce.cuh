@@ -447,7 +447,7 @@ struct DispatchReduce :
         (void)single_tile_kernel;
 
         // Kernel launch not supported from this device
-        return CubDebug(cudaErrorNotSupported );
+        return CubDebug(hipErrorUnknown );
 #else
         hipError_t error = hipSuccess;
         do
@@ -509,7 +509,7 @@ struct DispatchReduce :
         (void)    prepare_drain_kernel;
 
         // Kernel launch not supported from this device
-        return CubDebug(cudaErrorNotSupported );
+        return CubDebug(hipErrorUnknown );
 #else
 
         hipError_t error = hipSuccess;
@@ -583,7 +583,7 @@ struct DispatchReduce :
             }
             else
             {
-                error = CubDebug(cudaErrorNotSupported ); break;
+                error = CubDebug(hipErrorUnknown ); break;
             }
 
             // Log device_reduce_sweep_kernel configuration
@@ -809,7 +809,7 @@ struct DispatchSegmentedReduce :
 #ifndef CUB_RUNTIME_ENABLED
         (void)segmented_reduce_kernel;
         // Kernel launch not supported from this device
-        return CubDebug(cudaErrorNotSupported );
+        return CubDebug(hipErrorUnknown );
 #else
         hipError_t error = hipSuccess;
         do

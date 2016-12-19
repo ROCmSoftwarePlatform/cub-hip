@@ -502,7 +502,7 @@ __global__ void CnpDispatchKernel(
 {
 
 #ifndef CUB_CDP
-    *d_cdp_error = cudaErrorNotSupported;
+    *d_cdp_error = hipErrorUnknown;
 #else
     *d_cdp_error = Dispatch(Int2Type<CUB>(), is_flagged, is_partition, timing_timing_iterations, d_temp_storage_bytes, d_cdp_error,
         d_temp_storage, temp_storage_bytes, d_in, d_flags, d_out, d_num_selected_out, num_items, select_op, 0, debug_synchronous);

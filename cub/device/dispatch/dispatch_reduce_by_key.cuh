@@ -388,7 +388,7 @@ struct DispatchReduceByKey
       (void)reduce_by_key_config;
 
         // Kernel launch not supported from this device
-        return CubDebug(cudaErrorNotSupported);
+        return CubDebug(hipErrorUnknown);
 
 #else
 

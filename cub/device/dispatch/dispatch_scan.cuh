@@ -410,7 +410,7 @@ struct DispatchScan
         (void)scan_kernel_config;
 
         // Kernel launch not supported from this device
-        return CubDebug(cudaErrorNotSupported);
+        return CubDebug(hipErrorUnknown);
 
 #else
         hipError_t error = hipSuccess;

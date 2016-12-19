@@ -1551,7 +1551,7 @@ struct DeviceSegReduceDispatch
 #ifndef CUB_RUNTIME_ENABLED
 
         // Kernel launch not supported from this device
-        return CubDebug(cudaErrorNotSupported );
+        return CubDebug(hipErrorUnknown );
 
 #else
 
