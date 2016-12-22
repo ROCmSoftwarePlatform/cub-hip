@@ -1,3 +1,13 @@
+Build steps
+
+* cd test
+* make all
+
+(check each target in make file to build individual tests)
+
+
+
+
 <hr>
 <h3>About CUB</h3>
 
