@@ -37,7 +37,7 @@ COMMA = ,
 ifdef sm
 	SM_ARCH = $(subst $(COMMA),-,$(sm))
 else 
-    SM_ARCH = 200
+    SM_ARCH = 520
 endif
 
 ifeq (620, $(findstring 620, $(SM_ARCH)))
@@ -56,7 +56,7 @@ ifeq (600, $(findstring 600, $(SM_ARCH)))
     TEST_ARCH 	= 600
 endif
 ifeq (520, $(findstring 520, $(SM_ARCH)))
-    SM_TARGETS 	+= -gencode=arch=compute_52,code=\"sm_52,compute_52\" 
+    SM_TARGETS 	+= -gencode=arch=compute_52,code=sm_52 
     SM_DEF 		+= -DSM520
     TEST_ARCH 	= 520
 endif
