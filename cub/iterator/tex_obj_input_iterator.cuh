@@ -42,6 +42,7 @@
 #include "../util_debug.cuh"
 #include "../util_namespace.cuh"
 
+
 #if (THRUST_VERSION >= 100700)
     // This iterator is compatible with Thrust API 1.7 and newer
     #include <thrust/iterator/iterator_facade.h>
@@ -177,13 +178,15 @@ public:
         res_desc.res.linear.desc        = channel_desc;
         res_desc.res.linear.sizeInBytes = bytes;
         tex_desc.readMode               = hipReadModeElementType;
-        return cudaCreateTextureObject(&tex_obj, &res_desc, &tex_desc, NULL);
+        //TODO:(mcw) To find equivalent in hip
+        return hipSuccess;//cudaCreateTextureObject(&tex_obj, &res_desc, &tex_desc, NULL);
     }
 
     /// Unbind this iterator from its texture reference
     hipError_t UnbindTexture()
     {
-        return cudaDestroyTextureObject(tex_obj);
+        //TODO:(mcw) To find equivalent in hip
+        return hipSuccess;//cudaDestroyTextureObject(tex_obj);
     }
 
     /// Postfix increment
