@@ -178,7 +178,8 @@ bin/link_$(SUFFIX) : link_a.cu link_b.cu link_main.cpp $(DEPS)
 	mkdir -p bin
 	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_a.cu -c -o bin/link_a.obj
 	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_b.cu -c -o bin/link_b.obj
-	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_main.cpp bin/link_a.obj bin/link_b.obj -o bin/link_$(SUFFIX)
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_main.cpp -c -o bin/link_main.obj
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) bin/link_main.obj bin/link_a.obj bin/link_b.obj -o bin/link_$(SUFFIX)
 
 
 #-------------------------------------------------------------------------------
