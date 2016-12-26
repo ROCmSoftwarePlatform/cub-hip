@@ -80,6 +80,7 @@ template <
     int         ITEMS_PER_THREAD>
 __launch_bounds__ (BLOCK_THREADS)
 __global__ void BlockSortKernel(
+    hipLaunchParm lp,
     Key         *d_in,          // Tile of input
     Key         *d_out,         // Tile of output
     clock_t     *d_elapsed)     // Elapsed cycle count of block scan

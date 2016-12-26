@@ -76,6 +76,7 @@ template <
     int                     ITEMS_PER_THREAD,
     BlockReduceAlgorithm    ALGORITHM>
 __global__ void BlockSumKernel(
+    hipLaunchParm lp,
     int         *d_in,          // Tile of input
     int         *d_out,         // Tile aggregate
     clock_t     *d_elapsed)     // Elapsed cycle count of block reduction

@@ -66,6 +66,7 @@ namespace histogram_gmem_atomics
         int         NUM_BINS,
         typename    PixelType>
     __global__ void histogram_gmem_atomics(
+        hipLaunchParm   lp,
         const PixelType *in,
         int width,
         int height,
@@ -113,6 +114,7 @@ namespace histogram_gmem_atomics
         int         ACTIVE_CHANNELS,
         int         NUM_BINS>
     __global__ void histogram_gmem_accum(
+        hipLaunchParm   lp,
         const unsigned int *in,
         int n,
         unsigned int *out)

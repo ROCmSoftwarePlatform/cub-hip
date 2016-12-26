@@ -682,6 +682,7 @@ template <
     typename                        Value>
 __launch_bounds__ (BLOCK_THREADS)
 __global__ void CooKernel(
+    hipLaunchParm                  lp,
     GridEvenShare<int>              even_share,
     PartialProduct<VertexId, Value> *d_block_partials,
     VertexId                        *d_rows,
@@ -726,6 +727,7 @@ template <
     typename                        Value>
 __launch_bounds__ (BLOCK_THREADS,  1)
 __global__ void CooFinalizeKernel(
+    hipLaunchParm                  lp,
     PartialProduct<VertexId, Value> *d_block_partials,
     int                             num_partials,
     Value                           *d_result)

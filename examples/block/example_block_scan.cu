@@ -76,6 +76,7 @@ template <
     int                     ITEMS_PER_THREAD,
     BlockScanAlgorithm      ALGORITHM>
 __global__ void BlockPrefixSumKernel(
+    hipLaunchParm lp,
     int         *d_in,          // Tile of input
     int         *d_out,         // Tile of output
     clock_t     *d_elapsed)     // Elapsed cycle count of block scan

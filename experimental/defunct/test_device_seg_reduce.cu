@@ -1119,6 +1119,7 @@ template <
     typename SegmentOffsetIterator,             ///< Random-access input iterator type for reading segment end-offsets
     typename OffsetT>                           ///< Signed integer type for global offsets
 __global__ void SegReducePartitionKernel(
+    hipLaunchKernel             lp,
     SegmentOffsetIterator       d_segment_end_offsets,  ///< [in] A sequence of \p num_segments segment end-offsets
     IndexPair<OffsetT>          *d_block_idx,
     int                         num_partition_samples,
@@ -1176,6 +1177,7 @@ template <
     typename Value>                             ///< Value type
 __launch_bounds__ (BlockSegReduceRegionPolicy::BLOCK_THREADS)
 __global__ void SegReduceRegionKernel(
+    hipLaunchKernel             lp,
     SegmentOffsetIterator       d_segment_end_offsets,  ///< [in] A sequence of \p num_segments segment end-offsets
     ValueIterator               d_values,               ///< [in] A sequence of \p num_values values
     OutputIteratorT              d_output,               ///< [out] A sequence of \p num_segments segment totals
@@ -1259,6 +1261,7 @@ template <
     typename    Value>                                  ///< Value type
 __launch_bounds__ (BlockSegReduceRegionByKeyPolicy::BLOCK_THREADS, 1)
 __global__ void SegReduceRegionByKeyKernel(
+    hipLaunchKernel             lp,
     InputIteratorT          d_tuple_partials,           ///< [in] A sequence of partial reduction tuples
     OutputIteratorT          d_output,                   ///< [out] A sequence of \p num_segments segment totals
     OffsetT                 num_segments,               ///< [in] Number of segments in the \p d_output sequence
