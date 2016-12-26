@@ -104,9 +104,10 @@ struct IteratorTexRef
         }
 
         /// Unbind texture
+        //TODO:(mcw) error: no instance of function template "hipUnbindTexture" matches the argument list
         static hipError_t UnbindTexture()
         {
-            return CubDebug(hipUnbindTexture(ref));
+            return hipSuccess;//CubDebug(hipUnbindTexture(ref));
         }
 
         /// Fetch element
