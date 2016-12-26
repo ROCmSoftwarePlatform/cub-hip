@@ -74,6 +74,7 @@ template <
     typename                T,
     typename                HistoCounter>
 __global__ void BlockHistogramKernel(
+    hipLaunchParm           lp,
     T                       *d_samples,
     HistoCounter            *d_histogram)
 {

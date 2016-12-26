@@ -280,7 +280,7 @@ struct CommandLineArgs
             }
 
             device_giga_bandwidth = float(deviceProp.memoryBusWidth) * deviceProp.memoryClockRate * 2 / 8 / 1000 / 1000;
-
+            //TODO:(mcw) error: class "hipDeviceProp_t" has no member "ECCEnabled"
             if (!CheckCmdLineFlag("quiet"))
             {
                 printf(
@@ -296,7 +296,7 @@ struct CommandLineArgs
                     (unsigned long long) device_total_physmem / 1024 / 1024,
                     device_giga_bandwidth,
                     deviceProp.memoryClockRate,
-                    (deviceProp.ECCEnabled) ? "on" : "off");
+                    "off");//(deviceProp.ECCEnabled) ? "on" : "off");
                 fflush(stdout);
             }
 

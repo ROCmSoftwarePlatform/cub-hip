@@ -107,6 +107,7 @@ template <
     typename InputIteratorT,
     typename T>
 __global__ void Kernel(
+    hipLaunchParm           lp,
     InputIteratorT    d_in,
     T                 *d_out,
     InputIteratorT    *d_itrs)

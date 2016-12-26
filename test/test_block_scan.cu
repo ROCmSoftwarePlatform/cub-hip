@@ -384,6 +384,7 @@ template <
     typename            ScanOpT>
 __launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z)
 __global__ void BlockScanKernel(
+    hipLaunchParm       lp,
     T                   *d_in,
     T                   *d_out,
     T                   *d_aggregate,

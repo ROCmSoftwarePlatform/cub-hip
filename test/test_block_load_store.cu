@@ -73,6 +73,7 @@ template <
     typename            OutputIteratorT>
 __launch_bounds__ (BLOCK_THREADS, 1)
 __global__ void Kernel(
+    hipLaunchParm     lp,
     InputIteratorT    d_in,
     OutputIteratorT    d_out_unguarded,
     OutputIteratorT    d_out_guarded,

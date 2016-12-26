@@ -241,6 +241,7 @@ template <
     typename    ScanOpT,
     typename    InitialValueT>
 __global__ void WarpScanKernel(
+    hipLaunchParm   lp,
     T               *d_in,
     T               *d_out,
     T               *d_aggregate,

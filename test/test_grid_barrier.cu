@@ -51,6 +51,7 @@ using namespace cub;
  * Kernel that iterates through the specified number of software global barriers
  */
 __global__ void Kernel(
+    hipLaunchParm lp,
     GridBarrier global_barrier,
     int iterations)
 {

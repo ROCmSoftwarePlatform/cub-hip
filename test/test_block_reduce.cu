@@ -128,6 +128,7 @@ template <
     typename                ReductionOp>
 __launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z)
 __global__ void FullTileReduceKernel(
+    hipLaunchParm           lp,
     T                       *d_in,
     T                       *d_out,
     ReductionOp             reduction_op,
@@ -225,6 +226,7 @@ template <
     typename                ReductionOp>
 __launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z)
 __global__ void PartialTileReduceKernel(
+    hipLaunchParm            lp,
     T                       *d_in,
     T                       *d_out,
     int                     num_items,

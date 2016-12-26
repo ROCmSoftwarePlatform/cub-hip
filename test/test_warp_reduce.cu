@@ -191,6 +191,7 @@ template <
     typename    T,
     typename    ReductionOp>
 __global__ void FullWarpReduceKernel(
+    hipLaunchParm   lp,
     T               *d_in,
     T               *d_out,
     ReductionOp     reduction_op,
@@ -238,6 +239,7 @@ template <
     typename    T,
     typename    ReductionOp>
 __global__ void PartialWarpReduceKernel(
+    hipLaunchParm lp,
     T           *d_in,
     T           *d_out,
     ReductionOp reduction_op,
@@ -287,6 +289,7 @@ template <
     typename    FlagT,
     typename    ReductionOp>
 __global__ void WarpHeadSegmentedReduceKernel(
+    hipLaunchParm lp,
     T           *d_in,
     FlagT        *d_head_flags,
     T           *d_out,
@@ -337,6 +340,7 @@ template <
     typename    FlagT,
     typename    ReductionOp>
 __global__ void WarpTailSegmentedReduceKernel(
+    hipLaunchParm lp,
     T           *d_in,
     FlagT       *d_tail_flags,
     T           *d_out,

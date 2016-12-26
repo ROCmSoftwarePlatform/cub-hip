@@ -158,6 +158,7 @@ template <
     typename            Value>
 __launch_bounds__ (BLOCK_THREADS, 1)
 __global__ void Kernel(
+    hipLaunchParm               lp,
     Key                         *d_keys,
     Value                       *d_values,
     int                         begin_bit,
@@ -388,7 +389,8 @@ void TestDriver(
             g_num_rand_samples);
 
     // Set shared memory config
-    hipDeviceSetSharedMemConfig(SMEM_CONFIG);
+    //TODO:(mcw) revert once hipDeviceSetCacheConfig is supported in HIP
+    //hipDeviceSetSharedMemConfig(SMEM_CONFIG);
 
     // Run kernel
     hipLaunchKernel(HIP_KERNEL_NAME(Kernel<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, SMEM_CONFIG, DESCENDING, BLOCKED_OUTPUT>), dim3(1), dim3(BLOCK_THREADS), 0, 0, 
