@@ -40,6 +40,7 @@
 #include "util_namespace.cuh"
 #include "util_macro.cuh"
 
+
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
 
@@ -108,7 +109,7 @@ hipError_t AliasTemporaries(
  * Empty kernel for querying PTX manifest metadata (e.g., version) for the current device
  */
 template <typename T>
-__global__ void EmptyKernel(void) { }
+__global__ void EmptyKernel(hipLaunchParm lp, int x) { }
 
 
 #endif  // DOXYGEN_SHOULD_SKIP_THIS
@@ -120,17 +121,21 @@ CUB_RUNTIME_FUNCTION __forceinline__ hipError_t PtxVersion(int &ptx_version)
 {
     struct Dummy
     {
+        //TODO:(mcw) Use EmptyKernel function pointer to get ptxVersion
+        //      Once hipFuncGetAttributes() API is supported
+
         /// Type definition of the EmptyKernel kernel entry point
-        typedef void (*EmptyKernelPtr)();
+        //typedef void (*EmptyKernelPtr)();
 
         /// Force EmptyKernel<void> to be generated if this class is used
+        //HUB_RUNTIME_FUNCTION __forceinline__
+        //EmptyKernelPtr Empty()
         CUB_RUNTIME_FUNCTION __forceinline__
-        EmptyKernelPtr Empty()
+        void Empty()
         {
-            return EmptyKernel<void>;
+            //return EmptyKernel<void>;
         }
     };
-
 
 #ifndef CUB_RUNTIME_ENABLED
     (void)ptx_version;
@@ -146,14 +151,15 @@ CUB_RUNTIME_FUNCTION __forceinline__ hipError_t PtxVersion(int &ptx_version)
 #else
 
     hipError_t error = hipSuccess;
-    do
-    {
-        cudaFuncAttributes empty_kernel_attrs;
-        if (CubDebug(error = cudaFuncGetAttributes(&empty_kernel_attrs, EmptyKernel<void>))) break;
-        ptx_version = empty_kernel_attrs.ptxVersion * 10;
-    }
-    while (0);
+        //cudaFuncAttributes empty_kernel_attrs;
+        //if (cubDebug(error = cudaFuncGetAttributes(&empty_kernel_attrs, EmptyKernel<void>))) break;
+        //ptx_version = empty_kernel_attrs.ptxVersion * 10;
 
+        //Temporary fix: TODO:(mcw) revert once PTX operations are supported in HIP
+    hipDeviceProp_t deviceProp;
+    error = hipGetDeviceProperties(&deviceProp, 0);
+    if(error == hipSuccess)
+      ptx_version = deviceProp.major * 10;
     return error;
 
 #endif
@@ -259,7 +265,7 @@ hipError_t MaxSmOccupancy(
 
 #else
 
-    return cudaOccupancyMaxActiveBlocksPerMultiprocessor (
+    return hipOccupancyMaxActiveBlocksPerMultiprocessor (
         &max_sm_occupancy,
         kernel_ptr,
         block_threads,
@@ -293,7 +299,7 @@ struct KernelConfig
         block_threads        = AgentPolicyT::BLOCK_THREADS;
         items_per_thread     = AgentPolicyT::ITEMS_PER_THREAD;
         tile_size            = block_threads * items_per_thread;
-        hipError_t retval   = MaxSmOccupancy(sm_occupancy, kernel_ptr, block_threads);
+        hipError_t retval   = MaxSmOccupancy(sm_occupancy, (const void*)kernel_ptr, block_threads);
         return retval;
     }
 };
