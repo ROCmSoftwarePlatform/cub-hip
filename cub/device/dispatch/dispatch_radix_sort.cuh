@@ -1358,7 +1358,7 @@ struct DispatchSegmentedRadixSort :
                     num_segments, pass_config.segmented_config.block_threads, (long long) stream,
                 pass_config.segmented_config.items_per_thread, pass_config.segmented_config.sm_occupancy, current_bit, pass_bits);
 
-            hipLaunchKernel(HIP_KERNEL_NAME(pass_config.egmented_kernel), dim3(num_segments), dim3(pass_config.segmented_config.block_threads), 0, stream, 
+            hipLaunchKernel(HIP_KERNEL_NAME(pass_config.segmented_kernel), dim3(num_segments), dim3(pass_config.segmented_config.block_threads), 0, stream, 
                 d_keys_in, d_keys_out,
                 d_values_in,  d_values_out,
                 d_begin_offsets, d_end_offsets, num_segments,
