@@ -63,6 +63,7 @@ namespace cub {
 template <
     typename            ScanTileStateT>     ///< Tile status interface type
 __global__ void DeviceScanInitKernel(
+    hipLaunchParm       lp,
     ScanTileStateT      tile_state,         ///< [in] Tile status interface
     int                 num_tiles)          ///< [in] Number of tiles
 {
@@ -77,6 +78,7 @@ template <
     typename                ScanTileStateT,         ///< Tile status interface type
     typename                NumSelectedIteratorT>   ///< Output iterator type for recording the number of items selected
 __global__ void DeviceCompactInitKernel(
+    hipLaunchParm           lp,
     ScanTileStateT          tile_state,             ///< [in] Tile status interface
     int                     num_tiles,              ///< [in] Number of tiles
     NumSelectedIteratorT    d_num_selected_out)     ///< [out] Pointer to the total number of items selected (i.e., length of \p d_selected_out)
@@ -103,6 +105,7 @@ template <
     typename            OffsetT>            ///< Signed integer type for global offsets
 __launch_bounds__ (int(ScanPolicyT::BLOCK_THREADS))
 __global__ void DeviceScanKernel(
+    hipLaunchParm       lp,
     InputIteratorT      d_in,               ///< Input data
     OutputIteratorT     d_out,              ///< Output data
     ScanTileStateT      tile_state,         ///< Tile status interface
@@ -468,7 +471,7 @@ struct DispatchScan
             int scan_sm_occupancy;
             if (CubDebug(error = MaxSmOccupancy(
                 scan_sm_occupancy,            // out
-                scan_kernel,
+                (const void *)scan_kernel,
                 scan_kernel_config.block_threads))) break;
 
             // Get max x-dimension of grid

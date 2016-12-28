@@ -71,6 +71,7 @@ template <
     typename            OffsetT>                                ///< Signed integer type for global offsets
 __launch_bounds__ (int(AgentReduceByKeyPolicyT::BLOCK_THREADS))
 __global__ void DeviceReduceByKeyKernel(
+    hipLaunchParm               lp,
     KeysInputIteratorT          d_keys_in,                      ///< Pointer to the input sequence of keys
     UniqueOutputIteratorT       d_unique_out,                   ///< Pointer to the output sequence of unique keys (one key per run)
     ValuesInputIteratorT        d_values_in,                    ///< Pointer to the input sequence of corresponding values
@@ -448,7 +449,7 @@ struct DispatchReduceByKey
             int reduce_by_key_sm_occupancy;
             if (CubDebug(error = MaxSmOccupancy(
                 reduce_by_key_sm_occupancy,            // out
-                reduce_by_key_kernel,
+                (const void *)reduce_by_key_kernel,
                 reduce_by_key_config.block_threads))) break;
 
             // Get max x-dimension of grid

@@ -69,6 +69,7 @@ template <
     typename                ReductionOpT>               ///< Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS))
 __global__ void DeviceReduceKernel(
+    hipLaunchParm           lp,
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
     OffsetT                 num_items,                  ///< [in] Total number of input data items
@@ -118,6 +119,7 @@ template <
     typename                OuputT>                     ///< Data element type that is convertible to the \p value type of \p OutputIteratorT
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::SingleTilePolicy::BLOCK_THREADS), 1)
 __global__ void DeviceReduceSingleTileKernel(
+    hipLaunchParm           lp,
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
     OffsetT                 num_items,                  ///< [in] Total number of input data items
@@ -189,6 +191,7 @@ template <
     typename                OutputT>                    ///< Data element type that is convertible to the \p value type of \p OutputIteratorT
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS))
 __global__ void DeviceSegmentedReduceKernel(
+    hipLaunchParm           lp,
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
     int                     *d_begin_offsets,           ///< [in] %Device-accessible pointer to the sequence of beginning offsets of length \p num_segments, such that <tt>d_begin_offsets[i]</tt> is the first element of the <em>i</em><sup>th</sup> data segment in <tt>d_keys_*</tt> and <tt>d_values_*</tt>
@@ -573,7 +576,8 @@ struct DispatchReduce :
                 if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(prepare_drain_kernel), dim3(1), dim3(1), 0, %lld, )\n", (long long) stream);
 
                 // Invoke prepare_drain_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(prepare_drain_kernel), dim3(1), dim3(1), 0, stream, queue, num_items);
+                //TODO:(mcw) No kernel definition is found
+                //hipLaunchKernel(HIP_KERNEL_NAME(prepare_drain_kernel), dim3(1), dim3(1), 0, stream, queue, num_items);
 
                 // Check for failure to launch
                 if (CubDebug(error = hipPeekAtLastError())) break;

@@ -66,6 +66,7 @@ template <
     typename                                        CounterT,                       ///< Integer type for counting sample occurrences per histogram bin
     typename                                        OffsetT>                        ///< Signed integer type for global offsets
 __global__ void DeviceHistogramInitKernel(
+    hipLaunchParm                                   lp,
     ArrayWrapper<int, NUM_ACTIVE_CHANNELS>          num_output_bins_wrapper,        ///< Number of output histogram bins per channel
     ArrayWrapper<CounterT*, NUM_ACTIVE_CHANNELS>    d_output_histograms_wrapper,    ///< Histogram counter data having logical dimensions <tt>CounterT[NUM_ACTIVE_CHANNELS][num_bins.array[CHANNEL]]</tt>
     GridQueue<int>                                  tile_queue)                     ///< Drain queue descriptor for dynamically mapping tile data onto thread blocks
@@ -99,6 +100,7 @@ template <
     typename                                            OffsetT>                        ///< Signed integer type for global offsets
 __launch_bounds__ (int(AgentHistogramPolicyT::BLOCK_THREADS))
 __global__ void DeviceHistogramSweepKernel(
+    hipLaunchParm                                           lp,
     SampleIteratorT                                         d_samples,                          ///< Input data to reduce
     ArrayWrapper<int, NUM_ACTIVE_CHANNELS>                  num_output_bins_wrapper,            ///< The number bins per final output histogram
     ArrayWrapper<int, NUM_ACTIVE_CHANNELS>                  num_privatized_bins_wrapper,        ///< The number bins per privatized histogram
@@ -557,7 +559,7 @@ struct DipatchHistogram
             int histogram_sweep_sm_occupancy;
             if (CubDebug(error = MaxSmOccupancy(
                 histogram_sweep_sm_occupancy,
-                histogram_sweep_kernel,
+                (const void *)histogram_sweep_kernel,
                 histogram_sweep_config.block_threads))) break;
 
             // Get device occupancy for histogram_sweep_kernel

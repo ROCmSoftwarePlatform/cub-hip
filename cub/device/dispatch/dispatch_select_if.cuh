@@ -75,6 +75,7 @@ template <
     bool                KEEP_REJECTS>               ///< Whether or not we push rejected items to the back of the output
 __launch_bounds__ (int(AgentSelectIfPolicyT::BLOCK_THREADS))
 __global__ void DeviceSelectSweepKernel(
+    hipLaunchParm           lp,
     InputIteratorT          d_in,                   ///< [in] Pointer to the input sequence of data items
     FlagsInputIteratorT     d_flags,                ///< [in] Pointer to the input sequence of selection flags (if applicable)
     SelectedOutputIteratorT d_selected_out,         ///< [out] Pointer to the output sequence of selected data items
@@ -437,7 +438,7 @@ struct DispatchSelectIf
             int range_select_sm_occupancy;
             if (CubDebug(error = MaxSmOccupancy(
                 range_select_sm_occupancy,            // out
-                select_if_kernel,
+                (const void *)select_if_kernel,
                 select_if_config.block_threads))) break;
 
             // Get max x-dimension of grid

@@ -74,6 +74,7 @@ template <
     typename            OffsetT>                    ///< Signed integer type for global offsets
 __launch_bounds__ (int(AgentRlePolicyT::BLOCK_THREADS))
 __global__ void DeviceRleSweepKernel(
+    hipLaunchParm               lp,
     InputIteratorT              d_in,               ///< [in] Pointer to input sequence of data items
     OffsetsOutputIteratorT      d_offsets_out,      ///< [out] Pointer to output sequence of run-offsets
     LengthsOutputIteratorT      d_lengths_out,      ///< [out] Pointer to output sequence of run-lengths
@@ -435,7 +436,7 @@ struct DeviceRleDispatch
             int device_rle_kernel_sm_occupancy;
             if (CubDebug(error = MaxSmOccupancy(
                 device_rle_kernel_sm_occupancy,            // out
-                device_rle_sweep_kernel,
+                (const void *)device_rle_sweep_kernel,
                 device_rle_config.block_threads))) break;
 
             // Get max x-dimension of grid
