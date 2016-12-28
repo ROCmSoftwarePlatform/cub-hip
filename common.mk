@@ -25,13 +25,15 @@
 # * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # *
 #******************************************************************************/
-
+HIP_PATH?=$(shell hipconfig --path)
+HIPCC=$(HIP_PATH)/bin/hipcc
+HIP_PLATFORM=$(shell $(HIP_PATH)/bin/hipconfig --platform)
 
 #-------------------------------------------------------------------------------
 # Commandline Options
 #-------------------------------------------------------------------------------
 
-# [sm=<XXX,...>] Compute-capability to compile for, e.g., "sm=200,300,350" (SM20 by default).
+# [sm=<XXX,...>] Compute-capability to compile for, e.g., "sm=200,300,350" (SM52 by default).
   
 COMMA = ,
 ifdef sm
@@ -40,6 +42,7 @@ else
     SM_ARCH = 520
 endif
 
+ifeq (${HIP_PLATFORM}, nvcc)
 ifeq (620, $(findstring 620, $(SM_ARCH)))
     SM_TARGETS 	+= -gencode=arch=compute_62,code=\"sm_62,compute_62\" 
     SM_DEF 		+= -DSM620
@@ -105,13 +108,57 @@ ifeq (100, $(findstring 100, $(SM_ARCH)))
     SM_DEF 		+= -DSM100
     TEST_ARCH 	= 100
 endif
+endif
 
+ifeq (${HIP_PLATFORM}, hcc)
+    SM_TARGETS  += -Wno-deprecated-register
+ifeq (520, $(findstring 520, $(SM_ARCH)))
+    SM_DEF              += -DSM520
+    TEST_ARCH   = 520
+endif
+ifeq (370, $(findstring 370, $(SM_ARCH)))
+    SM_DEF              += -DSM370
+    TEST_ARCH   = 370
+endif
+ifeq (350, $(findstring 350, $(SM_ARCH)))
+    SM_DEF              += -DSM350
+    TEST_ARCH   = 350
+endif
+ifeq (300, $(findstring 300, $(SM_ARCH)))
+    SM_DEF              += -DSM300
+    TEST_ARCH   = 300
+endif
+ifeq (210, $(findstring 210, $(SM_ARCH)))
+    SM_DEF              += -DSM210
+    TEST_ARCH   = 210
+endif
+ifeq (200, $(findstring 200, $(SM_ARCH)))
+    SM_DEF              += -DSM200
+    TEST_ARCH   = 200
+endif
+ifeq (130, $(findstring 130, $(SM_ARCH)))
+    SM_DEF              += -DSM130
+    TEST_ARCH   = 130
+endif
+ifeq (120, $(findstring 120, $(SM_ARCH)))
+    SM_DEF              += -DSM120
+    TEST_ARCH   = 120
+endif
+ifeq (110, $(findstring 110, $(SM_ARCH)))
+    SM_DEF              += -DSM110
+    TEST_ARCH   = 110
+endif
+ifeq (100, $(findstring 100, $(SM_ARCH)))
+    SM_DEF              += -DSM100
+    TEST_ARCH   = 100
+endif
+endif
 
 # [cdp=<0|1>] CDP enable option (default: no)
 ifeq ($(cdp), 1)
 	DEFINES += -DCUB_CDP
 	CDP_SUFFIX = cdp
-    NVCCFLAGS += -rdc=true -lcudadevrt
+    HCCFLAGS += -rdc=true -lcudadevrt
 else
 	CDP_SUFFIX = nocdp
 endif
@@ -132,14 +179,14 @@ endif
 ifneq ($(abi), 0)
 	ABI_SUFFIX = abi
 else 
-	NVCCFLAGS += -Xptxas -abi=no
+	HCCFLAGS += -Xptxas -abi=no
 	ABI_SUFFIX = noabi
 endif
 
 
 # [open64=<0|1>] Middle-end compiler option (nvvm by default)
 ifeq ($(open64), 1)
-	NVCCFLAGS += -open64
+	HCCFLAGS += -open64
 	PTX_SUFFIX = open64
 else 
 	PTX_SUFFIX = nvvm
@@ -148,20 +195,21 @@ endif
 
 # [verbose=<0|1>] Verbose toolchain output from nvcc option
 ifeq ($(verbose), 1)
-	NVCCFLAGS += -v
+	HCCFLAGS += -v
 endif
 
 
 # [keep=<0|1>] Keep intermediate compilation artifacts option
 ifeq ($(keep), 1)
-	NVCCFLAGS += -keep
+	HCCFLAGS += -keep
 endif
 
 # [debug=<0|1>] Generate debug mode code
 ifeq ($(debug), 1)
-	NVCCFLAGS += -G
+	HCCFLAGS += -G
 endif
 
+CPPFLAGS += $(shell $(HIP_PATH)/bin/hipconfig --cpp_config)
 
 #-------------------------------------------------------------------------------
 # Compiler and compilation platform
@@ -169,18 +217,24 @@ endif
 
 CUB_DIR = $(dir $(lastword $(MAKEFILE_LIST)))
 
+ifeq (${HIP_PLATFORM}, nvcc)
 NVCC = "$(shell which nvcc)"
 ifdef nvccver
     NVCC_VERSION = $(nvccver)
 else
     NVCC_VERSION = $(strip $(shell nvcc --version | grep release | sed 's/.*release //' |  sed 's/,.*//'))
 endif
+endif
 
 # detect OS
 OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 
 # Default flags: verbose kernel properties (regs, smem, cmem, etc.); runtimes for compilation phases 
-NVCCFLAGS += $(SM_DEF) -Xptxas -v -Xcudafe -\# 
+ifeq (${HIP_PLATFORM}, nvcc)
+    HCCFLAGS += $(SM_DEF) -Xptxas -v -Xcudafe -\# 
+else
+    HCCFLAGS += $(SM_DEF)
+endif
 
 ifeq (WIN_NT, $(findstring WIN_NT, $(OSUPPER)))
     # For MSVC
@@ -214,8 +268,11 @@ endif
 endif
 
 # Suffix to append to each binary
+ifeq (${HIP_PLATFORM}, nvcc)
 BIN_SUFFIX = sm$(SM_ARCH)_$(PTX_SUFFIX)_$(NVCC_VERSION)_$(ABI_SUFFIX)_$(CDP_SUFFIX)_$(CPU_ARCH_SUFFIX)
-
+else
+BIN_SUFFIX = sm$(SM_ARCH)_$(PTX_SUFFIX)_$(ABI_SUFFIX)_$(CDP_SUFFIX)_$(CPU_ARCH_SUFFIX)
+endif
 
 #-------------------------------------------------------------------------------
 # Dependency Lists
