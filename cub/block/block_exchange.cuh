@@ -155,10 +155,17 @@ private:
      ******************************************************************************/
 
     /// Shared memory storage layout type
+    #ifdef __HIP_PLAFORM_NVCC__
     struct __align__(16) _TempStorage
     {
         InputT buff[TIME_SLICED_ITEMS + PADDING_ITEMS];
     };
+    #elif defined(__HIP_PLATFORM_HCC__)
+    struct __attribute__((aligned(16))) _TempStorage
+    {
+        InputT buff[TIME_SLICED_ITEMS + PADDING_ITEMS];
+    };
+    #endif
 
 public:
 

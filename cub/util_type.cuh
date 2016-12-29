@@ -303,9 +303,15 @@ struct AlignBytes
 // with device C++ compilers (EDG) on types passed as template parameters through
 // kernel functions
 
+#ifdef __HIP_PLATFORM_NVCC__
 #define __CUB_ALIGN_BYTES(t, b)         \
     template <> struct AlignBytes<t>    \
     { enum { ALIGN_BYTES = b }; typedef __align__(b) t Type; };
+#elif defined(__HIP_PLATFORM_HCC__)
+#define __CUB_ALIGN_BYTES(t, b)         \
+    template <> struct AlignBytes<t>    \
+    { enum { ALIGN_BYTES = b }; typedef __attribute__((aligned(b))) t Type; };
+#endif
 
 __CUB_ALIGN_BYTES(short4, 8)
 __CUB_ALIGN_BYTES(ushort4, 8)
