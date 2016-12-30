@@ -106,6 +106,8 @@ namespace cub {
  * \tparam T                    The value type of this iterator
  * \tparam OffsetT              The difference type of this iterator (Default: \p ptrdiff_t)
  */
+//Textures not supported in HIP yet
+//TODO: Support texture operations in cub-hip
 template <
     typename    T,
     typename    OffsetT = ptrdiff_t>
@@ -146,7 +148,7 @@ private:
 
     T*                  ptr;
     difference_type     tex_offset;
-    cudaTextureObject_t tex_obj;
+    //cudaTextureObject_t tex_obj;
 
 public:
 
@@ -154,8 +156,9 @@ public:
     __host__ __device__ __forceinline__ TexObjInputIterator()
     :
         ptr(NULL),
-        tex_offset(0),
-        tex_obj(0)
+        tex_offset(0)
+       //tex_obj(0)
+
     {}
 
     /// Use this iterator to bind \p ptr with a texture reference
@@ -168,7 +171,7 @@ public:
         this->ptr = const_cast<typename RemoveQualifiers<QualifiedT>::Type *>(ptr);
         this->tex_offset = tex_offset;
 
-        hipChannelFormatDesc   channel_desc = hipCreateChannelDesc<TextureWord>();
+        /*cudaChannelFormatDesc   channel_desc = cudaCreateChannelDesc<TextureWord>();
         cudaResourceDesc        res_desc;
         cudaTextureDesc         tex_desc;
         memset(&res_desc, 0, sizeof(cudaResourceDesc));
@@ -177,16 +180,18 @@ public:
         res_desc.res.linear.devPtr      = this->ptr;
         res_desc.res.linear.desc        = channel_desc;
         res_desc.res.linear.sizeInBytes = bytes;
-        tex_desc.readMode               = hipReadModeElementType;
-        //TODO:(mcw) To find equivalent in hip
-        return hipSuccess;//cudaCreateTextureObject(&tex_obj, &res_desc, &tex_desc, NULL);
+        tex_desc.readMode               = cudaReadModeElementType;
+        return cudaCreateTextureObject(&tex_obj, &res_desc, &tex_desc, NULL);*/
+        return hipErrorTbd;
+
     }
 
     /// Unbind this iterator from its texture reference
     hipError_t UnbindTexture()
     {
-        //TODO:(mcw) To find equivalent in hip
-        return hipSuccess;//cudaDestroyTextureObject(tex_obj);
+        //return cudaDestroyTextureObject(tex_obj);
+        return hipErrorTbd;
+
     }
 
     /// Postfix increment
@@ -217,9 +222,9 @@ public:
         #pragma unroll
         for (int i = 0; i < TEXTURE_MULTIPLE; ++i)
         {
-            words[i] = tex1Dfetch<TextureWord>(
-                tex_obj,
-                (tex_offset * TEXTURE_MULTIPLE) + i);
+            words[i] = 0//tex1Dfetch<TextureWord>(
+//                tex_obj,
+//                (tex_offset * TEXTURE_MULTIPLE) + i);
         }
 
         // Load from words
@@ -233,7 +238,7 @@ public:
     {
         self_type retval;
         retval.ptr          = ptr;
-        retval.tex_obj      = tex_obj;
+//        retval.tex_obj      = tex_obj;
         retval.tex_offset   = tex_offset + n;
         return retval;
     }
@@ -252,7 +257,7 @@ public:
     {
         self_type retval;
         retval.ptr          = ptr;
-        retval.tex_obj      = tex_obj;
+//        retval.tex_obj      = tex_obj;
         retval.tex_offset   = tex_offset - n;
         return retval;
     }
@@ -288,13 +293,13 @@ public:
     /// Equal to
     __host__ __device__ __forceinline__ bool operator==(const self_type& rhs)
     {
-        return ((ptr == rhs.ptr) && (tex_offset == rhs.tex_offset) && (tex_obj == rhs.tex_obj));
+        return ((ptr == rhs.ptr) && (tex_offset == rhs.tex_offset)); // && (tex_obj == rhs.tex_obj));
     }
 
     /// Not equal to
     __host__ __device__ __forceinline__ bool operator!=(const self_type& rhs)
     {
-        return ((ptr != rhs.ptr) || (tex_offset != rhs.tex_offset) || (tex_obj != rhs.tex_obj));
+        return ((ptr != rhs.ptr) || (tex_offset != rhs.tex_offset));// || (tex_obj != rhs.tex_obj));
     }
 
     /// ostream operator
