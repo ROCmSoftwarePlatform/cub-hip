@@ -264,13 +264,20 @@ hipError_t MaxSmOccupancy(
     return CubDebug(hipErrorUnknown);
 
 #else
-
+#ifdef __HIP_PLATFORM_NVCC__
     return hipOccupancyMaxActiveBlocksPerMultiprocessor (
         &max_sm_occupancy,
         kernel_ptr,
         block_threads,
         dynamic_smem_bytes);
-
+#elif defined(__HIP_PLATFORM_HCC__)
+    //TODO: not supported by HIP in hccbackend currently
+    printf("\nNote: Occupancy computation not supported in HIP in hccbackend.\nMaxBlocksPerMultiprocessor returned\n");
+    hipDeviceProp_t props;
+    if (hipGetDeviceProperties(&props, 0) != hipSuccess) return hipErrorTbd;
+    max_sm_occupancy = (int)(props.maxThreadsPerMultiProcessor / block_threads);
+    return hipSuccess;
+#endif
 #endif  // CUB_RUNTIME_ENABLED
 }
 
