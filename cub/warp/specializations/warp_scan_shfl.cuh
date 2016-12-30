@@ -258,8 +258,8 @@ struct WarpScanShfl
         unsigned long hi, lo;
         lo = 0xFFFFFFFF & input;
         hi = 0xFFFFFFFF & (input >> 32);
-        lo = unsigned long(__shfl_up((int)lo, (unsigned int)offset, shfl_c));
-        hi = unsigned long(__shfl_up((int)hi, (unsigned int)offset, shfl_c));
+        lo = (unsigned long)__shfl_up((int)lo, (unsigned int)offset, shfl_c);
+        hi = (unsigned long)__shfl_up((int)hi, (unsigned int)offset, shfl_c);
         long long out = (long long)lo | ((long long)hi << 32);
         output = input + out;
 #endif
