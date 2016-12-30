@@ -139,6 +139,7 @@ struct WarpReduceShfl
         unsigned int output;
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
         asm volatile(
             "{"
             "  .reg .u32 r0;"
@@ -148,7 +149,9 @@ struct WarpReduceShfl
             "  mov.u32 %0, r0;"
             "}"
             : "=r"(output) : "r"(input), "r"(offset), "r"(last_lane), "r"(input));
-
+#elif defined(__HIP_PLATFORM_HCC__)
+        output = input + __shfl_down((int)input, (unsigned int)offset, last_lane);
+#endif
         return output;
     }
 
@@ -163,6 +166,7 @@ struct WarpReduceShfl
         float output;
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
         asm volatile(
             "{"
             "  .reg .f32 r0;"
@@ -172,7 +176,9 @@ struct WarpReduceShfl
             "  mov.f32 %0, r0;"
             "}"
             : "=f"(output) : "f"(input), "r"(offset), "r"(last_lane), "f"(input));
-
+#elif defined(__HIP_PLATFORM_HCC__)
+        output = input + __shfl_down(input, (unsigned int) offset, last_lane);
+#endif
         return output;
     }
 
@@ -185,7 +191,7 @@ struct WarpReduceShfl
         int                 offset)             ///< [in] Up-offset to pull from
     {
         unsigned long long output;
-
+#ifdef __HIP_PLATFORM_NVCC__
         asm volatile(
             "{"
             "  .reg .u32 lo;"
@@ -198,7 +204,15 @@ struct WarpReduceShfl
             "  @p add.u64 %0, %0, %1;"
             "}"
             : "=l"(output) : "l"(input), "r"(offset), "r"(last_lane));
-
+#elif defined(__HIP_PLATFORM_HCC__)
+        unsigned long hi, lo;
+        lo = 0xFFFFFFFF & input;
+        hi = 0xFFFFFFFF & (input >> 32);
+        lo = (unsigned long)__shfl_down((int)lo, (unsigned int)offset, last_lane);
+        hi = (unsigned long)__shfl_down((int)hi, (unsigned int)offset, last_lane);
+        unsigned long long out = (unsigned long long)lo | ((unsigned long long)hi << 32);
+        output = input + out;
+#endif
         return output;
     }
 
@@ -211,7 +225,7 @@ struct WarpReduceShfl
         int                 offset)             ///< [in] Up-offset to pull from
     {
         long long output;
-
+#ifdef __HIP_PLATFORM_NVCC__
         // Use predicate set from SHFL to guard against invalid peers
         asm volatile(
             "{"
@@ -225,7 +239,15 @@ struct WarpReduceShfl
             "  @p add.s64 %0, %0, %1;"
             "}"
             : "=l"(output) : "l"(input), "r"(offset), "r"(last_lane));
-
+#elif defined(__HIP_PLATFORM_HCC__)
+        unsigned long long hi, lo;
+        lo = 0xFFFFFFFF & input;
+        hi = 0xFFFFFFFF & (input >> 32);
+        lo = (unsigned long long)__shfl_down((int)lo, (unsigned int)offset, last_lane);
+        hi = (unsigned long long)__shfl_down((int)hi, (unsigned int)offset, last_lane);
+        long long out = (unsigned long long)lo | ((unsigned long long)hi << 32);
+        output = input + out;
+#endif
         return output;
     }
 
@@ -240,6 +262,7 @@ struct WarpReduceShfl
         double output;
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
         asm volatile(
             "{"
             "  .reg .u32 lo;"
@@ -254,7 +277,15 @@ struct WarpReduceShfl
             "  @p add.f64 %0, %0, r0;"
             "}"
             : "=d"(output) : "d"(input), "r"(offset), "r"(last_lane));
-
+#elif defined(__HIP_PLATFORM_HCC__)
+        unsigned long hi, lo;
+        lo = 0xFFFFFFFF & (long)input;
+        hi = 0xFFFFFFFF & ((long)input >> 32);
+        lo = (unsigned long)__shfl_down((int)lo, (unsigned int)offset, last_lane);
+        hi = (unsigned long)__shfl_down((int)hi, (unsigned int)offset, last_lane);
+        double out = (double)(lo | (hi << 32));
+        output = input + out;
+#endif
         return output;
     }
 

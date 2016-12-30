@@ -835,7 +835,7 @@ void TestDevice(
     }
     fflush(stdout);
 
-    CubDebugExit(hipDeviceSetSharedMemConfig(cudaSharedMemBankSizeEightByte));
+    CubDebugExit(hipDeviceSetSharedMemConfig(hipSharedMemBankSizeEightByte));
 
     // Run kernel (always run one iteration without timing)
     GpuTimer gpu_timer;

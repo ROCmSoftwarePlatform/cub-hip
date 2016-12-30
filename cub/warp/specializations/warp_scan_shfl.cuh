@@ -117,6 +117,7 @@ struct WarpScanShfl
         int shfl_c = first_lane | SHFL_C;   // Shuffle control (mask and first-lane)
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
         asm volatile(
             "{"
             "  .reg .s32 r0;"
@@ -126,7 +127,9 @@ struct WarpScanShfl
             "  mov.s32 %0, r0;"
             "}"
             : "=r"(output) : "r"(input), "r"(offset), "r"(shfl_c), "r"(input));
-
+#elif defined(__HIP_PLATFORM_HCC__)
+        output = input + __shfl_up(input, (unsigned int)offset, shfl_c);
+#endif
         return output;
     }
 
@@ -141,6 +144,7 @@ struct WarpScanShfl
         int shfl_c = first_lane | SHFL_C;   // Shuffle control (mask and first-lane)
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
         asm volatile(
             "{"
             "  .reg .u32 r0;"
@@ -150,7 +154,9 @@ struct WarpScanShfl
             "  mov.u32 %0, r0;"
             "}"
             : "=r"(output) : "r"(input), "r"(offset), "r"(shfl_c), "r"(input));
-
+#elif defined(__HIP_PLATFORM_HCC__)
+        output = input + __shfl_up((int)input, (unsigned int)offset, shfl_c);
+#endif
         return output;
     }
 
@@ -166,6 +172,7 @@ struct WarpScanShfl
         int shfl_c = first_lane | SHFL_C;   // Shuffle control (mask and first-lane)
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
         asm volatile(
             "{"
             "  .reg .f32 r0;"
@@ -175,7 +182,9 @@ struct WarpScanShfl
             "  mov.f32 %0, r0;"
             "}"
             : "=f"(output) : "f"(input), "r"(offset), "r"(shfl_c), "f"(input));
-
+#elif defined(__HIP_PLATFORM_HCC__)
+        output = input + __shfl_up(input, (unsigned int)offset, shfl_c);
+#endif
         return output;
     }
 
@@ -191,6 +200,7 @@ struct WarpScanShfl
         int shfl_c = first_lane | SHFL_C;   // Shuffle control (mask and first-lane)
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
         asm volatile(
             "{"
             "  .reg .u64 r0;"
@@ -199,13 +209,21 @@ struct WarpScanShfl
             "  .reg .pred p;"
             "  mov.b64 {lo, hi}, %1;"
             "  shfl.up.b32 lo|p, lo, %2, %3;"
-            "  shfl.up.b32 hi|p, hi, %2, %3;"
+            "  shfl.up.b32 hi|p, hi, %2, %3;"1
             "  mov.b64 r0, {lo, hi};"
             "  @p add.u64 r0, r0, %4;"
             "  mov.u64 %0, r0;"
             "}"
             : "=l"(output) : "l"(input), "r"(offset), "r"(shfl_c), "l"(input));
-
+#elif defined(__HIP_PLATFORM_HCC__)
+        unsigned long hi, lo;
+        lo = (unsigned long)0xFFFFFFFF & input;
+        hi = (unsigned long)0xFFFFFFFF & (input >> 32);
+        lo = (unsigned long)__shfl_up((int)lo, (unsigned int)offset, shfl_c);
+        hi = (unsigned long)__shfl_up((int)hi, (unsigned int)offset, shfl_c);
+        unsigned long long out = (unsigned long long)lo | ((unsigned long long)hi << 32);
+        output = input + out;
+#endif
         return output;
     }
 
@@ -221,6 +239,7 @@ struct WarpScanShfl
         int shfl_c = first_lane | SHFL_C;   // Shuffle control (mask and first-lane)
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
         asm volatile(
             "{"
             "  .reg .s64 r0;"
@@ -235,7 +254,15 @@ struct WarpScanShfl
             "  mov.s64 %0, r0;"
             "}"
             : "=l"(output) : "l"(input), "r"(offset), "r"(shfl_c), "l"(input));
-
+#elif defined(__HIP_PLATFORM_HCC__)
+        unsigned long hi, lo;
+        lo = 0xFFFFFFFF & input;
+        hi = 0xFFFFFFFF & (input >> 32);
+        lo = unsigned long(__shfl_up((int)lo, (unsigned int)offset, shfl_c));
+        hi = unsigned long(__shfl_up((int)hi, (unsigned int)offset, shfl_c));
+        long long out = (long long)lo | ((long long)hi << 32);
+        output = input + out;
+#endif
         return output;
     }
 
@@ -251,6 +278,7 @@ struct WarpScanShfl
         int shfl_c = first_lane | SHFL_C;   // Shuffle control (mask and first-lane)
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
         asm volatile(
             "{"
             "  .reg .u32 lo;"
@@ -265,7 +293,15 @@ struct WarpScanShfl
             "  @p add.f64 %0, %0, r0;"
             "}"
             : "=d"(output) : "d"(input), "r"(offset), "r"(shfl_c));
-
+#elif defined(__HIP_PLATFORM_HCC__)
+        unsigned int hi, lo;
+        lo = (unsigned int)(0xFFFFFFFF & (long)input);
+        hi = (unsigned int)(0xFFFFFFFF & (long)input >> 32);
+        lo = (unsigned int)__shfl_up((int)lo, (unsigned int)offset, shfl_c);
+        hi = (unsigned int)__shfl_up((int)hi, (unsigned int)offset, shfl_c);
+        double out = (double)((long)lo | ((long)hi << 32));
+        output = input + out;
+#endif
         return output;
     }
 
@@ -319,11 +355,19 @@ struct WarpScanShfl
         int             offset,             ///< [in] Up-offset to pull from
         Int2Type<true>  /*is_small_unsigned*/)  ///< [in] Marker type indicating whether T is a small integer
     {
+#ifdef __HIP_PLATFORM_NVCC__
         unsigned int temp = reinterpret_cast<unsigned int &>(input);
 
         temp = InclusiveScanStep(temp, scan_op, first_lane, offset);
 
         return reinterpret_cast<_T&>(temp);
+#elif defined(__HIP_PLATFORM_HCC__)
+	_T temp = input;
+
+        temp = InclusiveScanStep(temp, scan_op, first_lane, offset);
+
+	return temp;
+#endif
     }
 
 
