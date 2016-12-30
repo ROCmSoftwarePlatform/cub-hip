@@ -491,7 +491,7 @@ struct CachingDeviceAllocator
             }
 
             // Create ready event
-            if (CubDebug(error = hipEventCreateWithFlags(&search_key.ready_event, cudaEventDisableTiming)))
+            if (CubDebug(error = hipEventCreateWithFlags(&search_key.ready_event, hipEventDisableTiming)))
                 return error;
 
             // Insert into live blocks

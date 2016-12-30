@@ -202,6 +202,7 @@ public:
  */
 template <typename OffsetT>
 __global__ void FillAndResetDrainKernel(
+    hipLaunchParm        lp,
     GridQueue<OffsetT>   grid_queue,
     OffsetT              num_items)
 {
