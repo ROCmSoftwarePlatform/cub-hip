@@ -41,13 +41,13 @@
 #include "../util_device.cuh"
 #include "../util_namespace.cuh"
 
-#include <thrust/version.h>
+//#include <thrust/version.h>
 
-#if (THRUST_VERSION >= 100700)
+//#if (THRUST_VERSION >= 100700)
     // This iterator is compatible with Thrust API 1.7 and newer
-    #include <thrust/iterator/iterator_facade.h>
-    #include <thrust/iterator/iterator_traits.h>
-#endif // THRUST_VERSION
+    //#include <thrust/iterator/iterator_facade.h>
+    //#include <thrust/iterator/iterator_traits.h>
+//#endif // THRUST_VERSION
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -120,7 +120,7 @@ public:
     typedef KeyValuePair<difference_type, OutputValueT> value_type;             ///< The type of the element the iterator can point to
     typedef value_type*                                 pointer;                ///< The type of a pointer to an element the iterator can point to
     typedef value_type                                  reference;              ///< The type of a reference to an element the iterator can point to
-
+/*
 #if (THRUST_VERSION >= 100700)
     // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
     typedef typename thrust::detail::iterator_facade_category<
@@ -129,9 +129,9 @@ public:
         value_type,
         reference
       >::type iterator_category;                                        ///< The iterator category
-#else
+#else*/
     typedef std::random_access_iterator_tag     iterator_category;      ///< The iterator category
-#endif  // THRUST_VERSION
+//#endif  // THRUST_VERSION
 
 private:
 
