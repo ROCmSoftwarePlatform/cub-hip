@@ -135,7 +135,8 @@ __device__ __forceinline__ unsigned int BFE(
 #if CUB_PTX_ARCH >= 200 && defined(__HIP_PLATFORM_NVCC__)
     asm volatile("bfe.u32 %0, %1, %2, %3;" : "=r"(bits) : "r"((unsigned int) source), "r"(bit_start), "r"(num_bits));
 #else
-    bits = bfe(source, bit_start, num_bits);
+    const unsigned int MASK = (1 << num_bits) - 1;
+    bits = (source >> bit_start) & MASK;
 #endif
     return bits;
 }
