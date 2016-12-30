@@ -193,6 +193,7 @@ struct AgentRadixSortDownsweep
     /**
      * Shared memory storage layout
      */
+#ifdef __HIP_PLATFORM_NVCC__
     union __align__(16) _TempStorage
     {
         typename BlockLoadKeys::TempStorage         load_keys;
@@ -209,8 +210,24 @@ struct AgentRadixSortDownsweep
         };
 
     };
+#elif defined(__HIP_PLATFORM_HCC__)
+    union __attribute__((aligned(16))) _TempStorage
+    {
+        typename BlockLoadKeys::TempStorage         load_keys;
+        typename BlockRadixRank::TempStorage        ranking;
+        typename BlockLoadValues::TempStorage       load_values;
+        typename BlockExchangeValues::TempStorage   exchange_values;
 
+        OffsetT     exclusive_digit_prefix[RADIX_DIGITS];
 
+        struct
+        {
+            typename BlockExchangeKeys::TempStorage     exchange_keys;
+            OffsetT     relative_bin_offsets[RADIX_DIGITS + 1];
+        };
+
+    };
+#endif
     /// Alias wrapper allowing storage to be unioned
     struct TempStorage : Uninitialized<_TempStorage> {};
 
@@ -660,10 +677,19 @@ struct AgentRadixSortDownsweep
         if (hipThreadIdx_x < RADIX_DIGITS)
         {
             // Short circuit if the histogram has only bin counts of only zeros or problem-size
+#ifdef __HIP_PLATFORM_NVCC__
             short_circuit = ((bin_offset == 0) || (bin_offset == num_items));
+#elif defined(__HIP_PLATFORM_HCC__)
+            int predicate = ((bin_offset == 0) || (bin_offset == num_items));
+            short_circuit = WarpAll(predicate);
+#endif
         }
-
+        //TODO:(mcw) To find equivalent in hip for __syncthreads_and()
+#ifdef __HIP_PLATFORM_NVCC__
         short_circuit = __syncthreads_and(short_circuit);
+#elif defined(__HIP_PLATFORM_HCC__)
+        __syncthreads();
+#endif
     }
 
 
@@ -699,13 +725,22 @@ struct AgentRadixSortDownsweep
 
             // Short circuit if the first block's histogram has only bin counts of only zeros or problem-size
             OffsetT first_block_bin_offset = d_spine[hipGridDim_x * bin_idx];
+#ifdef __HIP_PLATFORM_NVCC__
             short_circuit = ((first_block_bin_offset == 0) || (first_block_bin_offset == num_items));
+#elif defined(__HIP_PLATFORM_HCC__)
+            int predicate = ((first_block_bin_offset == 0) || (first_block_bin_offset == num_items));
+            short_circuit = WarpAll(predicate);
+#endif
 
             // Load my block's bin offset for my bin
             bin_offset = d_spine[(hipGridDim_x * bin_idx) + hipBlockIdx_x];
         }
-
+        //TODO:(mcw) To find equivalent in hip for __syncthreads_and()
+#ifdef __HIP_PLATFORM_NVCC__
         short_circuit = __syncthreads_and(short_circuit);
+#elif defined(__HIP_PLATFORM_HCC__)
+        __syncthreads();
+#endif
     }
 
 
