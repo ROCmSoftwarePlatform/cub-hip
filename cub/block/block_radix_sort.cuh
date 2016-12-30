@@ -59,7 +59,7 @@ namespace cub {
  * \tparam RADIX_BITS           <b>[optional]</b> The number of radix bits per digit place (default: 4 bits)
  * \tparam MEMOIZE_OUTER_SCAN   <b>[optional]</b> Whether or not to buffer outer raking scan partials to incur fewer shared memory reads at the expense of higher register pressure (default: true for architectures SM35 and newer, false otherwise).
  * \tparam INNER_SCAN_ALGORITHM <b>[optional]</b> The cub::BlockScanAlgorithm algorithm to use (default: cub::BLOCK_SCAN_WARP_SCANS)
- * \tparam SMEM_CONFIG          <b>[optional]</b> Shared memory bank mode (default: \p cudaSharedMemBankSizeFourByte)
+ * \tparam SMEM_CONFIG          <b>[optional]</b> Shared memory bank mode (default: \p hipSharedMemBankSizeFourByte)
  * \tparam BLOCK_DIM_Y          <b>[optional]</b> The thread block length in threads along the Y dimension (default: 1)
  * \tparam BLOCK_DIM_Z          <b>[optional]</b> The thread block length in threads along the Z dimension (default: 1)
  * \tparam PTX_ARCH             <b>[optional]</b> \ptxversion
@@ -125,7 +125,7 @@ template <
     int                     RADIX_BITS              = 4,
     bool                    MEMOIZE_OUTER_SCAN      = (CUB_PTX_ARCH >= 350) ? true : false,
     BlockScanAlgorithm      INNER_SCAN_ALGORITHM    = BLOCK_SCAN_WARP_SCANS,
-    cudaSharedMemConfig     SMEM_CONFIG             = cudaSharedMemBankSizeFourByte,
+    hipSharedMemConfig     SMEM_CONFIG             = hipSharedMemBankSizeFourByte,
     int                     BLOCK_DIM_Y             = 1,
     int                     BLOCK_DIM_Z             = 1,
     int                     PTX_ARCH                = CUB_PTX_ARCH>
@@ -479,8 +479,12 @@ public:
         int     begin_bit   = 0,                    ///< [in] <b>[optional]</b> The beginning (least-significant) bit index needed for key comparison
         int     end_bit     = sizeof(KeyT) * 8)      ///< [in] <b>[optional]</b> The past-the-end (most-significant) bit index needed for key comparison
     {
+#ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
-
+#elif defined(__HIP_PLATFORM_HCC__)
+	typedef __declspec(align(4)) struct S { NullType n; } ALIGNED_NULLTYPE;
+	ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
+#endif
         SortBlocked(keys, values, begin_bit, end_bit, Int2Type<false>(), Int2Type<KEYS_ONLY>());
     }
 
@@ -580,8 +584,12 @@ public:
         int     begin_bit   = 0,                    ///< [in] <b>[optional]</b> The beginning (least-significant) bit index needed for key comparison
         int     end_bit     = sizeof(KeyT) * 8)      ///< [in] <b>[optional]</b> The past-the-end (most-significant) bit index needed for key comparison
     {
+#ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
-
+#elif defined(__HIP_PLATFORM_HCC__)
+	typedef __declspec(align(4)) struct S { NullType n; } ALIGNED_NULLTYPE;
+	ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
+#endif
         SortBlocked(keys, values, begin_bit, end_bit, Int2Type<true>(), Int2Type<KEYS_ONLY>());
     }
 
@@ -690,8 +698,12 @@ public:
         int     begin_bit   = 0,                    ///< [in] <b>[optional]</b> The beginning (least-significant) bit index needed for key comparison
         int     end_bit     = sizeof(KeyT) * 8)      ///< [in] <b>[optional]</b> The past-the-end (most-significant) bit index needed for key comparison
     {
+#ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
-
+#elif defined(__HIP_PLATFORM_HCC__)
+	typedef __declspec(align(4)) struct S { NullType n; } ALIGNED_NULLTYPE;
+        ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
+#endif
         SortBlockedToStriped(keys, values, begin_bit, end_bit, Int2Type<false>(), Int2Type<KEYS_ONLY>());
     }
 
@@ -793,8 +805,12 @@ public:
         int     begin_bit   = 0,                    ///< [in] <b>[optional]</b> The beginning (least-significant) bit index needed for key comparison
         int     end_bit     = sizeof(KeyT) * 8)      ///< [in] <b>[optional]</b> The past-the-end (most-significant) bit index needed for key comparison
     {
+#ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
-
+#elif defined(__HIP_PLATFORM_HCC__)
+	typedef __declspec(align(4)) struct S { NullType n; } ALIGNED_NULLTYPE;
+	ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
+#endif
         SortBlockedToStriped(keys, values, begin_bit, end_bit, Int2Type<true>(), Int2Type<KEYS_ONLY>());
     }
 
