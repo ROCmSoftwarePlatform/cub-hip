@@ -152,6 +152,7 @@ struct IterateThreadLoad<MAX, MAX>
 /**
  * Define a uint4 (16B) ThreadLoad specialization for the given Cache load modifier
  */
+#ifdef __HIP_PLATFORM_NVCC__
 #define _CUB_LOAD_16(cub_modifier, ptx_modifier)                                             \
     template<>                                                                              \
     __device__ __forceinline__ uint4 ThreadLoad<cub_modifier, uint4 const *>(uint4 const *ptr)                   \
@@ -175,10 +176,31 @@ struct IterateThreadLoad<MAX, MAX>
             _CUB_ASM_PTR_(ptr));                                                            \
         return retval;                                                                      \
     }
-
+#elif defined(__HIP_PLATFORM_HCC__)
+#define _CUB_LOAD_16(cub_modifier, ptx_modifier)                                            \
+    template<>                                                                              \
+     __device__ __forceinline__ uint4 ThreadLoad<cub_modifier, uint4 const *>(uint4 const *ptr)                   \
+    {                                                                                       \
+        uint4 retval;                                                                       \
+        retval.x = ptr->x;                                                                  \
+        retval.y = ptr->y;                                                                  \
+        retval.z = ptr->z;                                                                  \
+        retval.w = ptr->w;                                                                  \
+        return retval;                                                                      \
+    }                                                                                       \
+    template<>                                                                              \
+     __device__ __forceinline__ ulonglong2 ThreadLoad<cub_modifier, ulonglong2 const *>(ulonglong2 const *ptr)    \
+    {                                                                                       \
+        ulonglong2 retval;                                                                  \
+        retval.x = ptr->x;                                                                  \
+        retval.y = ptr->y;                                                                  \
+        return retval;                                                                      \
+    }
+#endif
 /**
  * Define a uint2 (8B) ThreadLoad specialization for the given Cache load modifier
  */
+#ifdef __HIP_PLATFORM_NVCC__
 #define _CUB_LOAD_8(cub_modifier, ptx_modifier)                                              \
     template<>                                                                              \
     __device__ __forceinline__ ushort4 ThreadLoad<cub_modifier, ushort4 const *>(ushort4 const *ptr)             \
@@ -211,10 +233,38 @@ struct IterateThreadLoad<MAX, MAX>
             _CUB_ASM_PTR_(ptr));                                                            \
         return retval;                                                                      \
     }
-
+#elif defined(__HIP_PLATFORM_HCC__)
+#define _CUB_LOAD_8(cub_modifier, ptx_modifier)                                             \
+    template<>                                                                              \
+     __device__ __forceinline__ ushort4 ThreadLoad<cub_modifier, ushort4 const *>(ushort4 const *ptr)             \
+    {                                                                                       \
+        ushort4 retval;                                                                     \
+        retval.x = ptr->x;                                                                  \
+        retval.y = ptr->y;                                                                  \
+        retval.z = ptr->z;                                                                  \
+        retval.w = ptr->w;                                                                  \
+        return retval;                                                                      \
+    }                                                                                       \
+    template<>                                                                              \
+     __device__ __forceinline__ uint2 ThreadLoad<cub_modifier, uint2 const *>(uint2 const *ptr)                   \
+    {                                                                                       \
+        uint2 retval;                                                                       \
+        retval.x = ptr->x;                                                                  \
+        retval.y = ptr->y;                                                                  \
+        return retval;                                                                      \
+    }                                                                                       \
+    template<>                                                                              \
+     __device__ __forceinline__ unsigned long long ThreadLoad<cub_modifier, unsigned long long const *>(unsigned long long const *ptr)    \
+    {                                                                                       \
+        unsigned long long retval;                                                          \
+        retval = *ptr;                                                                      \
+        return retval;                                                                      \
+    }
+#endif
 /**
  * Define a uint (4B) ThreadLoad specialization for the given Cache load modifier
  */
+#ifdef __HIP_PLATFORM_NVCC__
 #define _CUB_LOAD_4(cub_modifier, ptx_modifier)                                              \
     template<>                                                                              \
     __device__ __forceinline__ unsigned int ThreadLoad<cub_modifier, unsigned int const *>(unsigned int const *ptr)                      \
@@ -225,11 +275,21 @@ struct IterateThreadLoad<MAX, MAX>
             _CUB_ASM_PTR_(ptr));                                                            \
         return retval;                                                                      \
     }
-
+#elif defined(__HIP_PLATFORM_HCC__)
+#define _CUB_LOAD_4(cub_modifier, ptx_modifier)                                             \
+    template<>                                                                              \
+     __device__ __forceinline__ unsigned int ThreadLoad<cub_modifier, unsigned int const *>(unsigned int const *ptr)                      \
+    {                                                                                       \
+        unsigned int retval;                                                                \
+        retval = *ptr;                                                                      \
+        return retval;                                                                      \
+    }
+#endif
 
 /**
  * Define a unsigned short (2B) ThreadLoad specialization for the given Cache load modifier
  */
+#ifdef __HIP_PLATFORM_NVCC__
 #define _CUB_LOAD_2(cub_modifier, ptx_modifier)                                              \
     template<>                                                                              \
     __device__ __forceinline__ unsigned short ThreadLoad<cub_modifier, unsigned short const *>(unsigned short const *ptr)                \
@@ -240,11 +300,22 @@ struct IterateThreadLoad<MAX, MAX>
             _CUB_ASM_PTR_(ptr));                                                            \
         return retval;                                                                      \
     }
+#elif defined(__HIP_PLATFORM_HCC__)
+#define _CUB_LOAD_2(cub_modifier, ptx_modifier)                                             \
+    template<>                                                                              \
+     __device__ __forceinline__ unsigned short ThreadLoad<cub_modifier, unsigned short const *>(unsigned short const *ptr)                \
+    {                                                                                       \
+        unsigned short retval;                                                              \
+        retval = *ptr;                                                                      \
+        return retval;                                                                      \
+    }
+#endif
 
 
 /**
  * Define an unsigned char (1B) ThreadLoad specialization for the given Cache load modifier
  */
+#ifdef __HIP_PLATFORM_NVCC__
 #define _CUB_LOAD_1(cub_modifier, ptx_modifier)                                              \
     template<>                                                                              \
     __device__ __forceinline__ unsigned char ThreadLoad<cub_modifier, unsigned char const *>(unsigned char const *ptr)                   \
@@ -260,8 +331,16 @@ struct IterateThreadLoad<MAX, MAX>
             _CUB_ASM_PTR_(ptr));                                                            \
         return (unsigned char) retval;                                                      \
     }
-
-
+#elif defined(__HIP_PLATFORM_HCC__)
+#define _CUB_LOAD_1(cub_modifier, ptx_modifier)                                             \
+    template<>                                                                              \
+     __device__ __forceinline__ unsigned char ThreadLoad<cub_modifier, unsigned char const *>(unsigned char const *ptr)                   \
+    {                                                                                       \
+        unsigned short retval;                                                              \
+        retval = *ptr;                                                                      \
+        return (unsigned char) retval;                                                      \
+    }
+#endif
 /**
  * Define powers-of-two ThreadLoad specializations for the given Cache load modifier
  */

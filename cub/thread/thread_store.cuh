@@ -34,7 +34,6 @@
 
 #pragma once
 
-#include <cuda.h>
 
 #include "../util_ptx.cuh"
 #include "../util_type.cuh"
@@ -156,6 +155,7 @@ struct IterateThreadStore<MAX, MAX>
 /**
  * Define a uint4 (16B) ThreadStore specialization for the given Cache load modifier
  */
+#ifdef __HIP_PLATFORM_NVCC__
 #define _CUB_STORE_16(cub_modifier, ptx_modifier)                                            \
     template<>                                                                              \
     __device__ __forceinline__ void ThreadStore<cub_modifier, uint4*, uint4>(uint4* ptr, uint4 val)                         \
@@ -175,11 +175,27 @@ struct IterateThreadStore<MAX, MAX>
             "l"(val.x),                                                                     \
             "l"(val.y));                                                                    \
     }
-
-
+#elif defined(__HIP_PLATFORM_HCC__)
+#define _CUB_STORE_16(cub_modifier, ptx_modifier)                                           \
+    template<>                                                                              \
+     __device__ __forceinline__ void ThreadStore<cub_modifier, uint4*, uint4>(uint4* ptr, uint4 val)                         \
+    {                                                                                       \
+        ptr->x = val.x;                                                                     \
+        ptr->y = val.y;                                                                     \
+        ptr->z = val.z;                                                                     \
+        ptr->w = val.w;                                                                     \
+    }                                                                                       \
+    template<>                                                                              \
+     __device__ __forceinline__ void ThreadStore<cub_modifier, ulonglong2*, ulonglong2>(ulonglong2* ptr, ulonglong2 val)     \
+    {                                                                                       \
+        ptr->x = val.x;                                                                     \
+        ptr->y = val.y;                                                                     \
+    }
+#endif
 /**
  * Define a uint2 (8B) ThreadStore specialization for the given Cache load modifier
  */
+#ifdef __HIP_PLATFORM_NVCC__
 #define _CUB_STORE_8(cub_modifier, ptx_modifier)                                             \
     template<>                                                                              \
     __device__ __forceinline__ void ThreadStore<cub_modifier, ushort4*, ushort4>(ushort4* ptr, ushort4 val)                 \
@@ -206,10 +222,32 @@ struct IterateThreadStore<MAX, MAX>
             _CUB_ASM_PTR_(ptr),                                                             \
             "l"(val));                                                                      \
     }
-
+#elif defined(__HIP_PLATFORM_HCC__)
+#define _CUB_STORE_8(cub_modifier, ptx_modifier)                                            \
+    template<>                                                                              \
+     __device__ __forceinline__ void ThreadStore<cub_modifier, ushort4*, ushort4>(ushort4* ptr, ushort4 val)                 \
+    {                                                                                       \
+        ptr->x = val.x;                                                                     \
+        ptr->y = val.y;                                                                     \
+        ptr->z = val.z;                                                                     \
+        ptr->w = val.w;                                                                     \
+    }                                                                                       \
+    template<>                                                                              \
+     __device__ __forceinline__ void ThreadStore<cub_modifier, uint2*, uint2>(uint2* ptr, uint2 val)                         \
+    {                                                                                       \
+        ptr->x = val.x;                                                                     \
+        ptr->y = val.y;                                                                     \
+    }                                                                                       \
+    template<>                                                                              \
+     __device__ __forceinline__ void ThreadStore<cub_modifier, unsigned long long*, unsigned long long>(unsigned long long* ptr, unsigned long long val)     \
+    {                                                                                       \
+        *ptr = val;                                                                         \
+    }
+#endif
 /**
  * Define a unsigned int (4B) ThreadStore specialization for the given Cache load modifier
  */
+#ifdef __HIP_PLATFORM_NVCC__
 #define _CUB_STORE_4(cub_modifier, ptx_modifier)                                             \
     template<>                                                                              \
     __device__ __forceinline__ void ThreadStore<cub_modifier, unsigned int*, unsigned int>(unsigned int* ptr, unsigned int val)                             \
@@ -218,11 +256,19 @@ struct IterateThreadStore<MAX, MAX>
             _CUB_ASM_PTR_(ptr),                                                             \
             "r"(val));                                                                      \
     }
-
+#elif defined(__HIP_PLATFORM_HCC__)
+#define _CUB_STORE_4(cub_modifier, ptx_modifier)                                            \
+    template<>                                                                              \
+     __device__ __forceinline__ void ThreadStore<cub_modifier, unsigned int*, unsigned int>(unsigned int* ptr, unsigned int val)                             \
+    {                                                                                       \
+        *ptr = val;                                                                         \
+    }
+#endif
 
 /**
  * Define a unsigned short (2B) ThreadStore specialization for the given Cache load modifier
  */
+#ifdef __HIP_PLATFORM_NVCC__
 #define _CUB_STORE_2(cub_modifier, ptx_modifier)                                             \
     template<>                                                                              \
     __device__ __forceinline__ void ThreadStore<cub_modifier, unsigned short*, unsigned short>(unsigned short* ptr, unsigned short val)                     \
@@ -231,11 +277,18 @@ struct IterateThreadStore<MAX, MAX>
             _CUB_ASM_PTR_(ptr),                                                             \
             "h"(val));                                                                      \
     }
-
-
+#elif defined(__HIP_PLATFORM_HCC__)
+#define _CUB_STORE_2(cub_modifier, ptx_modifier)                                            \
+    template<>                                                                              \
+     __device__ __forceinline__ void ThreadStore<cub_modifier, unsigned short*, unsigned short>(unsigned short* ptr, unsigned short val)                     \
+    {                                                                                       \
+        *ptr = val;                                                                         \
+    }
+#endif
 /**
  * Define a unsigned char (1B) ThreadStore specialization for the given Cache load modifier
  */
+#ifdef __HIP_PLATFORM_NVCC__
 #define _CUB_STORE_1(cub_modifier, ptx_modifier)                                             \
     template<>                                                                              \
     __device__ __forceinline__ void ThreadStore<cub_modifier, unsigned char*, unsigned char>(unsigned char* ptr, unsigned char val)                         \
@@ -249,7 +302,14 @@ struct IterateThreadStore<MAX, MAX>
             _CUB_ASM_PTR_(ptr),                                                             \
             "h"((unsigned short) val));                                                               \
     }
-
+#elif defined(__HIP_PLATFORM_HCC__)
+#define _CUB_STORE_1(cub_modifier, ptx_modifier)                                            \
+    template<>                                                                              \
+     __device__ __forceinline__ void ThreadStore<cub_modifier, unsigned char*, unsigned char>(unsigned char* ptr, unsigned char val)                         \
+    {                                                                                       \
+        *ptr = val;                                                                         \
+    }
+#endif
 /**
  * Define powers-of-two ThreadStore specializations for the given Cache load modifier
  */
