@@ -91,7 +91,7 @@ __device__ __forceinline__ unsigned int SHR_ADD(
     unsigned int addend)
 {
     unsigned int ret;
-#if CUB_PTX_ARCH >= 200
+#if CUB_PTX_ARCH >= 200 && defined(__HIP_PLATFORM_NVCC__)
     asm volatile("vshr.u32.u32.u32.clamp.add %0, %1, %2, %3;" :
         "=r"(ret) : "r"(x), "r"(shift), "r"(addend));
 #else
@@ -110,7 +110,7 @@ __device__ __forceinline__ unsigned int SHL_ADD(
     unsigned int addend)
 {
     unsigned int ret;
-#if CUB_PTX_ARCH >= 200
+#if CUB_PTX_ARCH >= 200 && defined(__HIP_PLATFORM_NVCC__)
     asm volatile("vshl.u32.u32.u32.clamp.add %0, %1, %2, %3;" :
         "=r"(ret) : "r"(x), "r"(shift), "r"(addend));
 #else
@@ -132,11 +132,10 @@ __device__ __forceinline__ unsigned int BFE(
     Int2Type<BYTE_LEN>      /*byte_len*/)
 {
     unsigned int bits;
-#if CUB_PTX_ARCH >= 200
+#if CUB_PTX_ARCH >= 200 && defined(__HIP_PLATFORM_NVCC__)
     asm volatile("bfe.u32 %0, %1, %2, %3;" : "=r"(bits) : "r"((unsigned int) source), "r"(bit_start), "r"(num_bits));
 #else
-    const unsigned int MASK = (1 << num_bits) - 1;
-    bits = (source >> bit_start) & MASK;
+    bits = bfe(source, bit_start, num_bits);
 #endif
     return bits;
 }
@@ -181,7 +180,7 @@ __device__ __forceinline__ void BFI(
     unsigned int bit_start,
     unsigned int num_bits)
 {
-#if CUB_PTX_ARCH >= 200
+#if CUB_PTX_ARCH >= 200 && defined(__HIP_PLATFORM_NVCC__)
     asm volatile("bfi.b32 %0, %1, %2, %3, %4;" :
         "=r"(ret) : "r"(y), "r"(x), "r"(bit_start), "r"(num_bits));
 #else
@@ -198,7 +197,7 @@ __device__ __forceinline__ void BFI(
  */
 __device__ __forceinline__ unsigned int IADD3(unsigned int x, unsigned int y, unsigned int z)
 {
-#if CUB_PTX_ARCH >= 200
+#if CUB_PTX_ARCH >= 200 && defined(__HIP_PLATFORM_NVCC__)
     asm volatile("vadd.u32.u32.u32.add %0, %1, %2, %3;" : "=r"(x) : "r"(x), "r"(y), "r"(z));
 #else
     x = x + y + z;
@@ -236,7 +235,28 @@ __device__ __forceinline__ unsigned int IADD3(unsigned int x, unsigned int y, un
 __device__ __forceinline__ int PRMT(unsigned int a, unsigned int b, unsigned int index)
 {
     int ret;
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("prmt.b32 %0, %1, %2, %3;" : "=r"(ret) : "r"(a), "r"(b), "r"(index));
+#elif defined(__HIP_PLATFORM_HCC__)
+    long tmp64 = (((long)b)<<32) | a;  // create 8 byte source with source={b,a}
+
+    int ctl[4];                        // Store the individual index values for each nibble
+    ctl[0] = (index >>  0) & 0xf;
+    ctl[1] = (index >>  4) & 0xf;
+    ctl[2] = (index >>  8) & 0xf;
+    ctl[3] = (index >> 12) & 0xf;
+
+    // Store the value pointed by index and shift to store in single variable ret
+    long res[4];
+    long val = 0x000F;
+    res[0] = ((val << (ctl[0]*8)) & tmp64)>>8;
+    res[1] = ((val << (ctl[1]*8)) & tmp64)>>16;
+    res[2] = ((val << (ctl[2]*8)) & tmp64)>>24;
+    res[3] = ((val << (ctl[3]*8)) & tmp64)>>32;
+
+    ret = (int)(res[0] | res[1] | res[2] | res[3]);
+#endif
+
     return ret;
 }
 
@@ -247,7 +267,11 @@ __device__ __forceinline__ int PRMT(unsigned int a, unsigned int b, unsigned int
  */
 __device__ __forceinline__ void BAR(int count)
 {
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("bar.sync 1, %0;" : : "r"(count));
+#endif
+    __syncthreads();
+
 }
 
 
@@ -257,7 +281,11 @@ __device__ __forceinline__ void BAR(int count)
 __device__ __forceinline__ float FMUL_RZ(float a, float b)
 {
     float d;
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("mul.rz.f32 %0, %1, %2;" : "=f"(d) : "f"(a), "f"(b));
+#elif defined(__HIP_PLATFORM_HCC__)
+   d = a * b;
+#endif
     return d;
 }
 
@@ -268,7 +296,11 @@ __device__ __forceinline__ float FMUL_RZ(float a, float b)
 __device__ __forceinline__ float FFMA_RZ(float a, float b, float c)
 {
     float d;
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("fma.rz.f32 %0, %1, %2, %3;" : "=f"(d) : "f"(a), "f"(b), "f"(c));
+#elif defined(__HIP_PLATFORM_HCC__)
+    d = a * b + c;
+#endif
     return d;
 }
 
@@ -278,7 +310,9 @@ __device__ __forceinline__ float FFMA_RZ(float a, float b, float c)
  * \brief Terminates the calling thread
  */
 __device__ __forceinline__ void ThreadExit() {
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("exit;");
+#endif
 }    
 
 
@@ -286,7 +320,9 @@ __device__ __forceinline__ void ThreadExit() {
  * \brief  Abort execution and generate an interrupt to the host CPU
  */
 __device__ __forceinline__ void ThreadTrap() {
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("trap;");
+#endif
 }
 
 
@@ -307,7 +343,12 @@ __device__ __forceinline__ int RowMajorTid(int block_dim_x, int block_dim_y, int
 __device__ __forceinline__ unsigned int LaneId()
 {
     unsigned int ret;
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("mov.u32 %0, %%laneid;" : "=r"(ret) );
+#elif defined(__HIP_PLATFORM_HCC__)
+    int Tid = hipBlockIdx_x * hipBlockDim_x * hipBlockDim_y + hipThreadIdx_y * hipBlockDim_x + hipThreadIdx_x;
+    ret =  Tid % 32;
+#endif
     return ret;
 }
 
@@ -318,7 +359,12 @@ __device__ __forceinline__ unsigned int LaneId()
 __device__ __forceinline__ unsigned int WarpId()
 {
     unsigned int ret;
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("mov.u32 %0, %%warpid;" : "=r"(ret) );
+#elif defined(__HIP_PLATFORM_HCC__)
+    int Tid = hipBlockIdx_x * hipBlockDim_x * hipBlockDim_y + hipThreadIdx_y * hipBlockDim_x + hipThreadIdx_x;
+    ret =  Tid / 32;
+#endif
     return ret;
 }
 
@@ -328,7 +374,13 @@ __device__ __forceinline__ unsigned int WarpId()
 __device__ __forceinline__ unsigned int LaneMaskLt()
 {
     unsigned int ret;
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("mov.u32 %0, %%lanemask_lt;" : "=r"(ret) );
+#elif defined(__HIP_PLATFORM_HCC__)
+    unsigned int Tid = hipBlockIdx_x * hipBlockDim_x * hipBlockDim_y + hipThreadIdx_y * hipBlockDim_x + hipThreadIdx_x;
+    unsigned int lane = Tid % 32;
+    ret = (1 << lane) - 1;
+#endif
     return ret;
 }
 
@@ -338,7 +390,13 @@ __device__ __forceinline__ unsigned int LaneMaskLt()
 __device__ __forceinline__ unsigned int LaneMaskLe()
 {
     unsigned int ret;
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("mov.u32 %0, %%lanemask_le;" : "=r"(ret) );
+#elif defined(__HIP_PLATFORM_HCC__)
+    unsigned int Tid = hipBlockIdx_x * hipBlockDim_x * hipBlockDim_y + hipThreadIdx_y * hipBlockDim_x + hipThreadIdx_x;
+    unsigned int lane = Tid % 32;
+    ret = (2 << lane) - 1;
+#endif
     return ret;
 }
 
@@ -348,7 +406,13 @@ __device__ __forceinline__ unsigned int LaneMaskLe()
 __device__ __forceinline__ unsigned int LaneMaskGt()
 {
     unsigned int ret;
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("mov.u32 %0, %%lanemask_gt;" : "=r"(ret) );
+#elif defined(__HIP_PLATFORM_HCC__)
+    unsigned int Tid = hipBlockIdx_x * hipBlockDim_x * hipBlockDim_y + hipThreadIdx_y * hipBlockDim_x + hipThreadIdx_x;
+    unsigned int lane = Tid % 32;
+    ret = ~((2 << lane) - 1);
+#endif
     return ret;
 }
 
@@ -358,7 +422,13 @@ __device__ __forceinline__ unsigned int LaneMaskGt()
 __device__ __forceinline__ unsigned int LaneMaskGe()
 {
     unsigned int ret;
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("mov.u32 %0, %%lanemask_ge;" : "=r"(ret) );
+#elif defined(__HIP_PLATFORM_HCC__)
+    unsigned int Tid = hipBlockIdx_x * hipBlockDim_x * hipBlockDim_y + hipThreadIdx_y * hipBlockDim_x + hipThreadIdx_x;
+    unsigned int lane = Tid % 32;
+    ret = ~((1 << lane) - 1);
+#endif
     return ret;
 }
 
@@ -381,8 +451,12 @@ __device__ __forceinline__ void ShuffleUp(
     Int2Type<STEP>  /*step*/)
 {
     unsigned int word = input[STEP];
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("shfl.up.b32 %0, %1, %2, %3;"
         : "=r"(word) : "r"(word), "r"(src_offset), "r"(first_lane));
+#elif defined(__HIP_PLATFORM_HCC__)
+    word = __shfl_up((int)word, (unsigned int)src_offset, first_lane);
+#endif
     output[STEP] = (ShuffleWordT) word;
 
     ShuffleUp(input, output, src_offset, first_lane, Int2Type<STEP - 1>());
@@ -415,8 +489,12 @@ __device__ __forceinline__ void ShuffleDown(
     Int2Type<STEP>  /*step*/)
 {
     unsigned int word = input[STEP];
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("shfl.down.b32 %0, %1, %2, %3;"
         : "=r"(word) : "r"(word), "r"(src_offset), "r"(last_lane));
+#elif defined(__HIP_PLATFORM_HCC__)
+    word = __shfl_down((int)word, (unsigned int)src_offset, last_lane);
+#endif
     output[STEP] = (ShuffleWordT) word;
 
     ShuffleDown(input, output, src_offset, last_lane, Int2Type<STEP - 1>());
@@ -448,8 +526,13 @@ __device__ __forceinline__ void ShuffleIdx(
     Int2Type<STEP>  /*step*/)
 {
     unsigned int word = input[STEP];
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("shfl.idx.b32 %0, %1, %2, %3;"
         : "=r"(word) : "r"(word), "r"(src_lane), "r"(last_lane));
+#elif defined(__HIP_PLATFORM_HCC__)
+    //TODO:(mcw) To find equivalent in hip
+    //word = __shfl_idx(word, src_lane, last_lane);
+#endif
     output[STEP] = (ShuffleWordT) word;
 
     ShuffleIdx(input, output, src_lane, last_lane, Int2Type<STEP - 1>());
@@ -518,15 +601,23 @@ __device__ __forceinline__ T ShuffleUp(
     ShuffleWord     *input_alias    = reinterpret_cast<ShuffleWord *>(&input);
 
     unsigned int shuffle_word;
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("shfl.up.b32 %0, %1, %2, %3;"
         : "=r"(shuffle_word) : "r"((unsigned int) input_alias[0]), "r"(src_offset), "r"(first_lane));
+#elif defined(__HIP_PLATFORM_HCC__)
+    shuffle_word = __shfl_up((int) input_alias[0], (unsigned int)src_offset, first_lane);
+#endif
     output_alias[0] = shuffle_word;
 
     #pragma unroll
     for (int WORD = 1; WORD < WORDS; ++WORD)
     {
+#ifdef __HIP_PLATFORM_NVCC__
         asm volatile("shfl.up.b32 %0, %1, %2, %3;"
             : "=r"(shuffle_word) : "r"((unsigned int) input_alias[WORD]), "r"(src_offset), "r"(first_lane));
+#elif defined(__HIP_PLATFORM_HCC__)
+        shuffle_word = __shfl_up((int) input_alias[WORD], (unsigned int)src_offset, first_lane);
+#endif
         output_alias[WORD] = shuffle_word;
     }
 
@@ -579,15 +670,23 @@ __device__ __forceinline__ T ShuffleDown(
     ShuffleWord     *input_alias    = reinterpret_cast<ShuffleWord *>(&input);
 
     unsigned int shuffle_word;
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("shfl.down.b32 %0, %1, %2, %3;"
         : "=r"(shuffle_word) : "r"((unsigned int) input_alias[0]), "r"(src_offset), "r"(last_lane));
+#elif defined(__HIP_PLATFORM_HCC__)
+    shuffle_word = __shfl_down((int) input_alias[0], (unsigned int)src_offset, last_lane);
+#endif
     output_alias[0] = shuffle_word;
 
     #pragma unroll
     for (int WORD = 1; WORD < WORDS; ++WORD)
     {
+#ifdef __HIP_PLATFORM_NVCC__
         asm volatile("shfl.down.b32 %0, %1, %2, %3;"
             : "=r"(shuffle_word) : "r"((unsigned int) input_alias[WORD]), "r"(src_offset), "r"(last_lane));
+#elif defined(__HIP_PLATFORM_HCC__)
+        shuffle_word = __shfl_down((int) input_alias[WORD], (unsigned int)src_offset, last_lane);
+#endif
         output_alias[WORD] = shuffle_word;
     }
 
@@ -620,15 +719,25 @@ __device__ __forceinline__ T ShuffleIndex(
     ShuffleWord     *input_alias    = reinterpret_cast<ShuffleWord *>(&input);
 
     unsigned int shuffle_word;
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("shfl.idx.b32 %0, %1, %2, %3;"
         : "=r"(shuffle_word) : "r"((unsigned int) input_alias[0]), "r"(src_lane), "r"(logical_warp_threads - 1));
+#elif defined(__HIP_PLATFORM_HCC__)
+    //TODO:(mcw) To find equivalent in hip 
+    //shuffle_word = __shfl_idx((unsigned int) input_alias[0], src_lane, logical_warp_threads - 1);
+#endif
     output_alias[0] = shuffle_word;
 
     #pragma unroll
     for (int WORD = 1; WORD < WORDS; ++WORD)
     {
+#ifdef __HIP_PLATFORM_NVCC__
         asm volatile("shfl.idx.b32 %0, %1, %2, %3;"
             : "=r"(shuffle_word) : "r"((unsigned int) input_alias[WORD]), "r"(src_lane), "r"(logical_warp_threads - 1));
+#elif defined(__HIP_PLATFORM_HCC__)
+        //TODO:(mcw) To find equivalent in hip
+        //shuffle_word = __shfl_idx((unsigned int) input_alias[WORD], src_lane, logical_warp_threads - 1);
+#endif
         output_alias[WORD] = shuffle_word;
     }
 
