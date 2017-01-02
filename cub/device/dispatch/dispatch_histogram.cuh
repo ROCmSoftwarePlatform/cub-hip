@@ -98,7 +98,7 @@ template <
     typename                                            PrivatizedDecodeOpT,            ///< The transform operator type for determining privatized counter indices from samples, one for each channel
     typename                                            OutputDecodeOpT,                ///< The transform operator type for determining output bin-ids from privatized counter indices, one for each channel
     typename                                            OffsetT>                        ///< Signed integer type for global offsets
-__launch_bounds__ (int(AgentHistogramPolicyT::BLOCK_THREADS))
+__launch_bounds__ (int(AgentHistogramPolicyT::BLOCK_THREADS), 1)
 __global__ void DeviceHistogramSweepKernel(
     hipLaunchParm                                           lp,
     SampleIteratorT                                         d_samples,                          ///< Input data to reduce
@@ -732,7 +732,12 @@ struct DipatchHistogram
             typedef PassThruTransform OutputDecodeOpT;
 
             PrivatizedDecodeOpT     privatized_decode_op[NUM_ACTIVE_CHANNELS];
+    #ifdef __HIP_PLATFORM_NVCC__
             OutputDecodeOpT         output_decode_op[NUM_ACTIVE_CHANNELS];
+    #elif defined(__HIP_PLATFORM_HCC__)
+	    typedef __declspec(align(4)) struct S { OutputDecodeOpT o; } ALIGNED_OUTPUTDECODEOPT;
+	    ALIGNED_OUTPUTDECODEOPT output_decode_op[NUM_ACTIVE_CHANNELS];
+    #endif
             int                     max_levels = num_output_levels[0];
 
             for (int channel = 0; channel < NUM_ACTIVE_CHANNELS; ++channel)
@@ -840,7 +845,12 @@ struct DipatchHistogram
             typedef SearchTransform<LevelT*> OutputDecodeOpT;
 
             int                         num_privatized_levels[NUM_ACTIVE_CHANNELS];
+    #ifdef __HIP_PLATFORM_NVCC__
             PrivatizedDecodeOpT         privatized_decode_op[NUM_ACTIVE_CHANNELS];
+    #elif defined(__HIP_PLATFORM_HCC__)
+	    typedef __declspec(align(4)) struct S { PrivatizedDecodeOpT p; } ALIGNED_PRIVATIZEDDECODEOPT;
+	    ALIGNED_PRIVATIZEDDECODEOPT privatized_decode_op[NUM_ACTIVE_CHANNELS];
+    #endif
             OutputDecodeOpT             output_decode_op[NUM_ACTIVE_CHANNELS];
             int                         max_levels = num_output_levels[0];              // Maximum number of levels in any channel
 
@@ -923,7 +933,12 @@ struct DipatchHistogram
             typedef PassThruTransform OutputDecodeOpT;
 
             PrivatizedDecodeOpT         privatized_decode_op[NUM_ACTIVE_CHANNELS];
+    #ifdef __HIP_PLATFORM_NVCC__
             OutputDecodeOpT             output_decode_op[NUM_ACTIVE_CHANNELS];
+    #elif defined(__HIP_PLATFORM_HCC__)
+	    typedef __declspec(align(4)) struct S { OutputDecodeOpT o; } ALIGNED_OUTPUTDECODEOPT;
+	    ALIGNED_OUTPUTDECODEOPT output_decode_op[NUM_ACTIVE_CHANNELS];
+    #endif
             int                         max_levels = num_output_levels[0];
 
             for (int channel = 0; channel < NUM_ACTIVE_CHANNELS; ++channel)
@@ -1035,7 +1050,12 @@ struct DipatchHistogram
             typedef ScaleTransform OutputDecodeOpT;
 
             int                     num_privatized_levels[NUM_ACTIVE_CHANNELS];
+   #ifdef __HIP_PLATFORM_NVCC__
             PrivatizedDecodeOpT     privatized_decode_op[NUM_ACTIVE_CHANNELS];
+   #elif defined(__HIP_PLATFORM_HCC__)
+   	    typedef __declspec(align(4)) struct S { PrivatizedDecodeOpT p; } ALIGNED_PRIVATIZEDDECODEOPT;
+	    ALIGNED_PRIVATIZEDDECODEOPT privatized_decode_op[NUM_ACTIVE_CHANNELS];
+    #endif
             OutputDecodeOpT         output_decode_op[NUM_ACTIVE_CHANNELS];
             int                     max_levels = num_output_levels[0];
 
