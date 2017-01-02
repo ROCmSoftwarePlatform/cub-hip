@@ -103,7 +103,7 @@ template <
     typename            ScanOpT,            ///< Binary scan functor type having member <tt>T operator()(const T &a, const T &b)</tt>
     typename            InitValueT,         ///< Initial value to seed the exclusive scan (cub::NullType for inclusive scans)
     typename            OffsetT>            ///< Signed integer type for global offsets
-__launch_bounds__ (int(ScanPolicyT::BLOCK_THREADS))
+__launch_bounds__ (int(ScanPolicyT::BLOCK_THREADS), 1)
 __global__ void DeviceScanKernel(
     hipLaunchParm       lp,
     InputIteratorT      d_in,               ///< Input data

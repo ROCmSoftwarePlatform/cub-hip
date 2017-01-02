@@ -69,7 +69,7 @@ template <
     typename                OffsetT>                        ///< Signed integer type for global offsets
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltUpsweepPolicy::BLOCK_THREADS :
-    ChainedPolicyT::ActivePolicy::UpsweepPolicy::BLOCK_THREADS))
+    ChainedPolicyT::ActivePolicy::UpsweepPolicy::BLOCK_THREADS), 1)
 __global__ void DeviceRadixSortUpsweepKernel(
     hipLaunchParm           lp,
     const KeyT              *d_keys,                        ///< [in] Input keys buffer
@@ -163,7 +163,7 @@ template <
     typename                OffsetT>                        ///< Signed integer type for global offsets
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltDownsweepPolicy::BLOCK_THREADS :
-    ChainedPolicyT::ActivePolicy::DownsweepPolicy::BLOCK_THREADS))
+    ChainedPolicyT::ActivePolicy::DownsweepPolicy::BLOCK_THREADS), 1)
 __global__ void DeviceRadixSortDownsweepKernel(
     hipLaunchParm           lp,
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
@@ -322,7 +322,7 @@ template <
     typename                OffsetT>                        ///< Signed integer type for global offsets
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltSegmentedPolicy::BLOCK_THREADS :
-    ChainedPolicyT::ActivePolicy::SegmentedPolicy::BLOCK_THREADS))
+    ChainedPolicyT::ActivePolicy::SegmentedPolicy::BLOCK_THREADS), 1)
 __global__ void DeviceSegmentedRadixSortKernel(
     hipLaunchParm           lp,
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer

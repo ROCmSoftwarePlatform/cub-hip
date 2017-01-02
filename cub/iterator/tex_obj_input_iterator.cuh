@@ -222,7 +222,7 @@ public:
         #pragma unroll
         for (int i = 0; i < TEXTURE_MULTIPLE; ++i)
         {
-            words[i] = 0//tex1Dfetch<TextureWord>(
+            words[i] = 0;//tex1Dfetch<TextureWord>(
 //                tex_obj,
 //                (tex_offset * TEXTURE_MULTIPLE) + i);
         }
