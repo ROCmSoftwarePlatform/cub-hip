@@ -154,6 +154,7 @@ struct GridEvenShare
      */
     __host__ __device__ __forceinline__ void Print()
     {
+#if (__HIP_DEVICE_COMPILE__ == 0)
         printf(
 #if (CUB_PTX_ARCH > 0)
             "\tthreadblock(%d) "
@@ -175,6 +176,7 @@ struct GridEvenShare
                 (unsigned long) big_blocks,
                 (unsigned long) big_share,
                 (unsigned long) normal_share);
+#endif
     }
 };
 
