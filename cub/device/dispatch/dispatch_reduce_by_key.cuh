@@ -69,7 +69,7 @@ template <
     typename            EqualityOpT,                            ///< KeyT equality operator type
     typename            ReductionOpT,                           ///< ValueT reduction operator type
     typename            OffsetT>                                ///< Signed integer type for global offsets
-__launch_bounds__ (int(AgentReduceByKeyPolicyT::BLOCK_THREADS))
+__launch_bounds__ (int(AgentReduceByKeyPolicyT::BLOCK_THREADS), 1)
 __global__ void DeviceReduceByKeyKernel(
     hipLaunchParm               lp,
     KeysInputIteratorT          d_keys_in,                      ///< Pointer to the input sequence of keys

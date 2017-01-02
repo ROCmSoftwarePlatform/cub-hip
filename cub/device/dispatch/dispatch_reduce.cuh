@@ -67,7 +67,7 @@ template <
     typename                OutputIteratorT,            ///< Output iterator type for recording the reduced aggregate \iterator
     typename                OffsetT,                    ///< Signed integer type for global offsets
     typename                ReductionOpT>               ///< Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
-__launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS))
+__launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS), 1)
 __global__ void DeviceReduceKernel(
     hipLaunchParm           lp,
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
@@ -189,7 +189,7 @@ template <
     typename                OffsetT,                    ///< Signed integer type for global offsets
     typename                ReductionOpT,               ///< Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
     typename                OutputT>                    ///< Data element type that is convertible to the \p value type of \p OutputIteratorT
-__launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS))
+__launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS), 1)
 __global__ void DeviceSegmentedReduceKernel(
     hipLaunchParm           lp,
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
