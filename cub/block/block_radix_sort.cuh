@@ -482,7 +482,7 @@ public:
 #ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
 #elif defined(__HIP_PLATFORM_HCC__)
-	typedef __declspec(align(4)) struct S { NullType n; } ALIGNED_NULLTYPE;
+	typedef struct S { NullType n; } __attribute__((aligned(4))) ALIGNED_NULLTYPE;
 	ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
 #endif
         SortBlocked(keys, values, begin_bit, end_bit, Int2Type<false>(), Int2Type<KEYS_ONLY>());
@@ -587,7 +587,7 @@ public:
 #ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
 #elif defined(__HIP_PLATFORM_HCC__)
-	typedef __declspec(align(4)) struct S { NullType n; } ALIGNED_NULLTYPE;
+	typedef struct S { NullType n; } __attribute__((aligned(4))) ALIGNED_NULLTYPE;
 	ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
 #endif
         SortBlocked(keys, values, begin_bit, end_bit, Int2Type<true>(), Int2Type<KEYS_ONLY>());
@@ -701,7 +701,7 @@ public:
 #ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
 #elif defined(__HIP_PLATFORM_HCC__)
-	typedef __declspec(align(4)) struct S { NullType n; } ALIGNED_NULLTYPE;
+	typedef struct S { NullType n; } __attribute__((aligned(4))) ALIGNED_NULLTYPE;
         ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
 #endif
         SortBlockedToStriped(keys, values, begin_bit, end_bit, Int2Type<false>(), Int2Type<KEYS_ONLY>());
@@ -808,7 +808,7 @@ public:
 #ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
 #elif defined(__HIP_PLATFORM_HCC__)
-	typedef __declspec(align(4)) struct S { NullType n; } ALIGNED_NULLTYPE;
+	typedef struct S { NullType n; } __attribute__((aligned(4))) ALIGNED_NULLTYPE;
 	ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
 #endif
         SortBlockedToStriped(keys, values, begin_bit, end_bit, Int2Type<true>(), Int2Type<KEYS_ONLY>());

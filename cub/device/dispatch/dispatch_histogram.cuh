@@ -735,7 +735,7 @@ struct DipatchHistogram
     #ifdef __HIP_PLATFORM_NVCC__
             OutputDecodeOpT         output_decode_op[NUM_ACTIVE_CHANNELS];
     #elif defined(__HIP_PLATFORM_HCC__)
-	    typedef __declspec(align(4)) struct S { OutputDecodeOpT o; } ALIGNED_OUTPUTDECODEOPT;
+	    typedef struct S { OutputDecodeOpT o; } __attribute__((aligned(4))) ALIGNED_OUTPUTDECODEOPT;
 	    ALIGNED_OUTPUTDECODEOPT output_decode_op[NUM_ACTIVE_CHANNELS];
     #endif
             int                     max_levels = num_output_levels[0];
@@ -848,7 +848,7 @@ struct DipatchHistogram
     #ifdef __HIP_PLATFORM_NVCC__
             PrivatizedDecodeOpT         privatized_decode_op[NUM_ACTIVE_CHANNELS];
     #elif defined(__HIP_PLATFORM_HCC__)
-	    typedef __declspec(align(4)) struct S { PrivatizedDecodeOpT p; } ALIGNED_PRIVATIZEDDECODEOPT;
+	    typedef struct S { PrivatizedDecodeOpT p; } __attribute__((aligned(4))) ALIGNED_PRIVATIZEDDECODEOPT;
 	    ALIGNED_PRIVATIZEDDECODEOPT privatized_decode_op[NUM_ACTIVE_CHANNELS];
     #endif
             OutputDecodeOpT             output_decode_op[NUM_ACTIVE_CHANNELS];
@@ -936,7 +936,7 @@ struct DipatchHistogram
     #ifdef __HIP_PLATFORM_NVCC__
             OutputDecodeOpT             output_decode_op[NUM_ACTIVE_CHANNELS];
     #elif defined(__HIP_PLATFORM_HCC__)
-	    typedef __declspec(align(4)) struct S { OutputDecodeOpT o; } ALIGNED_OUTPUTDECODEOPT;
+	    typedef struct S { OutputDecodeOpT o; } __attribute__((aligned(4))) ALIGNED_OUTPUTDECODEOPT;
 	    ALIGNED_OUTPUTDECODEOPT output_decode_op[NUM_ACTIVE_CHANNELS];
     #endif
             int                         max_levels = num_output_levels[0];
@@ -1053,7 +1053,7 @@ struct DipatchHistogram
    #ifdef __HIP_PLATFORM_NVCC__
             PrivatizedDecodeOpT     privatized_decode_op[NUM_ACTIVE_CHANNELS];
    #elif defined(__HIP_PLATFORM_HCC__)
-   	    typedef __declspec(align(4)) struct S { PrivatizedDecodeOpT p; } ALIGNED_PRIVATIZEDDECODEOPT;
+   	    typedef struct S { PrivatizedDecodeOpT p; } __attribute__((aligned(4))) ALIGNED_PRIVATIZEDDECODEOPT;
 	    ALIGNED_PRIVATIZEDDECODEOPT privatized_decode_op[NUM_ACTIVE_CHANNELS];
     #endif
             OutputDecodeOpT         output_decode_op[NUM_ACTIVE_CHANNELS];
