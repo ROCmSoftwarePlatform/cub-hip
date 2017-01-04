@@ -59,7 +59,7 @@
 #include "device/device_spmv.cuh"
 
 // Grid
-//#include "grid/grid_barrier.cuh"
+#include "grid/grid_barrier.cuh"
 #include "grid/grid_even_share.cuh"
 #include "grid/grid_mapping.cuh"
 #include "grid/grid_queue.cuh"
@@ -76,6 +76,7 @@
 #include "warp/warp_scan.cuh"
 
 // Iterator
+
 #include "iterator/arg_index_input_iterator.cuh"
 #include "iterator/cache_modified_input_iterator.cuh"
 #include "iterator/cache_modified_output_iterator.cuh"
@@ -84,6 +85,7 @@
 #include "iterator/tex_obj_input_iterator.cuh"
 #include "iterator/tex_ref_input_iterator.cuh"
 #include "iterator/transform_input_iterator.cuh"
+
 
 // Util
 #include "util_allocator.cuh"

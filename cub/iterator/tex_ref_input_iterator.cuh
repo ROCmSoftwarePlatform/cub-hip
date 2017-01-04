@@ -42,13 +42,13 @@
 #include "../util_debug.cuh"
 #include "../util_namespace.cuh"
 
-#if (CUDA_VERSION >= 5050) || defined(DOXYGEN_ACTIVE)  // This iterator is compatible with CUDA 5.5 and newer
+//#if (CUDA_VERSION >= 5050) || defined(DOXYGEN_ACTIVE)  // This iterator is compatible with CUDA 5.5 and newer
 
-#if (THRUST_VERSION >= 100700)    // This iterator is compatible with Thrust API 1.7 and newer
+/*#if (THRUST_VERSION >= 100700)    // This iterator is compatible with Thrust API 1.7 and newer
     #include <thrust/iterator/iterator_facade.h>
     #include <thrust/iterator/iterator_traits.h>
 #endif // THRUST_VERSION
-
+*/
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -62,7 +62,7 @@ namespace cub {
  *****************************************************************************/
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS    // Do not document
-
+//TODO:(mcw) Texture doesn't support in hip
 // Anonymous namespace
 namespace {
 
@@ -85,20 +85,20 @@ struct IteratorTexRef
         };
 
         // Texture reference type
-        typedef texture<TextureWord> TexRef;
+        //typedef texture<TextureWord> TexRef;
 
         // Texture reference
-        static TexRef ref;
+        //static TexRef ref;
 
         /// Bind texture
         static hipError_t BindTexture(void *d_in, size_t &offset)
         {
-            if (d_in)
+            /*if (d_in)
             {
                 hipChannelFormatDesc tex_desc = hipCreateChannelDesc<TextureWord>();
                 ref.channelDesc = tex_desc;
                 return (CubDebug(hipBindTexture(&offset, ref, d_in)));
-            }
+            }*/
 
             return hipSuccess;
         }
@@ -114,7 +114,7 @@ struct IteratorTexRef
         template <typename Distance>
         static __device__ __forceinline__ T Fetch(Distance tex_offset)
         {
-            DeviceWord temp[DEVICE_MULTIPLE];
+            /*DeviceWord temp[DEVICE_MULTIPLE];
             TextureWord *words = reinterpret_cast<TextureWord*>(temp);
 
             #pragma unroll
@@ -123,15 +123,16 @@ struct IteratorTexRef
                 words[i] = tex1Dfetch(ref, (tex_offset * TEXTURE_MULTIPLE) + i);
             }
 
-            return reinterpret_cast<T&>(temp);
+            return reinterpret_cast<T&>(temp);*/
+            return hipSuccess;
         }
     };
 };
 
 // Texture reference definitions
-template <typename  T>
-template <int       UNIQUE_ID>
-typename IteratorTexRef<T>::template TexId<UNIQUE_ID>::TexRef IteratorTexRef<T>::template TexId<UNIQUE_ID>::ref = 0;
+//template <typename  T>
+//template <int       UNIQUE_ID>
+//typename IteratorTexRef<T>::template TexId<UNIQUE_ID>::TexRef IteratorTexRef<T>::template TexId<UNIQUE_ID>::ref = 0;
 
 
 } // Anonymous namespace
@@ -213,7 +214,7 @@ public:
     typedef T*                                  pointer;                ///< The type of a pointer to an element the iterator can point to
     typedef T                                   reference;              ///< The type of a reference to an element the iterator can point to
 
-#if (THRUST_VERSION >= 100700)
+/*#if (THRUST_VERSION >= 100700)
     // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
     typedef typename thrust::detail::iterator_facade_category<
         thrust::device_system_tag,
@@ -221,9 +222,9 @@ public:
         value_type,
         reference
       >::type iterator_category;                                        ///< The iterator category
-#else
+#else*/
     typedef std::random_access_iterator_tag     iterator_category;      ///< The iterator category
-#endif  // THRUST_VERSION
+//#endif  // THRUST_VERSION
 
 private:
 
@@ -372,4 +373,4 @@ public:
 }               // CUB namespace
 CUB_NS_POSTFIX  // Optional outer namespace(s)
 
-#endif // CUDA_VERSION
+//#endif // CUDA_VERSION

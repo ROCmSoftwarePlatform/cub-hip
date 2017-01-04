@@ -50,8 +50,8 @@
 #include <cub/util_type.cuh>
 #include <cub/util_allocator.cuh>
 
-#include <thrust/device_ptr.h>
-#include <thrust/copy.h>
+//#include <thrust/device_ptr.h>
+//#include <thrust/copy.h>
 
 #include "test_util.h"
 
@@ -202,7 +202,7 @@ void TestConstant(T base)
     ConstantInputIterator<T> d_itr(base);
     Test(d_itr, h_reference);
 
-#if (THRUST_VERSION >= 100700)  // Thrust 1.7 or newer
+/*#if (THRUST_VERSION >= 100700)  // Thrust 1.7 or newer
 
     //
     // Test with thrust::copy_if()
@@ -227,7 +227,7 @@ void TestConstant(T base)
     if (h_copy) delete[] h_copy;
     if (d_copy) CubDebugExit(g_allocator.DeviceFree(d_copy));
 
-#endif // THRUST_VERSION
+#endif // THRUST_VERSION */
 }
 
 
@@ -257,7 +257,7 @@ void TestCounting(T base)
     CountingInputIterator<T> d_itr(base);
     Test(d_itr, h_reference);
 
-#if (THRUST_VERSION >= 100700)  // Thrust 1.7 or newer
+/*#if (THRUST_VERSION >= 100700)  // Thrust 1.7 or newer
 
     //
     // Test with thrust::copy_if()
@@ -282,7 +282,7 @@ void TestCounting(T base)
     if (h_copy) delete[] h_copy;
     if (d_copy) CubDebugExit(g_allocator.DeviceFree(d_copy));
 
-#endif // THRUST_VERSION
+#endif // THRUST_VERSION*/
 }
 
 
@@ -330,7 +330,7 @@ void TestModified()
     Test(CacheModifiedInputIterator<LOAD_LDG, T>((CastT*) d_data), h_reference);
     Test(CacheModifiedInputIterator<LOAD_VOLATILE, T>((CastT*) d_data), h_reference);
 
-#if (THRUST_VERSION >= 100700)  // Thrust 1.7 or newer
+/*#if (THRUST_VERSION >= 100700)  // Thrust 1.7 or newer
 
     //
     // Test with thrust::copy_if()
@@ -351,7 +351,7 @@ void TestModified()
     // Cleanup
     if (d_copy) CubDebugExit(g_allocator.DeviceFree(d_copy));
 
-#endif // THRUST_VERSION
+#endif // THRUST_VERSION*/
 
     if (h_data) delete[] h_data;
     if (d_data) CubDebugExit(g_allocator.DeviceFree(d_data));
@@ -399,7 +399,7 @@ void TestTransform()
     TransformInputIterator<T, TransformOp<T>, CastT*> d_itr((CastT*) d_data, op);
     Test(d_itr, h_reference);
 
-#if (THRUST_VERSION >= 100700)  // Thrust 1.7 or newer
+/*#if (THRUST_VERSION >= 100700)  // Thrust 1.7 or newer
 
     //
     // Test with thrust::copy_if()
@@ -423,7 +423,7 @@ void TestTransform()
     if (h_copy) delete[] h_copy;
     if (d_copy) CubDebugExit(g_allocator.DeviceFree(d_copy));
 
-#endif // THRUST_VERSION
+#endif // THRUST_VERSION*/
 
     if (h_data) delete[] h_data;
     if (d_data) CubDebugExit(g_allocator.DeviceFree(d_data));
@@ -478,7 +478,7 @@ void TestTexObj()
 
     Test(d_obj_itr, h_reference);
 
-#if (THRUST_VERSION >= 100700)  // Thrust 1.7 or newer
+/*#if (THRUST_VERSION >= 100700)  // Thrust 1.7 or newer
 
     //
     // Test with thrust::copy_if()
@@ -500,7 +500,7 @@ void TestTexObj()
 
     if (d_copy) CubDebugExit(g_allocator.DeviceFree(d_copy));
 
-#endif  // THRUST_VERSION
+#endif  // THRUST_VERSION*/
 
     if (h_data) delete[] h_data;
     if (d_data) CubDebugExit(g_allocator.DeviceFree(d_data));
@@ -562,7 +562,7 @@ void TestTexRef()
 
     Test(d_ref_itr, h_reference);
 
-#if (THRUST_VERSION >= 100700)  // Thrust 1.7 or newer
+/*#if (THRUST_VERSION >= 100700)  // Thrust 1.7 or newer
 
     //
     // Test with thrust::copy_if()
@@ -581,7 +581,7 @@ void TestTexRef()
 
     if (d_copy) CubDebugExit(g_allocator.DeviceFree(d_copy));
 
-#endif  // THRUST_VERSION
+#endif  // THRUST_VERSION*/
 
     CubDebugExit(d_ref_itr.UnbindTexture());
     CubDebugExit(d_ref_itr2.UnbindTexture());
@@ -641,7 +641,7 @@ void TestTexTransform()
 
     Test(xform_itr, h_reference);
 
-#if (THRUST_VERSION >= 100700)  // Thrust 1.7 or newer
+/*#if (THRUST_VERSION >= 100700)  // Thrust 1.7 or newer
 
     //
     // Test with thrust::copy_if()
@@ -665,7 +665,7 @@ void TestTexTransform()
     if (h_copy) delete[] h_copy;
     if (d_copy) CubDebugExit(g_allocator.DeviceFree(d_copy));
 
-#endif  // THRUST_VERSION
+#endif  // THRUST_VERSION*/
 
     CubDebugExit(d_tex_itr.UnbindTexture());
     if (h_data) delete[] h_data;
