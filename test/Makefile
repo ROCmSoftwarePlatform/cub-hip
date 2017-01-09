@@ -34,6 +34,10 @@
 # make <target> [sm=<XXX,...>] [cdp=<0|1>] [force32=<0|1>] [abi=<0|1>] [open64=<0|1>] [verbose=<0|1>] [keep=<0|1>] [quicktest=<0|1>] [quickertest=<0|1>]
 #
 #-------------------------------------------------------------------------------
+#HIP PATH
+ifndef HIP_PATH
+        HIP_PATH=/opt/rocm/hip
+endif
 
 #HIPCC executable setup
 HIPCC=${HIP_PATH}/bin/hipcc
