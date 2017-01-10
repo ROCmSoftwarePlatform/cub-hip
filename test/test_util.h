@@ -689,7 +689,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
         return os;                                          \
     }                                                       \
     /* Inequality */                                        \
-    __host__ __device__ __forceinline__ bool operator!=(    \
+    __device__ __forceinline__ bool operator!=(    \
         const T &a,                                         \
         const T &b)                                         \
     {                                                       \
@@ -727,9 +727,9 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
         return a.y < b.y;                                               \
     }                                                       \
     /* Summation (non-reference addends for VS2003 -O3 warpscan workaround */                                         \
-    __host__ __device__ __forceinline__ T operator+(        \
-        T a,                                         \
-        T b)                                         \
+    __device__ __forceinline__ T operator+(        \
+       const T a,                                         \
+       const T b)                                         \
     {                                                       \
         T retval = make_##T(                                        \
             a.x + b.x,                                      \
@@ -780,7 +780,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
         return os;                                          \
     }                                                       \
     /* Inequality */                                        \
-    __host__ __device__ __forceinline__ bool operator!=(    \
+    __device__ __forceinline__ bool operator!=(    \
         const T &a,                                         \
         const T &b)                                         \
     {                                                       \
@@ -823,7 +823,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
         return a.z < b.z;                                               \
     }                                                       \
     /* Summation (non-reference addends for VS2003 -O3 warpscan workaround */                                         \
-    __host__ __device__ __forceinline__ T operator+(        \
+    __device__ __forceinline__ T operator+(        \
         T a,                                                \
         T b)                                                \
     {                                                       \
@@ -879,7 +879,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
         return os;                                          \
     }                                                       \
     /* Inequality */                                        \
-    __host__ __device__ __forceinline__ bool operator!=(    \
+    __device__ __forceinline__ bool operator!=(    \
         const T &a,                                         \
         const T &b)                                         \
     {                                                       \
@@ -927,7 +927,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
         return a.w < b.w;                                               \
     }                                                       \
     /* Summation (non-reference addends for VS2003 -O3 warpscan workaround */                                         \
-    __host__ __device__ __forceinline__ T operator+(        \
+    __device__ __forceinline__ T operator+(        \
         T a,                                                \
         T b)                                                \
     {                                                       \
