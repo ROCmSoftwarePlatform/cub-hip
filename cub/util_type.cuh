@@ -982,13 +982,17 @@ struct BaseTraits<UNSIGNED_INTEGER, true, false, _UnsignedBits, T>
     static __host__ __device__ __forceinline__ T Max()
     {
         UnsignedBits retval = MAX_KEY;
-        return reinterpret_cast<T&>(retval);
+        //return reinterpret_cast<T&>(retval);
+        const char &x = (char)retval;
+        return x;
     }
 
     static __host__ __device__ __forceinline__ T Lowest()
     {
         UnsignedBits retval = LOWEST_KEY;
-        return reinterpret_cast<T&>(retval);
+        //return reinterpret_cast<T&>(retval);
+        const char &x = (char)retval;
+        return x;
     }
 };
 
@@ -1025,13 +1029,17 @@ struct BaseTraits<SIGNED_INTEGER, true, false, _UnsignedBits, T>
     static __host__ __device__ __forceinline__ T Max()
     {
         UnsignedBits retval = MAX_KEY;
-        return reinterpret_cast<T&>(retval);
+        //return reinterpret_cast<T&>(retval);
+        const char &x = (char)retval;
+        return x;
     }
 
     static __host__ __device__ __forceinline__ T Lowest()
     {
         UnsignedBits retval = LOWEST_KEY;
-        return reinterpret_cast<T&>(retval);
+        //return reinterpret_cast<T&>(retval);
+        const char &x = (char)retval;
+        return x;
     }
 };
 
