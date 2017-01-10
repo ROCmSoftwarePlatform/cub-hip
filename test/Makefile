@@ -35,12 +35,17 @@
 #
 #-------------------------------------------------------------------------------
 
+#HIP PATH
+ifndef HIP_PATH
+	HIP_PATH=/opt/rocm/hip
+endif
+
 #HIPCC executable setup
-HIPCC=${HIP_PATH}/bin/hipcc
+HIPCC=${HIP_PATH}/bin/hipcc 
 HIP_INC=${HIP_PATH}/include/
 
+
 include ../common.mk 
- 
 #-------------------------------------------------------------------------------
 # Commandline Options
 #-------------------------------------------------------------------------------
@@ -174,12 +179,12 @@ run_block_radix_sort :
 
 link : bin/link_$(SUFFIX)
 
-bin/link_$(SUFFIX) : link_a.cu link_b.cu link_main.cpp $(DEPS)
+bin/link_$(SUFFIX) : link.cu link_main.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_a.cu -c -o bin/link_a.obj
-	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_b.cu -c -o bin/link_b.obj
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link.cu -c -o bin/link.obj
+#	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_b.cu -c -o bin/link_b.obj
 	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_main.cpp -c -o bin/link_main.obj
-	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) bin/link_main.obj bin/link_a.obj bin/link_b.obj -o bin/link_$(SUFFIX)
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) bin/link_main.obj bin/link.obj -o bin/link_$(SUFFIX)
 
 
 #-------------------------------------------------------------------------------
