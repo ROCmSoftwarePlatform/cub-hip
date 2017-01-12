@@ -80,7 +80,9 @@ __host__ __device__ __forceinline__ hipError_t Debug(
         fprintf(stderr, "CUDA error %d [%s, %d]: %s\n", error, filename, line, hipGetErrorString(error));
         fflush(stderr);
     #elif (CUB_PTX_ARCH >= 200)
+#ifdef __HIP_PLATFORM_NVCC__
         printf("CUDA error %d [block (%d,%d,%d) thread (%d,%d,%d), %s, %d]\n", error, hipBlockIdx_z, hipBlockIdx_y, hipBlockIdx_x, hipThreadIdx_z, hipThreadIdx_y, hipThreadIdx_x, filename, line);
+#endif
     #endif
     }
 #endif
