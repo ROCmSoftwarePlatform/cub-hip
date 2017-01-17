@@ -40,6 +40,12 @@ HIPCC=${HIP_PATH}/bin/hipcc
 HIP_INC=${HIP_PATH}/include/
 
 include ../common.mk 
+
+#HIP PATH
+ifndef HIP_PATH
+        HIP_PATH=/opt/rocm/hip
+endif
+
  
 #-------------------------------------------------------------------------------
 # Commandline Options
