@@ -136,7 +136,7 @@ int main(int argc, char** argv)
     AssertEquals(allocator.cached_blocks.size(), 1);
 
     // Run some big kernel in other_stream
-    /*hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel), dim3(32000), dim3(512), 1024 * 8, other_stream, 0);
+    hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel), dim3(32000), dim3(512), 1024 * 8, other_stream, 0);
 
     // Free d_999B_stream_other
     CubDebugExit(allocator.DeviceFree(d_999B_stream_other_a));
@@ -452,7 +452,7 @@ int main(int argc, char** argv)
         cuda_malloc_elapsed_millis / cub_calloc_elapsed_millis,
         cuda_malloc_elapsed_millis / timing_iterations,
         cub_calloc_elapsed_millis / timing_iterations);
-*/
+
 
 #endif
 
