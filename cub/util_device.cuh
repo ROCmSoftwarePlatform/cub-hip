@@ -109,7 +109,7 @@ hipError_t AliasTemporaries(
  * Empty kernel for querying PTX manifest metadata (e.g., version) for the current device
  */
 template <typename T>
-__global__ void EmptyKernel(hipLaunchParm lp, int x) { }
+inline static __global__ void EmptyKernel(hipLaunchParm lp, int x) { }
 
 
 #endif  // DOXYGEN_SHOULD_SKIP_THIS
