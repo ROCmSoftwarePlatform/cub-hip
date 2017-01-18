@@ -36,7 +36,7 @@
 
 #include <stdio.h>
 
-#include <device_functions.h>
+//#include <device_functions.h>
 #include <typeinfo>
 
 #include <cub/block/block_reduce.cuh>
@@ -126,7 +126,7 @@ template <
     int                     ITEMS_PER_THREAD,
     typename                T,
     typename                ReductionOp>
-__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z)
+__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 1)
 __global__ void FullTileReduceKernel(
     hipLaunchParm           lp,
     T                       *d_in,
@@ -224,7 +224,7 @@ template <
     int                     BLOCK_DIM_Z,
     typename                T,
     typename                ReductionOp>
-__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z)
+__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 1)
 __global__ void PartialTileReduceKernel(
     hipLaunchParm            lp,
     T                       *d_in,
