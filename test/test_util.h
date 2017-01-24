@@ -689,6 +689,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
         return os;                                          \
     }                                                       \
     /* Inequality */                                        \
+      namespace cub_overloads {                             \
     __device__ __forceinline__ bool operator!=(    \
         const T &a,                                         \
         const T &b)                                         \
@@ -696,6 +697,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
         return (a.x != b.x) ||                              \
             (a.y != b.y);                                   \
     }                                                       \
+    } /* cub_overloads */                                   \
     /* Equality */                                          \
     __host__ __device__ __forceinline__ bool operator==(    \
         const T &a,                                         \
@@ -879,6 +881,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
         return os;                                          \
     }                                                       \
     /* Inequality */                                        \
+     namespace cub_overloads {                              \
     __device__ __forceinline__ bool operator!=(    \
         const T &a,                                         \
         const T &b)                                         \
@@ -888,6 +891,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
             (a.z != b.z) ||                                 \
             (a.w != b.w);                                   \
     }                                                       \
+    } /*namespace cub_overloads*/                           \
     /* Equality */                                          \
     __host__ __device__ __forceinline__ bool operator==(    \
         const T &a,                                         \
@@ -1290,6 +1294,7 @@ int CompareResults(cub::NullType* computed, cub::NullType* reference, OffsetT le
 /**
  * Compares the equivalence of two arrays
  */
+
 template <typename OffsetT>
 int CompareResults(double* computed, double* reference, OffsetT len, bool verbose = true)
 {
