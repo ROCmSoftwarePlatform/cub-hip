@@ -41,7 +41,6 @@
 #include <cub/util_allocator.cuh>
 
 #include "test_util.h"
-
 using namespace cub;
 
 //---------------------------------------------------------------------
@@ -99,7 +98,6 @@ __device__ __forceinline__ void DeviceTest(
     // Test basic warp scan
     warp_scan.ExclusiveScan(data, data, initial_value, scan_op);
 }
-
 /// Exclusive scan aggregate
 template <
     typename    WarpScanT,
@@ -136,6 +134,7 @@ __device__ __forceinline__ void DeviceTest(
     // Test basic warp scan
     warp_scan.ExclusiveSum(data, data);
 }
+
 
 
 /// Exclusive sum aggregate
@@ -259,9 +258,9 @@ __global__ void WarpScanKernel(
     T data = d_in[hipThreadIdx_x];
 
     // Start cycle timer
-    __threadfence_block();      // workaround to prevent clock hoisting
+   // __threadfence_block();      // workaround to prevent clock hoisting
     clock_t start = clock();
-    __threadfence_block();      // workaround to prevent clock hoisting
+   // __threadfence_block();      // workaround to prevent clock hoisting
 
     T aggregate;
 
@@ -277,9 +276,9 @@ __global__ void WarpScanKernel(
         Int2Type<Traits<T>::PRIMITIVE>());
 
     // Stop cycle timer
-    __threadfence_block();      // workaround to prevent clock hoisting
+   // __threadfence_block();      // workaround to prevent clock hoisting
     clock_t stop = clock();
-    __threadfence_block();      // workaround to prevent clock hoisting
+   // __threadfence_block();      // workaround to prevent clock hoisting
 
     // Store data
     d_out[hipThreadIdx_x] = data;
@@ -493,6 +492,7 @@ void Test(
     // Inclusive
     Test<LOGICAL_WARP_THREADS, BASIC, T>(gen_mode, scan_op, NullType());
     Test<LOGICAL_WARP_THREADS, AGGREGATE, T>(gen_mode, scan_op, NullType());
+
 }
 
 
@@ -509,7 +509,6 @@ void Test(GenMode gen_mode)
     // Get ptx version
     int ptx_version;
     CubDebugExit(PtxVersion(ptx_version));
-
     // primitive
     Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), (char) 99);
     Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), (short) 99);
@@ -623,7 +622,6 @@ int main(int argc, char** argv)
     }
 
 #endif
-
     return 0;
 }
 
