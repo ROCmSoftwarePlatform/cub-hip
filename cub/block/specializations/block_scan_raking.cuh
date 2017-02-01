@@ -656,7 +656,7 @@ struct BlockScanRaking
             output = *placement_ptr;
         }
     }
-
+  __host__ __device__ ~BlockScanRaking() {}
 };
 
 
