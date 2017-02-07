@@ -2,7 +2,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -111,7 +111,9 @@ template <
     CacheStoreModifier  MODIFIER,
     typename            OutputIteratorT,
     typename            T>
-__device__ __forceinline__ void ThreadStore(OutputIteratorT itr, T val);
+__device__ __forceinline__
+static
+void ThreadStore(OutputIteratorT itr, T val);
 
 
 //@}  end member group
@@ -396,7 +398,7 @@ __device__ __forceinline__ void ThreadStoreVolatilePtr(
     T                           val,
     Int2Type<false>             /*is_primitive*/)
 {
-#if CUB_PTX_ARCH <= 130
+#if CUB_PTX_ARCH <= 130 && !defined(__HIP_PLATFORM_HCC__)
 
     *ptr = val;
     __threadfence_block();
@@ -404,12 +406,12 @@ __device__ __forceinline__ void ThreadStoreVolatilePtr(
 #else
 
     // Create a temporary using shuffle-words, then store using volatile-words
-    typedef typename UnitWord<T>::VolatileWord  VolatileWord;  
+    typedef typename UnitWord<T>::VolatileWord  VolatileWord;
     typedef typename UnitWord<T>::ShuffleWord   ShuffleWord;
 
     const int VOLATILE_MULTIPLE = sizeof(T) / sizeof(VolatileWord);
     const int SHUFFLE_MULTIPLE  = sizeof(T) / sizeof(ShuffleWord);
-    
+
     VolatileWord words[VOLATILE_MULTIPLE];
 
     #pragma unroll
@@ -450,12 +452,12 @@ __device__ __forceinline__ void ThreadStore(
     Int2Type<true>              /*is_pointer*/)
 {
     // Create a temporary using shuffle-words, then store using device-words
-    typedef typename UnitWord<T>::DeviceWord    DeviceWord;  
+    typedef typename UnitWord<T>::DeviceWord    DeviceWord;
     typedef typename UnitWord<T>::ShuffleWord   ShuffleWord;
 
     const int DEVICE_MULTIPLE   = sizeof(T) / sizeof(DeviceWord);
     const int SHUFFLE_MULTIPLE  = sizeof(T) / sizeof(ShuffleWord);
-    
+
     DeviceWord words[DEVICE_MULTIPLE];
 
     #pragma unroll
@@ -472,7 +474,8 @@ __device__ __forceinline__ void ThreadStore(
  * ThreadStore definition for generic modifiers
  */
 template <CacheStoreModifier MODIFIER, typename OutputIteratorT, typename T>
-__device__ __forceinline__ void ThreadStore(OutputIteratorT itr, T val)
+__device__ __forceinline__
+void ThreadStore(OutputIteratorT itr, T val)
 {
     ThreadStore(
         itr,

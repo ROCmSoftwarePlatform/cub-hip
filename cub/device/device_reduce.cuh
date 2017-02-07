@@ -131,7 +131,7 @@ struct DeviceReduce
      *
      * \tparam InputIteratorT       <b>[inferred]</b> Random-access input iterator type for reading input items \iterator
      * \tparam OutputIteratorT      <b>[inferred]</b> Output iterator type for recording the reduced aggregate \iterator
-     * \tparam ReductionOpT         <b>[inferred]</b> Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt> 
+     * \tparam ReductionOpT         <b>[inferred]</b> Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
      * \tparam T                    <b>[inferred]</b> Data element type that is convertible to the \p value type of \p InputIteratorT
      */
     template <
@@ -639,7 +639,7 @@ struct DeviceReduce
      * \tparam ValuesInputIteratorT     <b>[inferred]</b> Random-access input iterator type for reading input values \iterator
      * \tparam AggregatesOutputIterator <b>[inferred]</b> Random-access output iterator type for writing output value aggregates \iterator
      * \tparam NumRunsOutputIteratorT   <b>[inferred]</b> Output iterator type for recording the number of runs encountered \iterator
-     * \tparam ReductionOpT              <b>[inferred]</b> Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt> 
+     * \tparam ReductionOpT              <b>[inferred]</b> Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
      */
     template <
         typename                    KeysInputIteratorT,
@@ -674,19 +674,25 @@ struct DeviceReduce
         // Default == operator
         typedef Equality EqualityOp;
 
-        return DispatchReduceByKey<KeysInputIteratorT, UniqueOutputIteratorT, ValuesInputIteratorT, AggregatesOutputIteratorT, NumRunsOutputIteratorT, EqualityOp, ReductionOpT, OffsetT>::Dispatch(
-            d_temp_storage,
-            temp_storage_bytes,
-            d_keys_in,
-            d_unique_out,
-            d_values_in,
-            d_aggregates_out,
-            d_num_runs_out,
-            EqualityOp(),
-            reduction_op,
-            num_items,
-            stream,
-            debug_synchronous);
+        return DispatchReduceByKey<KeysInputIteratorT,
+                                   UniqueOutputIteratorT,
+                                   ValuesInputIteratorT,
+                                   AggregatesOutputIteratorT,
+                                   NumRunsOutputIteratorT,
+                                   EqualityOp,
+                                   ReductionOpT,
+                                   OffsetT>::Dispatch(d_temp_storage,
+                                                      temp_storage_bytes,
+                                                      d_keys_in,
+                                                      d_unique_out,
+                                                      d_values_in,
+                                                      d_aggregates_out,
+                                                      d_num_runs_out,
+                                                      EqualityOp(),
+                                                      reduction_op,
+                                                      num_items,
+                                                      stream,
+                                                      debug_synchronous);
     }
 
 };

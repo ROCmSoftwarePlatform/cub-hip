@@ -2,7 +2,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -180,7 +180,8 @@ private:
      ******************************************************************************/
 
     /// Shared storage reference
-    _TempStorage &temp_storage;
+    //_TempStorage &temp_storage;
+    std::uintptr_t temp_storage;
 
     /// Linear thread-id
     unsigned int linear_tid;
@@ -215,7 +216,7 @@ private:
         {
             int item_offset = (linear_tid * ITEMS_PER_THREAD) + ITEM;
             if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-            temp_storage.buff[item_offset] = input_items[ITEM];
+            reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
         }
 
         __syncthreads();
@@ -225,7 +226,7 @@ private:
         {
             int item_offset = int(ITEM * BLOCK_THREADS) + linear_tid;
             if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-            output_items[ITEM] = temp_storage.buff[item_offset];
+            output_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
         }
     }
 
@@ -256,7 +257,7 @@ private:
                 {
                     int item_offset = (lane_id * ITEMS_PER_THREAD) + ITEM;
                     if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-                    temp_storage.buff[item_offset] = input_items[ITEM];
+                    reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
                 }
             }
 
@@ -275,7 +276,7 @@ private:
                     if ((item_offset >= 0) && (item_offset < TIME_SLICED_ITEMS))
                     {
                         if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-                        temp_items[ITEM] = temp_storage.buff[item_offset];
+                        temp_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
                     }
                 }
             }
@@ -304,17 +305,19 @@ private:
         {
             int item_offset = warp_offset + ITEM + (lane_id * ITEMS_PER_THREAD);
             if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-            temp_storage.buff[item_offset] = input_items[ITEM];
+            reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
         }
 
-        __threadfence_block();
+        // TODO: temporarily disabled as HIP does not support this at the
+        //       moment.
+        //__threadfence_block();
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
         {
             int item_offset = warp_offset + (ITEM * WARP_TIME_SLICED_THREADS) + lane_id;
             if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-            output_items[ITEM] = temp_storage.buff[item_offset];
+            output_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
         }
     }
 
@@ -334,17 +337,18 @@ private:
             {
                 int item_offset = ITEM + (lane_id * ITEMS_PER_THREAD);
                 if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-                temp_storage.buff[item_offset] = input_items[ITEM];
+                reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
             }
 
-            __threadfence_block();
+            // TODO: temporarily disabled as HIP does not support it yet.
+            //__threadfence_block();
 
             #pragma unroll
             for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
             {
                 int item_offset = (ITEM * WARP_TIME_SLICED_THREADS) + lane_id;
                 if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-                output_items[ITEM] = temp_storage.buff[item_offset];
+                output_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
             }
         }
 
@@ -360,17 +364,18 @@ private:
                 {
                     int item_offset = ITEM + (lane_id * ITEMS_PER_THREAD);
                     if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-                    temp_storage.buff[item_offset] = input_items[ITEM];
+                    reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
                 }
 
-                __threadfence_block();
+                // TODO: temporarily disabled as HIP does not support it yet.
+                //__threadfence_block();
 
                 #pragma unroll
                 for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
                 {
                     int item_offset = (ITEM * WARP_TIME_SLICED_THREADS) + lane_id;
                     if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-                    output_items[ITEM] = temp_storage.buff[item_offset];
+                    output_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
                 }
             }
         }
@@ -391,7 +396,7 @@ private:
         {
             int item_offset = int(ITEM * BLOCK_THREADS) + linear_tid;
             if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-            temp_storage.buff[item_offset] = input_items[ITEM];
+            reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
         }
 
         __syncthreads();
@@ -402,7 +407,7 @@ private:
         {
             int item_offset = (linear_tid * ITEMS_PER_THREAD) + ITEM;
             if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-            output_items[ITEM] = temp_storage.buff[item_offset];
+            output_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
         }
     }
 
@@ -440,7 +445,7 @@ private:
                     if ((item_offset >= 0) && (item_offset < TIME_SLICED_ITEMS))
                     {
                         if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-                        temp_storage.buff[item_offset] = input_items[ITEM];
+                        reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
                     }
                 }
             }
@@ -454,7 +459,7 @@ private:
                 {
                     int item_offset = (lane_id * ITEMS_PER_THREAD) + ITEM;
                     if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-                    temp_items[ITEM] = temp_storage.buff[item_offset];
+                    temp_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
                 }
             }
         }
@@ -482,17 +487,18 @@ private:
         {
             int item_offset = warp_offset + (ITEM * WARP_TIME_SLICED_THREADS) + lane_id;
             if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-            temp_storage.buff[item_offset] = input_items[ITEM];
+            reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
         }
 
-        __threadfence_block();
+        // TODO: temporarily disabled as HIP does not support it yet.
+        //__threadfence_block();
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
         {
             int item_offset = warp_offset + ITEM + (lane_id * ITEMS_PER_THREAD);
             if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-            output_items[ITEM] = temp_storage.buff[item_offset];
+            output_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
         }
     }
 
@@ -518,17 +524,18 @@ private:
                 {
                     int item_offset = (ITEM * WARP_TIME_SLICED_THREADS) + lane_id;
                     if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-                    temp_storage.buff[item_offset] = input_items[ITEM];
+                    reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
                 }
 
-                __threadfence_block();
+                // TODO: temporarily disabled as HIP does not support it yet.
+                //__threadfence_block();
 
                 #pragma unroll
                 for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
                 {
                     int item_offset = ITEM + (lane_id * ITEMS_PER_THREAD);
                     if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-                    output_items[ITEM] = temp_storage.buff[item_offset];
+                    output_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
                 }
             }
         }
@@ -550,7 +557,7 @@ private:
         {
             int item_offset = ranks[ITEM];
             if (INSERT_PADDING) item_offset = SHR_ADD(item_offset, LOG_SMEM_BANKS, item_offset);
-            temp_storage.buff[item_offset] = input_items[ITEM];
+            reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
         }
 
         __syncthreads();
@@ -560,7 +567,7 @@ private:
         {
             int item_offset = (linear_tid * ITEMS_PER_THREAD) + ITEM;
             if (INSERT_PADDING) item_offset = SHR_ADD(item_offset, LOG_SMEM_BANKS, item_offset);
-            output_items[ITEM] = temp_storage.buff[item_offset];
+            output_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
         }
     }
 
@@ -590,7 +597,7 @@ private:
                 if ((item_offset >= 0) && (item_offset < WARP_TIME_SLICED_ITEMS))
                 {
                     if (INSERT_PADDING) item_offset = SHR_ADD(item_offset, LOG_SMEM_BANKS, item_offset);
-                    temp_storage.buff[item_offset] = input_items[ITEM];
+                    reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
                 }
             }
 
@@ -603,7 +610,7 @@ private:
                 {
                     int item_offset = (lane_id * ITEMS_PER_THREAD) + ITEM;
                     if (INSERT_PADDING) item_offset = SHR_ADD(item_offset, LOG_SMEM_BANKS, item_offset);
-                    temp_items[ITEM] = temp_storage.buff[item_offset];
+                    temp_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
                 }
             }
         }
@@ -632,7 +639,7 @@ private:
         {
             int item_offset = ranks[ITEM];
             if (INSERT_PADDING) item_offset = SHR_ADD(item_offset, LOG_SMEM_BANKS, item_offset);
-            temp_storage.buff[item_offset] = input_items[ITEM];
+            reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
         }
 
         __syncthreads();
@@ -642,7 +649,7 @@ private:
         {
             int item_offset = int(ITEM * BLOCK_THREADS) + linear_tid;
             if (INSERT_PADDING) item_offset = SHR_ADD(item_offset, LOG_SMEM_BANKS, item_offset);
-            output_items[ITEM] = temp_storage.buff[item_offset];
+            output_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
         }
     }
 
@@ -674,7 +681,7 @@ private:
                 if ((item_offset >= 0) && (item_offset < WARP_TIME_SLICED_ITEMS))
                 {
                     if (INSERT_PADDING) item_offset = SHR_ADD(item_offset, LOG_SMEM_BANKS, item_offset);
-                    temp_storage.buff[item_offset] = input_items[ITEM];
+                    reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
                 }
             }
 
@@ -693,7 +700,7 @@ private:
                     if ((item_offset >= 0) && (item_offset < TIME_SLICED_ITEMS))
                     {
                         if (INSERT_PADDING) item_offset += item_offset >> LOG_SMEM_BANKS;
-                        temp_items[ITEM] = temp_storage.buff[item_offset];
+                        temp_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
                     }
                 }
             }
@@ -734,7 +741,8 @@ public:
     __device__ __forceinline__ BlockExchange(
         TempStorage &temp_storage)             ///< [in] Reference to memory allocation having layout type TempStorage
     :
-        temp_storage(temp_storage.Alias()),
+        //temp_storage(temp_storage.Alias()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z)),
         warp_id((WARPS == 1) ? 0 : linear_tid / WARP_THREADS),
         lane_id(LaneId()),
@@ -1007,7 +1015,7 @@ public:
             int item_offset = ranks[ITEM];
             if (INSERT_PADDING) item_offset = SHR_ADD(item_offset, LOG_SMEM_BANKS, item_offset);
             if (ranks[ITEM] >= 0)
-                temp_storage.buff[item_offset] = input_items[ITEM];
+                reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
         }
 
         __syncthreads();
@@ -1017,7 +1025,7 @@ public:
         {
             int item_offset = int(ITEM * BLOCK_THREADS) + linear_tid;
             if (INSERT_PADDING) item_offset = SHR_ADD(item_offset, LOG_SMEM_BANKS, item_offset);
-            output_items[ITEM] = temp_storage.buff[item_offset];
+            output_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
         }
     }
 
@@ -1046,7 +1054,7 @@ public:
             int item_offset = ranks[ITEM];
             if (INSERT_PADDING) item_offset = SHR_ADD(item_offset, LOG_SMEM_BANKS, item_offset);
             if (is_valid[ITEM])
-                temp_storage.buff[item_offset] = input_items[ITEM];
+                reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset] = input_items[ITEM];
         }
 
         __syncthreads();
@@ -1056,7 +1064,7 @@ public:
         {
             int item_offset = int(ITEM * BLOCK_THREADS) + linear_tid;
             if (INSERT_PADDING) item_offset = SHR_ADD(item_offset, LOG_SMEM_BANKS, item_offset);
-            output_items[ITEM] = temp_storage.buff[item_offset];
+            output_items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
         }
     }
 
@@ -1185,7 +1193,8 @@ private:
      * Thread fields
      ******************************************************************************/
 
-    _TempStorage    &temp_storage;
+    //_TempStorage    &temp_storage;
+    std::uintptr_t  temp_storage;
     int             lane_id;
 
 public:
@@ -1198,7 +1207,8 @@ public:
     __device__ __forceinline__ WarpExchange(
         TempStorage &temp_storage)
     :
-        temp_storage(temp_storage.Alias()),
+        //temp_storage(temp_storage.Alias()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
         lane_id(IS_ARCH_WARP ?
             LaneId() :
             LaneId() % LOGICAL_WARP_THREADS)
@@ -1226,17 +1236,18 @@ public:
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
         {
             if (INSERT_PADDING) ranks[ITEM] = SHR_ADD(ranks[ITEM], LOG_SMEM_BANKS, ranks[ITEM]);
-            temp_storage.buff[ranks[ITEM]] = items[ITEM];
+            reinterpret_cast<_TempStorage*>(temp_storage)->buff[ranks[ITEM]] = items[ITEM];
         }
 
-        __threadfence_block();
+        // TODO: temporarily disabled as HIP does not support it yet.
+        //__threadfence_block();
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
         {
             int item_offset = (ITEM * LOGICAL_WARP_THREADS) + lane_id;
             if (INSERT_PADDING) item_offset = SHR_ADD(item_offset, LOG_SMEM_BANKS, item_offset);
-            items[ITEM] = temp_storage.buff[item_offset];
+            items[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->buff[item_offset];
         }
     }
 

@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -32,6 +32,8 @@
  */
 
 #pragma once
+
+#include "../../hip_helpers/serialising_wrapper.hpp"
 
 #include "../../thread/thread_operators.cuh"
 #include "../../util_type.cuh"
@@ -79,14 +81,14 @@ struct WarpScanShfl
     };
 
     /// Shared memory storage layout type
-    struct TempStorage {};
+    struct TempStorage { unsigned int dummy; };
 
 
     //---------------------------------------------------------------------
     // Thread fields
     //---------------------------------------------------------------------
 
-    unsigned int lane_id;
+    alignas(8) unsigned int lane_id;
 
     //---------------------------------------------------------------------
     // Construction
@@ -331,18 +333,21 @@ struct WarpScanShfl
     template <typename _T, typename ScanOpT>
     __device__ __forceinline__ _T InclusiveScanStep(
         _T              input,              ///< [in] Calling thread's input item.
-        ScanOpT          scan_op,            ///< [in] Binary scan operator
+        ScanOpT         scan_op,            ///< [in] Binary scan operator
         int             first_lane,         ///< [in] Index of first lane in segment
         int             offset)             ///< [in] Up-offset to pull from
     {
+        //if (lane_id < first_lane + offset) return input;
+
         _T temp = ShuffleUp(input, offset, first_lane);
 
         // Perform scan op if from a valid peer
         _T output = scan_op(temp, input);
-        if (static_cast<int>(lane_id) < first_lane + offset)
-            output = input;
 
-        return output;
+        //if (static_cast<int>(lane_id) < first_lane + offset)
+        //    output = input;
+
+        return LaneId() < first_lane + offset ? input : output;
     }
 
 
@@ -350,24 +355,24 @@ struct WarpScanShfl
     template <typename _T, typename ScanOpT>
     __device__ __forceinline__ _T InclusiveScanStep(
         _T              input,              ///< [in] Calling thread's input item.
-        ScanOpT          scan_op,            ///< [in] Binary scan operator
+        ScanOpT         scan_op,           ///< [in] Binary scan operator
         int             first_lane,         ///< [in] Index of first lane in segment
         int             offset,             ///< [in] Up-offset to pull from
         Int2Type<true>  /*is_small_unsigned*/)  ///< [in] Marker type indicating whether T is a small integer
     {
-#ifdef __HIP_PLATFORM_NVCC__
-        unsigned int temp = reinterpret_cast<unsigned int &>(input);
+//#ifdef __HIP_PLATFORM_NVCC__
+        unsigned int temp = *reinterpret_cast<unsigned int*>(&input);//reinterpret_cast<unsigned int &>(input);
 
         temp = InclusiveScanStep(temp, scan_op, first_lane, offset);
 
-        return reinterpret_cast<_T&>(temp);
-#elif defined(__HIP_PLATFORM_HCC__)
-	_T temp = input;
-
-        temp = InclusiveScanStep(temp, scan_op, first_lane, offset);
-
-	return temp;
-#endif
+        return *reinterpret_cast<_T*>(&temp);
+//#elif defined(__HIP_PLATFORM_HCC__)
+//	_T temp = input;
+//
+//        temp = InclusiveScanStep(temp, scan_op, first_lane, offset);
+//
+//	return temp;
+//#endif
     }
 
 
@@ -442,19 +447,19 @@ struct WarpScanShfl
         int segment_first_lane = 0;
 
         // Iterate scan steps
-//        InclusiveScanStep(inclusive_output, scan_op, segment_first_lane, Int2Type<0>());
-
-        // Iterate scan steps
-        #pragma unroll
-        for (int STEP = 0; STEP < STEPS; STEP++)
-        {
-            inclusive_output = InclusiveScanStep(
-                inclusive_output,
-                scan_op,
-                segment_first_lane,
-                (1 << STEP),
-                Int2Type<IntegerTraits<T>::IS_SMALL_UNSIGNED>());
-        }
+        InclusiveScanStep(inclusive_output, scan_op, segment_first_lane, Int2Type<0>());
+//
+//        // Iterate scan steps
+//        #pragma unroll
+//        for (int STEP = 0; STEP < STEPS; STEP++)
+//        {
+//            inclusive_output = InclusiveScanStep(
+//                inclusive_output,
+//                scan_op,
+//                segment_first_lane,
+//                (1 << STEP),
+//                Int2Type<IntegerTraits<T>::IS_SMALL_UNSIGNED>());
+//        }
 
     }
 
@@ -478,19 +483,19 @@ struct WarpScanShfl
         int segment_first_lane = CUB_MAX(0, 31 - __clz(ballot));
 
         // Iterate scan steps
-//        InclusiveScanStep(inclusive_output.value, scan_op.op, segment_first_lane, Int2Type<0>());
+        InclusiveScanStep(inclusive_output.value, scan_op.op, segment_first_lane, Int2Type<0>());
 
         // Iterate scan steps
-        #pragma unroll
-        for (int STEP = 0; STEP < STEPS; STEP++)
-        {
-            inclusive_output.value = InclusiveScanStep(
-                inclusive_output.value,
-                scan_op.op,
-                segment_first_lane,
-                (1 << STEP),
-                Int2Type<IntegerTraits<T>::IS_SMALL_UNSIGNED>());
-        }
+//        #pragma unroll
+//        for (int STEP = 0; STEP < STEPS; STEP++)
+//        {
+//            inclusive_output.value = InclusiveScanStep(
+//                inclusive_output.value,
+//                scan_op.op,
+//                segment_first_lane,
+//                (1 << STEP),
+//                Int2Type<IntegerTraits<T>::IS_SMALL_UNSIGNED>());
+//        }
     }
 
 

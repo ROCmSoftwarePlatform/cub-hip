@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -32,6 +32,8 @@
  */
 
 #pragma once
+
+#include "../../hip_helpers/serialising_wrapper.hpp"
 
 #include "../../warp/warp_reduce.cuh"
 #include "../../util_ptx.cuh"
@@ -83,9 +85,9 @@ struct BlockReduceWarpReductions
     /// Shared memory storage layout type
     struct _TempStorage
     {
-        typename WarpReduce::TempStorage    warp_reduce[WARPS];                ///< Buffer for warp-synchronous scan
-        T                                   warp_aggregates[WARPS];     ///< Shared totals from each warp-synchronous scan
-        T                                   block_prefix;               ///< Shared prefix for the entire threadblock
+        typename WarpReduce::TempStorage    warp_reduce[WARPS];         ///< Buffer for warp-synchronous scan
+        T                        warp_aggregates[WARPS];     ///< Shared totals from each warp-synchronous scan
+        T                        block_prefix;               ///< Shared prefix for the entire threadblock
     };
 
     /// Alias wrapper allowing storage to be unioned
@@ -93,17 +95,19 @@ struct BlockReduceWarpReductions
 
 
     // Thread fields
-    _TempStorage &temp_storage;
+    //_TempStorage &temp_storage;
+    std::uintptr_t temp_storage;
     unsigned int linear_tid;
     unsigned int warp_id;
     unsigned int lane_id;
 
 
     /// Constructor
-    __device__ __forceinline__ BlockReduceWarpReductions(
-        TempStorage &temp_storage)
+    __device__ __forceinline__
+    BlockReduceWarpReductions(TempStorage &temp_storage)
     :
-        temp_storage(temp_storage.Alias()),
+        //temp_storage(temp_storage.Alias()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z)),
         warp_id((WARPS == 1) ? 0 : linear_tid / WARP_THREADS),
         lane_id(LaneId())
@@ -112,25 +116,28 @@ struct BlockReduceWarpReductions
 
     template <bool FULL_TILE, typename ReductionOp, int SUCCESSOR_WARP>
     __device__ __forceinline__ T ApplyWarpAggregates(
-        ReductionOp                 reduction_op,       ///< [in] Binary scan operator
-        T                           warp_aggregate,     ///< [in] <b>[<em>lane</em><sub>0</sub> only]</b> Warp-wide aggregate reduction of input items
-        int                         num_valid,          ///< [in] Number of valid elements (may be less than BLOCK_THREADS)
-        Int2Type<SUCCESSOR_WARP>    /*successor_warp*/)
+        ReductionOp              reduction_op,       ///< [in] Binary scan operator
+        T                        warp_aggregate,     ///< [in] <b>[<em>lane</em><sub>0</sub> only]</b> Warp-wide aggregate reduction of input items
+        int                      num_valid,          ///< [in] Number of valid elements (may be less than BLOCK_THREADS)
+        Int2Type<SUCCESSOR_WARP> /*successor_warp*/)
     {
         if (FULL_TILE || (SUCCESSOR_WARP * LOGICAL_WARP_SIZE < num_valid))
         {
-            T addend = temp_storage.warp_aggregates[SUCCESSOR_WARP];
+            T addend = reinterpret_cast<_TempStorage*>(temp_storage)->warp_aggregates[SUCCESSOR_WARP];
             warp_aggregate = reduction_op(warp_aggregate, addend);
         }
-        return ApplyWarpAggregates<FULL_TILE>(reduction_op, warp_aggregate, num_valid, Int2Type<SUCCESSOR_WARP + 1>());
+        return ApplyWarpAggregates<FULL_TILE>(reduction_op,
+                                              warp_aggregate,
+                                              num_valid,
+                                              Int2Type<SUCCESSOR_WARP + 1>());
     }
 
     template <bool FULL_TILE, typename ReductionOp>
     __device__ __forceinline__ T ApplyWarpAggregates(
-        ReductionOp         /*reduction_op*/,   ///< [in] Binary scan operator
-        T                   warp_aggregate,     ///< [in] <b>[<em>lane</em><sub>0</sub> only]</b> Warp-wide aggregate reduction of input items
-        int                 /*num_valid*/,      ///< [in] Number of valid elements (may be less than BLOCK_THREADS)
-        Int2Type<WARPS>     /*successor_warp*/)
+        ReductionOp     /*reduction_op*/,   ///< [in] Binary scan operator
+        T               warp_aggregate,     ///< [in] <b>[<em>lane</em><sub>0</sub> only]</b> Warp-wide aggregate reduction of input items
+        int             /*num_valid*/,      ///< [in] Number of valid elements (may be less than BLOCK_THREADS)
+        Int2Type<WARPS> /*successor_warp*/)
     {
         return warp_aggregate;
     }
@@ -140,15 +147,15 @@ struct BlockReduceWarpReductions
     template <
         bool                FULL_TILE,
         typename            ReductionOp>
-    __device__ __forceinline__ T ApplyWarpAggregates(
-        ReductionOp         reduction_op,       ///< [in] Binary scan operator
-        T                   warp_aggregate,     ///< [in] <b>[<em>lane</em><sub>0</sub> only]</b> Warp-wide aggregate reduction of input items
-        int                 num_valid)          ///< [in] Number of valid elements (may be less than BLOCK_THREADS)
+    __device__ __forceinline__
+    T ApplyWarpAggregates(ReductionOp reduction_op,   ///< [in] Binary scan operator
+                          Wrapper<T>  warp_aggregate, ///< [in] <b>[<em>lane</em><sub>0</sub> only]</b> Warp-wide aggregate reduction of input items
+                          int         num_valid)      ///< [in] Number of valid elements (may be less than BLOCK_THREADS)
     {
         // Share lane aggregates
         if (lane_id == 0)
         {
-            temp_storage.warp_aggregates[warp_id] = warp_aggregate;
+            reinterpret_cast<_TempStorage*>(temp_storage)->warp_aggregates[warp_id] = warp_aggregate;
         }
 
         __syncthreads();
@@ -156,7 +163,10 @@ struct BlockReduceWarpReductions
         // Update total aggregate in warp 0, lane 0
         if (linear_tid == 0)
         {
-            warp_aggregate = ApplyWarpAggregates<FULL_TILE>(reduction_op, warp_aggregate, num_valid, Int2Type<1>());
+            warp_aggregate = ApplyWarpAggregates<FULL_TILE>(reduction_op,
+                                                            warp_aggregate,
+                                                            num_valid,
+                                                            Int2Type<1>());
         }
 
         return warp_aggregate;
@@ -178,7 +188,7 @@ struct BlockReduceWarpReductions
                                 0;
 
         // Warp reduction in every warp
-        T warp_aggregate = WarpReduce(temp_storage.warp_reduce[warp_id]).template Reduce<(FULL_TILE && EVEN_WARP_MULTIPLE), 1>(
+        T warp_aggregate = WarpReduce(reinterpret_cast<_TempStorage*>(temp_storage)->warp_reduce[warp_id]).template Reduce<(FULL_TILE && EVEN_WARP_MULTIPLE), 1>(
             input,
             warp_num_valid,
             cub::Sum());
@@ -205,7 +215,7 @@ struct BlockReduceWarpReductions
                                 0;
 
         // Warp reduction in every warp
-        T warp_aggregate = WarpReduce(temp_storage.warp_reduce[warp_id]).template Reduce<(FULL_TILE && EVEN_WARP_MULTIPLE), 1>(
+        T warp_aggregate = WarpReduce(reinterpret_cast<_TempStorage*>(temp_storage)->warp_reduce[warp_id]).template Reduce<(FULL_TILE && EVEN_WARP_MULTIPLE), 1>(
             input,
             warp_num_valid,
             reduction_op);

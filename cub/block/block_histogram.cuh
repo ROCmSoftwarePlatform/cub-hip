@@ -1,8 +1,7 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -33,6 +32,8 @@
  */
 
 #pragma once
+
+#include "hip/hip_runtime.h"
 
 #include "specializations/block_histogram_sort.cuh"
 #include "specializations/block_histogram_atomic.cuh"
@@ -176,7 +177,7 @@ private:
      * on version SM120 or later.  Otherwise BLOCK_HISTO_SORT is used
      * regardless.
      */
-    static const BlockHistogramAlgorithm SAFE_ALGORITHM =
+    static constexpr BlockHistogramAlgorithm SAFE_ALGORITHM =
         ((ALGORITHM == BLOCK_HISTO_ATOMIC) && (PTX_ARCH < 120)) ?
             BLOCK_HISTO_SORT :
             ALGORITHM;
@@ -187,7 +188,7 @@ private:
         BlockHistogramAtomic<BINS> >::Type InternalBlockHistogram;
 
     /// Shared memory storage layout type for BlockHistogram
-    typedef typename InternalBlockHistogram::TempStorage _TempStorage;
+    typedef typename InternalBlockHistogram::_TempStorage _TempStorage;
 
 
     /******************************************************************************
@@ -195,7 +196,11 @@ private:
      ******************************************************************************/
 
     /// Shared storage reference
-    _TempStorage &temp_storage;
+    #if defined(__HIP_PLATFORM_HCC__)
+        std::uintptr_t temp_storage;
+    #else
+        _TempStorage &temp_storage;
+    #endif
 
     /// Linear thread-id
     unsigned int linear_tid;
@@ -229,7 +234,8 @@ public:
      */
     __device__ __forceinline__ BlockHistogram()
     :
-        temp_storage(PrivateStorage()),
+        //temp_storage(PrivateStorage()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&PrivateStorage())},
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
     {}
 
@@ -240,7 +246,11 @@ public:
     __device__ __forceinline__ BlockHistogram(
         TempStorage &temp_storage)             ///< [in] Reference to memory allocation having layout type TempStorage
     :
+    #if defined(__HIPCC__)
+        temp_storage(reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())),
+    #else
         temp_storage(temp_storage.Alias()),
+    #endif
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
     {}
 
@@ -289,7 +299,7 @@ public:
      * \tparam CounterT              <b>[inferred]</b> Histogram counter type
      */
     template <typename CounterT     >
-    __device__ __forceinline__ void InitHistogram(CounterT      histogram[BINS])
+    __device__ __forceinline__ void InitHistogram(CounterT histogram[BINS])
     {
         // Initialize histogram bin counts to zeros
         int histo_offset = 0;
@@ -347,7 +357,7 @@ public:
         typename            CounterT     >
     __device__ __forceinline__ void Histogram(
         T                   (&items)[ITEMS_PER_THREAD],     ///< [in] Calling thread's input values to histogram
-        CounterT             histogram[BINS])                ///< [out] Reference to shared/device-accessible memory histogram
+        CounterT            histogram[BINS])                ///< [out] Reference to shared/device-accessible memory histogram
     {
         // Initialize histogram bin counts to zeros
         InitHistogram(histogram);
@@ -355,7 +365,11 @@ public:
         __syncthreads();
 
         // Composite the histogram
-        InternalBlockHistogram(temp_storage).Composite(items, histogram);
+        #if defined(__HIP_PLATFORM_HCC__)
+            InternalBlockHistogram{*reinterpret_cast<_TempStorage*>(temp_storage)}.Composite(items, histogram);
+        #else
+            InternalBlockHistogram(temp_storage).Composite(items, histogram);
+        #endif
     }
 
 
@@ -402,11 +416,17 @@ public:
      */
     template <
         typename            CounterT     >
-    __device__ __forceinline__ void Composite(
-        T                   (&items)[ITEMS_PER_THREAD],     ///< [in] Calling thread's input values to histogram
-        CounterT             histogram[BINS])                 ///< [out] Reference to shared/device-accessible memory histogram
+    __device__ __forceinline__
+    void Composite(T        (&items)[ITEMS_PER_THREAD],     ///< [in] Calling thread's input values to histogram
+                   CounterT histogram[BINS])             ///< [out] Reference to shared/device-accessible memory histogram
     {
-        InternalBlockHistogram(temp_storage).Composite(items, histogram);
+        #if defined(__HCC__)
+        // TODO: this breaks the Promote pass.
+            InternalBlockHistogram{*reinterpret_cast<_TempStorage*>(temp_storage)}.Composite(items, histogram);
+        #else
+            InternalBlockHistogram(temp_storage).Composite(items, histogram);
+        #endif
+    //    InternalBlockHistogram(temp_storage).Composite(items, histogram);
     }
 
 };

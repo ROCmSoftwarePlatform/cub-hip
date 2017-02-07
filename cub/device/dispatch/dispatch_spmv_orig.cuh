@@ -66,7 +66,9 @@ template <
     typename    AgentSpmvPolicyT,           ///< Parameterized SpmvPolicy tuning policy type
     typename    ValueT,                     ///< Matrix and vector value type
     typename    OffsetT>                    ///< Signed integer type for sequence offsets
-__global__ void DeviceSpmv1ColKernel(
+__global__
+inline
+void DeviceSpmv1ColKernel(
     hipLaunchParm               lp,
     SpmvParams<ValueT, OffsetT> spmv_params)                ///< [in] SpMV input parameter bundle
 {
@@ -103,7 +105,9 @@ template <
     typename    OffsetT,                        ///< Signed integer type for sequence offsets
     typename    CoordinateT,                    ///< Merge path coordinate type
     typename    SpmvParamsT>                    ///< SpmvParams type
-__global__ void DeviceSpmvSearchKernel(
+__global__
+inline
+void DeviceSpmvSearchKernel(
     hipLaunchParm   lp,
     int             num_merge_tiles,            ///< [in] Number of SpMV merge tiles (spmv grid size)
     CoordinateT*    d_tile_coordinates,         ///< [out] Pointer to the temporary array of tile starting coordinates
@@ -158,7 +162,9 @@ template <
     bool            HAS_ALPHA,                  ///< Whether the input parameter Alpha is 1
     bool            HAS_BETA>                   ///< Whether the input parameter Beta is 0
 __launch_bounds__ (int(SpmvPolicyT::BLOCK_THREADS), 1)
-__global__ void DeviceSpmvKernel(
+__global__
+inline
+void DeviceSpmvKernel(
     hipLaunchParm                   lp,
     SpmvParams<ValueT, OffsetT>     spmv_params,                ///< [in] SpMV input parameter bundle
     CoordinateT*                    d_tile_coordinates,         ///< [in] Pointer to the temporary array of tile starting coordinates
@@ -200,7 +206,9 @@ template <
     typename    OffsetT,                        ///< Signed integer type for global offsets
     typename    ScanTileStateT>                 ///< Tile status interface type
 __launch_bounds__ (int(AgentSegmentFixupPolicyT::BLOCK_THREADS), 1)
-__global__ void DeviceSegmentFixupKernel(
+__global__
+inline
+void DeviceSegmentFixupKernel(
     hipLaunchParm               lp,
     PairsInputIteratorT         d_pairs_in,         ///< [in] Pointer to the array carry-out dot product row-ids, one per spmv block
     AggregatesOutputIteratorT   d_aggregates_out,   ///< [in,out] Output value aggregates

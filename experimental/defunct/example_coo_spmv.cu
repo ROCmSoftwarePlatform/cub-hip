@@ -268,6 +268,9 @@ struct PersistentBlockSpmv
         VertexId        first_block_row;    ///< The first row-ID seen by this thread block
         VertexId        last_block_row;     ///< The last row-ID seen by this thread block
         Value           first_product;      ///< The first dot-product written by this thread block
+
+        __host__ __device__
+        ~TempStorage() {}
     };
 
     //---------------------------------------------------------------------
@@ -681,7 +684,9 @@ template <
     typename                        VertexId,
     typename                        Value>
 __launch_bounds__ (BLOCK_THREADS)
-__global__ void CooKernel(
+__global__
+inline
+void CooKernel(
     hipLaunchParm                  lp,
     GridEvenShare<int>              even_share,
     PartialProduct<VertexId, Value> *d_block_partials,
@@ -726,7 +731,9 @@ template <
     typename                        VertexId,
     typename                        Value>
 __launch_bounds__ (BLOCK_THREADS,  1)
-__global__ void CooFinalizeKernel(
+__global__
+inline
+void CooFinalizeKernel(
     hipLaunchParm                  lp,
     PartialProduct<VertexId, Value> *d_block_partials,
     int                             num_partials,
@@ -848,7 +855,7 @@ void TestDevice(
         CubDebugExit(hipMemset(d_result, 0, coo_graph.row_dim * sizeof(Value)));
 
         // Run the COO kernel
-        hipLaunchKernel(HIP_KERNEL_NAME(CooKernel<COO_BLOCK_THREADS, COO_ITEMS_PER_THREAD>), dim3(coo_grid_size), dim3(COO_BLOCK_THREADS), 0, 0, 
+        hipLaunchKernel(HIP_KERNEL_NAME(CooKernel<COO_BLOCK_THREADS, COO_ITEMS_PER_THREAD>), dim3(coo_grid_size), dim3(COO_BLOCK_THREADS), 0, 0,
             even_share,
             d_block_partials,
             d_rows,
@@ -860,7 +867,7 @@ void TestDevice(
         if (coo_grid_size > 1)
         {
             // Run the COO finalize kernel
-            hipLaunchKernel(HIP_KERNEL_NAME(CooFinalizeKernel<FINALIZE_BLOCK_THREADS, FINALIZE_ITEMS_PER_THREAD>), dim3(1), dim3(FINALIZE_BLOCK_THREADS), 0, 0, 
+            hipLaunchKernel(HIP_KERNEL_NAME(CooFinalizeKernel<FINALIZE_BLOCK_THREADS, FINALIZE_ITEMS_PER_THREAD>), dim3(1), dim3(FINALIZE_BLOCK_THREADS), 0, 0,
                 d_block_partials,
                 num_partials,
                 d_result);

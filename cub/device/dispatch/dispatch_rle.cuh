@@ -73,12 +73,15 @@ template <
     typename            EqualityOpT,                 ///< T equality operator type
     typename            OffsetT>                    ///< Signed integer type for global offsets
 __launch_bounds__ (int(AgentRlePolicyT::BLOCK_THREADS), 1)
-__global__ void DeviceRleSweepKernel(
+__global__
+__attribute__((used))
+inline
+void DeviceRleSweepKernel(
     hipLaunchParm               lp,
-    InputIteratorT              d_in,               ///< [in] Pointer to input sequence of data items
-    OffsetsOutputIteratorT      d_offsets_out,      ///< [out] Pointer to output sequence of run-offsets
-    LengthsOutputIteratorT      d_lengths_out,      ///< [out] Pointer to output sequence of run-lengths
-    NumRunsOutputIteratorT      d_num_runs_out,     ///< [out] Pointer to total number of runs (i.e., length of \p d_offsets_out)
+    Wrapper<InputIteratorT>     d_in,               ///< [in] Pointer to input sequence of data items
+    Wrapper<OffsetsOutputIteratorT>      d_offsets_out,      ///< [out] Pointer to output sequence of run-offsets
+    Wrapper<LengthsOutputIteratorT>      d_lengths_out,      ///< [out] Pointer to output sequence of run-lengths
+    Wrapper<NumRunsOutputIteratorT>      d_num_runs_out,     ///< [out] Pointer to total number of runs (i.e., length of \p d_offsets_out)
     ScanTileStateT              tile_status,        ///< [in] Tile status interface
     EqualityOpT                 equality_op,        ///< [in] Equality operator for input items
     OffsetT                     num_items,          ///< [in] Total number of input items (i.e., length of \p d_in)
@@ -356,7 +359,8 @@ struct DeviceRleDispatch
         typename                    DeviceScanInitKernelPtr,        ///< Function type of cub::DeviceScanInitKernel
         typename                    DeviceRleSweepKernelPtr>        ///< Function type of cub::DeviceRleSweepKernelPtr
     CUB_RUNTIME_FUNCTION __forceinline__
-    static hipError_t Dispatch(
+    static
+    hipError_t Dispatch(
         void*                       d_temp_storage,                 ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&                     temp_storage_bytes,             ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         InputIteratorT              d_in,                           ///< [in] Pointer to the input sequence of data items
@@ -417,10 +421,14 @@ struct DeviceRleDispatch
             if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(device_scan_init_kernel), dim3(%d), dim3(%d), 0, %lld, )\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
 
             // Invoke device_scan_init_kernel to initialize tile descriptors and queue descriptors
-            hipLaunchKernel(HIP_KERNEL_NAME(device_scan_init_kernel), dim3(init_grid_size), dim3(INIT_KERNEL_THREADS), 0, stream, 
-                tile_status,
-                num_tiles,
-                d_num_runs_out);
+            hipLaunchKernel(HIP_KERNEL_NAME(device_scan_init_kernel),
+                            dim3(init_grid_size),
+                            dim3(INIT_KERNEL_THREADS),
+                            0,
+                            stream,
+                            tile_status,
+                            num_tiles,
+                            d_num_runs_out);
 
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;
@@ -454,7 +462,7 @@ struct DeviceRleDispatch
                 scan_grid_size.x, scan_grid_size.y, scan_grid_size.z, device_rle_config.block_threads, (long long) stream, device_rle_config.items_per_thread, device_rle_kernel_sm_occupancy);
 
             // Invoke device_rle_sweep_kernel
-            hipLaunchKernel(HIP_KERNEL_NAME(device_rle_sweep_kernel), dim3(scan_grid_size), dim3(device_rle_config.block_threads), 0, stream, 
+            hipLaunchKernel(HIP_KERNEL_NAME(device_rle_sweep_kernel), dim3(scan_grid_size), dim3(device_rle_config.block_threads), 0, stream,
                 d_in,
                 d_offsets_out,
                 d_lengths_out,

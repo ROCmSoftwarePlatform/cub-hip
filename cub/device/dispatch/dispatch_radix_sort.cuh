@@ -70,7 +70,9 @@ template <
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltUpsweepPolicy::BLOCK_THREADS :
     ChainedPolicyT::ActivePolicy::UpsweepPolicy::BLOCK_THREADS), 1)
-__global__ void DeviceRadixSortUpsweepKernel(
+__global__
+inline
+void DeviceRadixSortUpsweepKernel(
     hipLaunchParm           lp,
     const KeyT              *d_keys,                        ///< [in] Input keys buffer
     OffsetT                 *d_spine,                       ///< [out] Privatized (per block) digit histograms (striped, i.e., 0s counts from each block, then 1s counts from each block, etc.)
@@ -119,7 +121,9 @@ template <
     typename                ChainedPolicyT,                 ///< Chained tuning policy
     typename                OffsetT>                        ///< Signed integer type for global offsets
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ScanPolicy::BLOCK_THREADS), 1)
-__global__ void RadixSortScanBinsKernel(
+__global__
+inline
+void RadixSortScanBinsKernel(
     hipLaunchParm           lp,
     OffsetT                 *d_spine,                       ///< [in,out] Privatized (per block) digit histograms (striped, i.e., 0s counts from each block, then 1s counts from each block, etc.)
     int                     num_counts)                     ///< [in] Total number of bin-counts
@@ -164,7 +168,9 @@ template <
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltDownsweepPolicy::BLOCK_THREADS :
     ChainedPolicyT::ActivePolicy::DownsweepPolicy::BLOCK_THREADS), 1)
-__global__ void DeviceRadixSortDownsweepKernel(
+__global__
+inline
+void DeviceRadixSortDownsweepKernel(
     hipLaunchParm           lp,
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
     KeyT                    *d_keys_out,                    ///< [in] Output keys buffer
@@ -210,7 +216,9 @@ template <
     typename                ValueT,                         ///< Value type
     typename                OffsetT>                        ///< Signed integer type for global offsets
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::SingleTilePolicy::BLOCK_THREADS), 1)
-__global__ void DeviceRadixSortSingleTileKernel(
+__global__
+inline
+void DeviceRadixSortSingleTileKernel(
     hipLaunchParm           lp,
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
     KeyT                    *d_keys_out,                    ///< [in] Output keys buffer
@@ -323,7 +331,9 @@ template <
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltSegmentedPolicy::BLOCK_THREADS :
     ChainedPolicyT::ActivePolicy::SegmentedPolicy::BLOCK_THREADS), 1)
-__global__ void DeviceSegmentedRadixSortKernel(
+__global__
+inline
+void DeviceSegmentedRadixSortKernel(
     hipLaunchParm           lp,
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
     KeyT                    *d_keys_out,                    ///< [in] Output keys buffer
@@ -371,7 +381,7 @@ __global__ void DeviceSegmentedRadixSortKernel(
     //
 
     // Shared memory storage
-    __shared__ union
+    __shared__ union _foo
     {
         typename BlockUpsweepT::TempStorage     upsweep;
         typename BlockDownsweepT::TempStorage   downsweep;
@@ -381,7 +391,8 @@ __global__ void DeviceSegmentedRadixSortKernel(
             volatile OffsetT                        reverse_counts_out[RADIX_DIGITS];
             typename DigitScanT::TempStorage        scan;
         };
-
+        __host__ __device__
+        ~_foo() {}
     } temp_storage;
 
     OffsetT segment_begin   = d_begin_offsets[hipBlockIdx_x];
@@ -789,7 +800,7 @@ struct DispatchRadixSort :
     OffsetT                 num_items;              ///< [in] Number of items to sort
     int                     begin_bit;              ///< [in] The beginning (least-significant) bit index needed for key comparison
     int                     end_bit;                ///< [in] The past-the-end (most-significant) bit index needed for key comparison
-    hipStream_t            stream;                 ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+    hipStream_t             stream;                 ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
     bool                    debug_synchronous;      ///< [in] Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     int                     ptx_version;            ///< [in] PTX version
     bool                    is_overwrite_okay;      ///< [in] Whether is okay to overwrite source buffers
@@ -810,7 +821,7 @@ struct DispatchRadixSort :
         int                     begin_bit,
         int                     end_bit,
         bool                    is_overwrite_okay,
-        hipStream_t            stream,
+        hipStream_t             stream,
         bool                    debug_synchronous,
         int                     ptx_version)
     :
@@ -837,8 +848,7 @@ struct DispatchRadixSort :
         typename                ActivePolicyT,          ///< Umbrella policy active for the target device
         typename                SingleTileKernelT>      ///< Function type of cub::DeviceRadixSortSingleTileKernel
     CUB_RUNTIME_FUNCTION __forceinline__
-    hipError_t InvokeSingleTile(
-        SingleTileKernelT       single_tile_kernel)     ///< [in] Kernel function pointer to parameterization of cub::DeviceRadixSortSingleTileKernel
+    hipError_t InvokeSingleTile(SingleTileKernelT single_tile_kernel)     ///< [in] Kernel function pointer to parameterization of cub::DeviceRadixSortSingleTileKernel
     {
 #ifndef CUB_RUNTIME_ENABLED
         (void)single_tile_kernel;
@@ -866,14 +876,18 @@ struct DispatchRadixSort :
                     ActivePolicyT::SingleTilePolicy::ITEMS_PER_THREAD, 1, begin_bit, ActivePolicyT::SingleTilePolicy::RADIX_BITS);
 
             // Invoke upsweep_kernel with same grid size as downsweep_kernel
-            hipLaunchKernel(HIP_KERNEL_NAME(single_tile_kernel), dim3(1), dim3(ActivePolicyT::SingleTilePolicy::BLOCK_THREADS), 0, stream, 
-                d_keys.Current(),
-                d_keys.Alternate(),
-                d_values.Current(),
-                d_values.Alternate(),
-                num_items,
-                begin_bit,
-                end_bit);
+            hipLaunchKernel(HIP_KERNEL_NAME(single_tile_kernel),
+                            dim3(1),
+                            dim3(ActivePolicyT::SingleTilePolicy::BLOCK_THREADS),
+                            0,
+                            stream,
+                            d_keys.Current(),
+                            d_keys.Alternate(),
+                            d_values.Current(),
+                            d_values.Alternate(),
+                            num_items,
+                            begin_bit,
+                            end_bit);
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;
 
@@ -923,13 +937,17 @@ struct DispatchRadixSort :
                 pass_config.upsweep_config.items_per_thread, pass_config.upsweep_config.sm_occupancy, current_bit, pass_bits);
 
             // Invoke upsweep_kernel with same grid size as downsweep_kernel
-            hipLaunchKernel(HIP_KERNEL_NAME(pass_config.upsweep_kernel), dim3(pass_config.even_share.grid_size), dim3(pass_config.upsweep_config.block_threads), 0, stream, 
-                d_keys_in,
-                d_spine,
-                num_items,
-                current_bit,
-                pass_bits,
-                pass_config.even_share);
+            hipLaunchKernel(HIP_KERNEL_NAME(pass_config.upsweep_kernel),
+                            dim3(pass_config.even_share.grid_size),
+                            dim3(pass_config.upsweep_config.block_threads),
+                            0,
+                            stream,
+                            d_keys_in,
+                            d_spine,
+                            num_items,
+                            current_bit,
+                            pass_bits,
+                            pass_config.even_share);
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;
 
@@ -941,9 +959,13 @@ struct DispatchRadixSort :
                 1, pass_config.scan_config.block_threads, (long long) stream, pass_config.scan_config.items_per_thread);
 
             // Invoke scan_kernel
-            hipLaunchKernel(HIP_KERNEL_NAME(pass_config.scan_kernel), dim3(1), dim3(pass_config.scan_config.block_threads), 0, stream, 
-                d_spine,
-                spine_length);
+            hipLaunchKernel(HIP_KERNEL_NAME(pass_config.scan_kernel),
+                            dim3(1),
+                            dim3(pass_config.scan_config.block_threads),
+                            0,
+                            stream,
+                            d_spine,
+                            spine_length);
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;
 
@@ -956,16 +978,20 @@ struct DispatchRadixSort :
                 pass_config.downsweep_config.items_per_thread, pass_config.downsweep_config.sm_occupancy);
 
             // Invoke downsweep_kernel
-            hipLaunchKernel(HIP_KERNEL_NAME(pass_config.downsweep_kernel), dim3(pass_config.even_share.grid_size), dim3(pass_config.downsweep_config.block_threads), 0, stream, 
-                d_keys_in,
-                d_keys_out,
-                d_values_in,
-                d_values_out,
-                d_spine,
-                num_items,
-                current_bit,
-                pass_bits,
-                pass_config.even_share);
+            hipLaunchKernel(HIP_KERNEL_NAME(pass_config.downsweep_kernel),
+                            dim3(pass_config.even_share.grid_size),
+                            dim3(pass_config.downsweep_config.block_threads),
+                            0,
+                            stream,
+                            d_keys_in,
+                            d_keys_out,
+                            d_values_in,
+                            d_values_out,
+                            d_spine,
+                            num_items,
+                            current_bit,
+                            pass_bits,
+                            pass_config.even_share);
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;
 
@@ -1081,14 +1107,14 @@ struct DispatchRadixSort :
             // Init regular and alternate-digit kernel configurations
             PassConfig<UpsweepKernelT, ScanKernelT, DownsweepKernelT> pass_config, alt_pass_config;
             if ((error = pass_config.template InitPassConfig<
-                    typename ActivePolicyT::UpsweepPolicy, 
-                    typename ActivePolicyT::ScanPolicy, 
+                    typename ActivePolicyT::UpsweepPolicy,
+                    typename ActivePolicyT::ScanPolicy,
                     typename ActivePolicyT::DownsweepPolicy>(
                 upsweep_kernel, scan_kernel, downsweep_kernel, ptx_version, sm_count, num_items))) break;
 
             if ((error = alt_pass_config.template InitPassConfig<
-                    typename ActivePolicyT::AltUpsweepPolicy, 
-                    typename ActivePolicyT::ScanPolicy, 
+                    typename ActivePolicyT::AltUpsweepPolicy,
+                    typename ActivePolicyT::ScanPolicy,
                     typename ActivePolicyT::AltDownsweepPolicy>(
                 alt_upsweep_kernel, scan_kernel, alt_downsweep_kernel, ptx_version, sm_count, num_items))) break;
 
@@ -1132,20 +1158,26 @@ struct DispatchRadixSort :
 
             // Run first pass, consuming from the input's current buffers
             int current_bit = begin_bit;
-            if (CubDebug(error = InvokePass(
-                d_keys.Current(), d_keys_remaining_passes.Current(),
-                d_values.Current(), d_values_remaining_passes.Current(),
-                d_spine, spine_length, current_bit,
-                (current_bit < alt_end_bit) ? alt_pass_config : pass_config))) break;
+            if (CubDebug(error = InvokePass(d_keys.Current(),
+                                            d_keys_remaining_passes.Current(),
+                                            d_values.Current(),
+                                            d_values_remaining_passes.Current(),
+                                            d_spine,
+                                            spine_length,
+                                            current_bit,
+                                            (current_bit < alt_end_bit) ? alt_pass_config : pass_config))) break;
 
             // Run remaining passes
             while (current_bit < end_bit)
             {
-                if (CubDebug(error = InvokePass(
-                    d_keys_remaining_passes.d_buffers[d_keys_remaining_passes.selector],    d_keys_remaining_passes.d_buffers[d_keys_remaining_passes.selector ^ 1],
-                    d_values_remaining_passes.d_buffers[d_keys_remaining_passes.selector],  d_values_remaining_passes.d_buffers[d_keys_remaining_passes.selector ^ 1],
-                    d_spine, spine_length, current_bit,
-                    (current_bit < alt_end_bit) ? alt_pass_config : pass_config))) break;;
+                if (CubDebug(error = InvokePass(d_keys_remaining_passes.d_buffers[d_keys_remaining_passes.selector],
+                                                d_keys_remaining_passes.d_buffers[d_keys_remaining_passes.selector ^ 1],
+                                                d_values_remaining_passes.d_buffers[d_keys_remaining_passes.selector],
+                                                d_values_remaining_passes.d_buffers[d_keys_remaining_passes.selector ^ 1],
+                                                d_spine,
+                                                spine_length,
+                                                current_bit,
+                                                (current_bit < alt_end_bit) ? alt_pass_config : pass_config))) break;;
 
                 // Invert selectors
                 d_keys_remaining_passes.selector ^= 1;
@@ -1229,15 +1261,20 @@ struct DispatchRadixSort :
             if (CubDebug(error = PtxVersion(ptx_version))) break;
 
             // Create dispatch functor
-            DispatchRadixSort dispatch(
-                d_temp_storage, temp_storage_bytes,
-                d_keys, d_values,
-                num_items, begin_bit, end_bit, is_overwrite_okay,
-                stream, debug_synchronous, ptx_version);
+            DispatchRadixSort dispatch(d_temp_storage,
+                                       temp_storage_bytes,
+                                       d_keys,
+                                       d_values,
+                                       num_items,
+                                       begin_bit,
+                                       end_bit,
+                                       is_overwrite_okay,
+                                       stream,
+                                       debug_synchronous,
+                                       ptx_version);
 
             // Dispatch to chained policy
             if (CubDebug(error = MaxPolicyT::Invoke(ptx_version, dispatch))) break;
-
         } while (0);
 
         return error;
@@ -1358,11 +1395,20 @@ struct DispatchSegmentedRadixSort :
                     num_segments, pass_config.segmented_config.block_threads, (long long) stream,
                 pass_config.segmented_config.items_per_thread, pass_config.segmented_config.sm_occupancy, current_bit, pass_bits);
 
-            hipLaunchKernel(HIP_KERNEL_NAME(pass_config.segmented_kernel), dim3(num_segments), dim3(pass_config.segmented_config.block_threads), 0, stream, 
-                d_keys_in, d_keys_out,
-                d_values_in,  d_values_out,
-                d_begin_offsets, d_end_offsets, num_segments,
-                current_bit, pass_bits);
+            hipLaunchKernel(HIP_KERNEL_NAME(pass_config.segmented_kernel),
+                            dim3(num_segments),
+                            dim3(pass_config.segmented_config.block_threads),
+                            0,
+                            stream,
+                            d_keys_in,
+                            d_keys_out,
+                            d_values_in,
+                            d_values_out,
+                            d_begin_offsets,
+                            d_end_offsets,
+                            num_segments,
+                            current_bit,
+                            pass_bits);
 
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;

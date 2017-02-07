@@ -1,4 +1,3 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -30,17 +29,22 @@
 /******************************************************************************
  * Test evaluation for caching allocator of device memory
  ******************************************************************************/
-
 // Ensure printing of CUDA runtime errors to console
 #define CUB_STDERR
 
-#include <stdio.h>
-
-#include <cub/util_allocator.cuh>
 #include "test_util.h"
 
-using namespace cub;
+#include <cub/util_allocator.cuh>
 
+#include "hip/hip_runtime.h"
+
+#include <stdio.h>
+
+template
+__global__
+void cub::EmptyKernel<void>(hipLaunchParm lp, int x);
+
+using namespace cub;
 
 //---------------------------------------------------------------------
 // Main
@@ -101,7 +105,12 @@ int main(int argc, char** argv)
     CubDebugExit(allocator.DeviceAllocate((void **) &d_999B_stream0_a, 999, 0));
 
     // Run some big kernel in stream 0
-    hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel<void>), dim3(32000), dim3(512), 1024 * 8, 0, 0);
+    hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel<void>),
+                    dim3(32000),
+                    dim3(512),
+                    1024 * 8,
+                    0,
+                    0);
 
     // Free d_999B_stream0_a
     CubDebugExit(allocator.DeviceFree(d_999B_stream0_a));
@@ -116,7 +125,12 @@ int main(int argc, char** argv)
     AssertEquals(allocator.cached_blocks.size(), 0);
 
     // Run some big kernel in stream 0
-    hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel<void>), dim3(32000), dim3(512), 1024 * 8, 0, 0);
+    hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel<void>),
+                    dim3(32000),
+                    dim3(512),
+                    1024 * 8,
+                    0,
+                    0);
 
     // Free d_999B_stream0_b
     CubDebugExit(allocator.DeviceFree(d_999B_stream0_b));
@@ -133,7 +147,12 @@ int main(int argc, char** argv)
     AssertEquals(allocator.cached_blocks.size(), 1);
 
     // Run some big kernel in other_stream
-    hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel<void>), dim3(32000), dim3(512), 1024 * 8, other_stream, 0);
+    hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel<void>),
+                    dim3(32000),
+                    dim3(512),
+                    1024 * 8,
+                    other_stream,
+                    0);
 
     // Free d_999B_stream_other
     CubDebugExit(allocator.DeviceFree(d_999B_stream_other_a));
@@ -165,7 +184,12 @@ int main(int argc, char** argv)
     AssertEquals(allocator.cached_blocks.size(), 0);
 
     // Run some big kernel in other_stream
-    hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel<void>), dim3(32000), dim3(512), 1024 * 8, other_stream, 0);
+    hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel<void>),
+                    dim3(32000),
+                    dim3(512),
+                    1024 * 8,
+                    other_stream,
+                    0);
 
     // Free d_999B_stream_other_a and d_999B_stream_other_b
     CubDebugExit(allocator.DeviceFree(d_999B_stream_other_a));

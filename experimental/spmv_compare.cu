@@ -107,7 +107,9 @@ template <
     typename    OffsetT,
     typename    VectorItr>
 __launch_bounds__ (int(BLOCK_THREADS))
-__global__ void NonZeroIoKernel(
+__global__
+inline
+void NonZeroIoKernel(
     SpmvParams<ValueT, OffsetT> params,
     VectorItr                   d_vector_x)
 {
@@ -543,7 +545,7 @@ float TestGpuMergeCsrmv(
         d_temp_storage, temp_storage_bytes,
         params.d_values, params.d_row_end_offsets, params.d_column_indices,
         params.d_vector_x, params.d_vector_y,
-        params.num_rows, params.num_cols, params.num_nonzeros, 
+        params.num_rows, params.num_cols, params.num_nonzeros,
 // params.alpha, params.beta,
         (hipStream_t) 0, !g_quiet));
 
@@ -564,7 +566,7 @@ float TestGpuMergeCsrmv(
             d_temp_storage, temp_storage_bytes,
             params.d_values, params.d_row_end_offsets, params.d_column_indices,
             params.d_vector_x, params.d_vector_y,
-            params.num_rows, params.num_cols, params.num_nonzeros, 
+            params.num_rows, params.num_cols, params.num_nonzeros,
 // params.alpha, params.beta,
             (hipStream_t) 0, false));
     }

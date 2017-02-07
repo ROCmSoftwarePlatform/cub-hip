@@ -199,14 +199,14 @@ template <
     typename    WarpScanT,
     typename    T,
     typename    InitialValueT>
-__device__ __forceinline__ void DeviceTest(
-    WarpScanT                       &warp_scan,
-    T                               &data,
-    NullType                        &initial_value,
-    Sum                             &scan_op,
-    T                               &aggregate,
-    Int2Type<BASIC>                 test_mode,
-    Int2Type<true>                  is_primitive)
+__device__ __forceinline__
+void DeviceTest(WarpScanT                       &warp_scan,
+                T                               &data,
+                NullType                        &initial_value,
+                Sum                             &scan_op,
+                T                               &aggregate,
+                Int2Type<BASIC>                 test_mode,
+                Int2Type<true>                  is_primitive)
 {
     // Test basic warp scan
     warp_scan.InclusiveSum(data, data);
@@ -240,14 +240,14 @@ template <
     typename    T,
     typename    ScanOpT,
     typename    InitialValueT>
-__global__ void WarpScanKernel(
-    hipLaunchParm   lp,
-    T               *d_in,
-    T               *d_out,
-    T               *d_aggregate,
-    ScanOpT         scan_op,
-    InitialValueT   initial_value,
-    clock_t         *d_elapsed)
+__global__
+void WarpScanKernel(hipLaunchParm lp,
+                    T             *d_in,
+                    T             *d_out,
+                    T             *d_aggregate,
+                    ScanOpT       scan_op,
+                    InitialValueT initial_value,
+                    clock_t       *d_elapsed)
 {
     // Cooperative warp-scan utility type (1 warp)
     typedef WarpScan<T, LOGICAL_WARP_THREADS> WarpScanT;
@@ -259,27 +259,26 @@ __global__ void WarpScanKernel(
     T data = d_in[hipThreadIdx_x];
 
     // Start cycle timer
-    __threadfence_block();      // workaround to prevent clock hoisting
+    //__threadfence_block();      // workaround to prevent clock hoisting
     clock_t start = clock();
-    __threadfence_block();      // workaround to prevent clock hoisting
+    //__threadfence_block();      // workaround to prevent clock hoisting
 
     T aggregate;
 
     // Test scan
     WarpScanT warp_scan(temp_storage);
-    DeviceTest(
-        warp_scan,
-        data,
-        initial_value,
-        scan_op,
-        aggregate,
-        Int2Type<TEST_MODE>(),
-        Int2Type<Traits<T>::PRIMITIVE>());
+    DeviceTest(warp_scan,
+               data,
+               initial_value,
+               scan_op,
+               aggregate,
+               Int2Type<TEST_MODE>(),
+               Int2Type<Traits<T>::PRIMITIVE>());
 
     // Stop cycle timer
-    __threadfence_block();      // workaround to prevent clock hoisting
+    //__threadfence_block();      // workaround to prevent clock hoisting
     clock_t stop = clock();
-    __threadfence_block();      // workaround to prevent clock hoisting
+    //__threadfence_block();      // workaround to prevent clock hoisting
 
     // Store data
     d_out[hipThreadIdx_x] = data;
@@ -430,13 +429,17 @@ void Test(
     fflush(stdout);
 
     // Run aggregate/prefix kernel
-    hipLaunchKernel(HIP_KERNEL_NAME(WarpScanKernel<LOGICAL_WARP_THREADS, TEST_MODE>), dim3(1), dim3(LOGICAL_WARP_THREADS), 0, 0, 
-        d_in,
-        d_out,
-        d_aggregate,
-        scan_op,
-        initial_value,
-        d_elapsed);
+    hipLaunchKernel(HIP_KERNEL_NAME(WarpScanKernel<LOGICAL_WARP_THREADS, TEST_MODE, T, ScanOpT, InitialValueT>),
+                                    dim3(1),
+                                    dim3(LOGICAL_WARP_THREADS),
+                                    0,
+                                    0,
+                                    d_in,
+                                    d_out,
+                                    d_aggregate,
+                                    scan_op,
+                                    initial_value,
+                                    d_elapsed);
 
     printf("\tElapsed clocks: ");
     DisplayDeviceResults(d_elapsed, 1);
@@ -530,34 +533,34 @@ void Test(GenMode gen_mode)
     Test<LOGICAL_WARP_THREADS>(gen_mode, Max(), (unsigned long long) 99);
 
     // vec-2
-    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_uchar2(17, 21));
-    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_ushort2(17, 21));
-    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_uint2(17, 21));
-    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_ulong2(17, 21));
-    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_ulonglong2(17, 21));
-    if (gen_mode != RANDOM) {
-        // Only test numerically stable inputs
-        Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_float2(17, 21));
-        if (ptx_version > 100)
-            Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_double2(17, 21));
-    }
-
-    // vec-4
-    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_char4(17, 21, 32, 85));
-    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_short4(17, 21, 32, 85));
-    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_int4(17, 21, 32, 85));
-    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_long4(17, 21, 32, 85));
-    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_longlong4(17, 21, 32, 85));
-    if (gen_mode != RANDOM) {
-        // Only test numerically stable inputs
-        Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_float4(17, 21, 32, 85));
-        if (ptx_version > 100)
-            Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_double4(17, 21, 32, 85));
-    }
+//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_uchar2(17, 21));
+//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_ushort2(17, 21));
+//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_uint2(17, 21));
+//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_ulong2(17, 21));
+//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_ulonglong2(17, 21));
+//    if (gen_mode != RANDOM) {
+//        // Only test numerically stable inputs
+//        Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_float2(17, 21));
+//        if (ptx_version > 100)
+//            Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_double2(17, 21));
+//    }
+//
+//    // vec-4
+//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_char4(17, 21, 32, 85));
+//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_short4(17, 21, 32, 85));
+//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_int4(17, 21, 32, 85));
+//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_long4(17, 21, 32, 85));
+//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_longlong4(17, 21, 32, 85));
+//    if (gen_mode != RANDOM) {
+//        // Only test numerically stable inputs
+//        Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_float4(17, 21, 32, 85));
+//        if (ptx_version > 100)
+//            Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_double4(17, 21, 32, 85));
+//    }
 
     // complex
-    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), TestFoo::MakeTestFoo(17, 21, 32, 85));
-    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), TestBar(17, 21));
+//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), TestFoo::MakeTestFoo(17, 21, 32, 85));
+//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), TestBar(17, 21));
 
 }
 

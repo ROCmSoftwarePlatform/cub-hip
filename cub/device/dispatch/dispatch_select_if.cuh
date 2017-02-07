@@ -74,7 +74,10 @@ template <
     typename            OffsetT,                    ///< Signed integer type for global offsets
     bool                KEEP_REJECTS>               ///< Whether or not we push rejected items to the back of the output
 __launch_bounds__ (int(AgentSelectIfPolicyT::BLOCK_THREADS), 1)
-__global__ void DeviceSelectSweepKernel(
+__global__
+__attribute__((used))
+inline
+void DeviceSelectSweepKernel(
     hipLaunchParm           lp,
     InputIteratorT          d_in,                   ///< [in] Pointer to the input sequence of data items
     FlagsInputIteratorT     d_flags,                ///< [in] Pointer to the input sequence of selection flags (if applicable)
@@ -419,7 +422,7 @@ struct DispatchSelectIf
             if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(scan_init_kernel), dim3(%d), dim3(%d), 0, %lld, )\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
 
             // Invoke scan_init_kernel to initialize tile descriptors
-            hipLaunchKernel(HIP_KERNEL_NAME(scan_init_kernel), dim3(init_grid_size), dim3(INIT_KERNEL_THREADS), 0, stream, 
+            hipLaunchKernel(HIP_KERNEL_NAME(scan_init_kernel), dim3(init_grid_size), dim3(INIT_KERNEL_THREADS), 0, stream,
                 tile_status,
                 num_tiles,
                 d_num_selected_out);
@@ -456,7 +459,7 @@ struct DispatchSelectIf
                 scan_grid_size.x, scan_grid_size.y, scan_grid_size.z, select_if_config.block_threads, (long long) stream, select_if_config.items_per_thread, range_select_sm_occupancy);
 
             // Invoke select_if_kernel
-            hipLaunchKernel(HIP_KERNEL_NAME(select_if_kernel), dim3(scan_grid_size), dim3(select_if_config.block_threads), 0, stream, 
+            hipLaunchKernel(HIP_KERNEL_NAME(select_if_kernel), dim3(scan_grid_size), dim3(select_if_config.block_threads), 0, stream,
                 d_in,
                 d_flags,
                 d_selected_out,

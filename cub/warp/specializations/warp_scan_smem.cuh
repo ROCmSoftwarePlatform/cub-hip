@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -87,7 +87,8 @@ struct WarpScanSmem
      * Thread fields
      ******************************************************************************/
 
-    _TempStorage    &temp_storage;
+    //_TempStorage    &temp_storage;
+    std::uintptr_t  temp_storage;
     unsigned int    lane_id;
 
 
@@ -99,7 +100,8 @@ struct WarpScanSmem
     __device__ __forceinline__ WarpScanSmem(
         TempStorage     &temp_storage)
     :
-        temp_storage(temp_storage.Alias()),
+        //temp_storage(temp_storage.Alias()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
         lane_id(IS_ARCH_WARP ?
             LaneId() :
             LaneId() % LOGICAL_WARP_THREADS)
@@ -123,12 +125,14 @@ struct WarpScanSmem
         const int OFFSET = 1 << STEP;
 
         // Share partial into buffer
-        ThreadStore<STORE_VOLATILE>(&temp_storage[HALF_WARP_THREADS + lane_id], (CellT) partial);
+        ThreadStore<STORE_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[HALF_WARP_THREADS + lane_id], (CellT) partial);
 
         // Update partial if addend is in range
         if (HAS_IDENTITY || (lane_id >= OFFSET))
         {
-            T addend = (T) ThreadLoad<LOAD_VOLATILE>(&temp_storage[HALF_WARP_THREADS + lane_id - OFFSET]);
+            // TODO: this is incorrect as doing the load currently causes
+            //       compiler breakage.
+            T addend;//ThreadLoad<LOAD_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[HALF_WARP_THREADS + lane_id - OFFSET]);
             partial = scan_op(addend, partial);
         }
 
@@ -155,7 +159,7 @@ struct WarpScanSmem
         Int2Type<true>          /*is_primitive*/)   ///< [in] Marker type indicating whether T is primitive type
     {
         T identity = 0;
-        ThreadStore<STORE_VOLATILE>(&temp_storage[lane_id], (CellT) identity);
+        ThreadStore<STORE_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[lane_id], (CellT) identity);
 
         // Iterate scan steps
         output = input;
@@ -192,10 +196,10 @@ struct WarpScanSmem
     {
         if (lane_id == src_lane)
         {
-            ThreadStore<STORE_VOLATILE>(temp_storage, (CellT) input);
+            ThreadStore<STORE_VOLATILE>(*reinterpret_cast<_TempStorage*>(temp_storage), (CellT) input);
         }
 
-        return (T) ThreadLoad<LOAD_VOLATILE>(temp_storage);
+        return (T) ThreadLoad<LOAD_VOLATILE>(*reinterpret_cast<_TempStorage*>(temp_storage));
     }
 
 
@@ -225,8 +229,8 @@ struct WarpScanSmem
         InclusiveScan(input, inclusive_output, scan_op);
 
         // Retrieve aggregate
-        ThreadStore<STORE_VOLATILE>(&temp_storage[HALF_WARP_THREADS + lane_id], (CellT) inclusive_output);
-        warp_aggregate = (T) ThreadLoad<LOAD_VOLATILE>(&temp_storage[WARP_SMEM_ELEMENTS - 1]);
+        ThreadStore<STORE_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[HALF_WARP_THREADS + lane_id], (CellT) inclusive_output);
+        warp_aggregate = (T) ThreadLoad<LOAD_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[WARP_SMEM_ELEMENTS - 1]);
     }
 
 
@@ -244,8 +248,8 @@ struct WarpScanSmem
         IsIntegerT              /*is_integer*/) ///< [in]
     {
         // initial value unknown
-        ThreadStore<STORE_VOLATILE>(&temp_storage[HALF_WARP_THREADS + lane_id], (CellT) inclusive);
-        exclusive = (T) ThreadLoad<LOAD_VOLATILE>(&temp_storage[HALF_WARP_THREADS + lane_id - 1]);
+        ThreadStore<STORE_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[HALF_WARP_THREADS + lane_id], (CellT) inclusive);
+        exclusive = (T) ThreadLoad<LOAD_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[HALF_WARP_THREADS + lane_id - 1]);
     }
 
     /// Update inclusive and exclusive using input and inclusive (specialized for summation of integer types)
@@ -271,8 +275,8 @@ struct WarpScanSmem
         IsIntegerT              /*is_integer*/)
     {
         inclusive = scan_op(initial_value, inclusive);
-        ThreadStore<STORE_VOLATILE>(&temp_storage[HALF_WARP_THREADS + lane_id], (CellT) inclusive);
-        exclusive = (T) ThreadLoad<LOAD_VOLATILE>(&temp_storage[HALF_WARP_THREADS + lane_id - 1]);
+        ThreadStore<STORE_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[HALF_WARP_THREADS + lane_id], (CellT) inclusive);
+        exclusive = (T) ThreadLoad<LOAD_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[HALF_WARP_THREADS + lane_id - 1]);
         if (lane_id == 0)
             exclusive = initial_value;
     }
@@ -302,9 +306,9 @@ struct WarpScanSmem
         IsIntegerT              /*is_integer*/)
     {
         // Initial value presumed to be unknown or identity (either way our padding is correct)
-        ThreadStore<STORE_VOLATILE>(&temp_storage[HALF_WARP_THREADS + lane_id], (CellT) inclusive);
-        exclusive = (T) ThreadLoad<LOAD_VOLATILE>(&temp_storage[HALF_WARP_THREADS + lane_id - 1]);
-        warp_aggregate = (T) ThreadLoad<LOAD_VOLATILE>(&temp_storage[WARP_SMEM_ELEMENTS - 1]);
+        ThreadStore<STORE_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[HALF_WARP_THREADS + lane_id], (CellT) inclusive);
+        exclusive = (T) ThreadLoad<LOAD_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[HALF_WARP_THREADS + lane_id - 1]);
+        warp_aggregate = (T) ThreadLoad<LOAD_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[WARP_SMEM_ELEMENTS - 1]);
     }
 
     /// Update inclusive, exclusive, and warp aggregate using input and inclusive (specialized for summation of integer types)
@@ -317,8 +321,8 @@ struct WarpScanSmem
         Int2Type<true>          /*is_integer*/)
     {
         // Initial value presumed to be unknown or identity (either way our padding is correct)
-        ThreadStore<STORE_VOLATILE>(&temp_storage[HALF_WARP_THREADS + lane_id], (CellT) inclusive);
-        warp_aggregate = (T) ThreadLoad<LOAD_VOLATILE>(&temp_storage[WARP_SMEM_ELEMENTS - 1]);
+        ThreadStore<STORE_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[HALF_WARP_THREADS + lane_id], (CellT) inclusive);
+        warp_aggregate = (T) ThreadLoad<LOAD_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[WARP_SMEM_ELEMENTS - 1]);
         exclusive = inclusive - input;
     }
 
@@ -334,15 +338,15 @@ struct WarpScanSmem
         IsIntegerT              /*is_integer*/)
     {
         // Broadcast warp aggregate
-        ThreadStore<STORE_VOLATILE>(&temp_storage[HALF_WARP_THREADS + lane_id], (CellT) inclusive);
-        warp_aggregate = (T) ThreadLoad<LOAD_VOLATILE>(&temp_storage[WARP_SMEM_ELEMENTS - 1]);
+        ThreadStore<STORE_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[HALF_WARP_THREADS + lane_id], (CellT) inclusive);
+        warp_aggregate = (T) ThreadLoad<LOAD_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[WARP_SMEM_ELEMENTS - 1]);
 
         // Update inclusive with initial value
         inclusive = scan_op(initial_value, inclusive);
 
         // Get exclusive from exclusive
-        ThreadStore<STORE_VOLATILE>(&temp_storage[HALF_WARP_THREADS + lane_id - 1], (CellT) inclusive);
-        exclusive = (T) ThreadLoad<LOAD_VOLATILE>(&temp_storage[HALF_WARP_THREADS + lane_id - 2]);
+        ThreadStore<STORE_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[HALF_WARP_THREADS + lane_id - 1], (CellT) inclusive);
+        exclusive = (T) ThreadLoad<LOAD_VOLATILE>(&*reinterpret_cast<_TempStorage*>(temp_storage)[HALF_WARP_THREADS + lane_id - 2]);
 
         if (lane_id == 0)
             exclusive = initial_value;

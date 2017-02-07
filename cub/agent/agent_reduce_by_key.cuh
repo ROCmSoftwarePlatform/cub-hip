@@ -136,11 +136,13 @@ struct AgentReduceByKey
 
         /// Constructor
         __host__ __device__ __forceinline__
-        GuardedInequalityWrapper(_EqualityOpT op, int num_remaining) : op(op), num_remaining(num_remaining) {}
+        GuardedInequalityWrapper(_EqualityOpT op, int num_remaining)
+            : op(op), num_remaining(num_remaining) {}
 
         /// Boolean inequality operator, returns <tt>(a != b)</tt>
         template <typename T>
-        __host__ __device__ __forceinline__ bool operator()(const T &a, const T &b, int idx) const
+        __host__ __device__ __forceinline__
+        bool operator()(const T &a, const T &b, int idx) const
         {
             if (idx < num_remaining)
                 return !op(a, b);   // In bounds
@@ -148,6 +150,9 @@ struct AgentReduceByKey
             // Return true if first out-of-bounds item, false otherwise
             return (idx == num_remaining);
        }
+
+       __host__ __device__
+       ~GuardedInequalityWrapper() {}
     };
 
 
@@ -252,7 +257,8 @@ struct AgentReduceByKey
     // Per-thread fields
     //---------------------------------------------------------------------
 
-    _TempStorage&                   temp_storage;       ///< Reference to temp_storage
+    //_TempStorage&                   temp_storage;       ///< Reference to temp_storage
+    std::uintptr_t                  temp_storage;
     WrappedKeysInputIteratorT       d_keys_in;          ///< Input keys
     UniqueOutputIteratorT           d_unique_out;       ///< Unique output keys
     WrappedValuesInputIteratorT     d_values_in;        ///< Input values
@@ -279,7 +285,8 @@ struct AgentReduceByKey
         EqualityOpT                 equality_op,        ///< KeyT equality operator
         ReductionOpT                reduction_op)       ///< ValueT reduction operator
     :
-        temp_storage(temp_storage.Alias()),
+        //temp_storage(temp_storage.Alias()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
         d_keys_in(d_keys_in),
         d_unique_out(d_unique_out),
         d_values_in(d_values_in),
@@ -298,7 +305,9 @@ struct AgentReduceByKey
     /**
      * Directly scatter flagged items to output offsets
      */
-    __device__ __forceinline__ void ScatterDirect(
+    __device__ __forceinline__
+    inline
+    void ScatterDirect(
         KeyValuePairT   (&scatter_items)[ITEMS_PER_THREAD],
         OffsetT         (&segment_flags)[ITEMS_PER_THREAD],
         OffsetT         (&segment_indices)[ITEMS_PER_THREAD])
@@ -322,7 +331,8 @@ struct AgentReduceByKey
      * The exclusive scan causes each head flag to be paired with the previous
      * value aggregate: the scatter offsets must be decremented for value aggregates
      */
-    __device__ __forceinline__ void ScatterTwoPhase(
+    __device__ __forceinline__
+    void ScatterTwoPhase(
         KeyValuePairT   (&scatter_items)[ITEMS_PER_THREAD],
         OffsetT         (&segment_flags)[ITEMS_PER_THREAD],
         OffsetT         (&segment_indices)[ITEMS_PER_THREAD],
@@ -337,7 +347,7 @@ struct AgentReduceByKey
         {
             if (segment_flags[ITEM])
             {
-                temp_storage.raw_exchange.Alias()[segment_indices[ITEM] - num_tile_segments_prefix] = scatter_items[ITEM];
+                reinterpret_cast<_TempStorage*>(temp_storage)->raw_exchange.Alias()[segment_indices[ITEM] - num_tile_segments_prefix] = scatter_items[ITEM];
             }
         }
 
@@ -345,7 +355,7 @@ struct AgentReduceByKey
 
         for (int item = hipThreadIdx_x; item < num_tile_segments; item += BLOCK_THREADS)
         {
-            KeyValuePairT pair                                  = temp_storage.raw_exchange.Alias()[item];
+            KeyValuePairT pair                                  = reinterpret_cast<_TempStorage*>(temp_storage)->raw_exchange.Alias()[item];
             d_unique_out[num_tile_segments_prefix + item]       = pair.key;
             d_aggregates_out[num_tile_segments_prefix + item]   = pair.value;
         }
@@ -355,7 +365,9 @@ struct AgentReduceByKey
     /**
      * Scatter flagged items
      */
-    __device__ __forceinline__ void Scatter(
+    __device__ __forceinline__
+    inline
+    void Scatter(
         KeyValuePairT   (&scatter_items)[ITEMS_PER_THREAD],
         OffsetT         (&segment_flags)[ITEMS_PER_THREAD],
         OffsetT         (&segment_indices)[ITEMS_PER_THREAD],
@@ -390,7 +402,8 @@ struct AgentReduceByKey
      * Process a tile of input (dynamic chained scan)
      */
     template <bool IS_LAST_TILE>                ///< Whether the current tile is the last tile
-    __device__ __forceinline__ void ConsumeTile(
+    __device__ __forceinline__
+    void ConsumeTile(
         OffsetT             num_remaining,      ///< Number of global input items remaining (including this tile)
         int                 tile_idx,           ///< Tile index
         OffsetT             tile_offset,        ///< Tile offset
@@ -406,9 +419,9 @@ struct AgentReduceByKey
 
         // Load keys
         if (IS_LAST_TILE)
-            BlockLoadKeysT(temp_storage.load_keys).Load(d_keys_in + tile_offset, keys, num_remaining);
+            BlockLoadKeysT(reinterpret_cast<_TempStorage*>(temp_storage)->load_keys).Load(d_keys_in + tile_offset, keys, num_remaining);
         else
-            BlockLoadKeysT(temp_storage.load_keys).Load(d_keys_in + tile_offset, keys);
+            BlockLoadKeysT(reinterpret_cast<_TempStorage*>(temp_storage)->load_keys).Load(d_keys_in + tile_offset, keys);
 
         // Load tile predecessor key in first thread
         KeyOutputT tile_predecessor;
@@ -423,9 +436,9 @@ struct AgentReduceByKey
 
         // Load values
         if (IS_LAST_TILE)
-            BlockLoadValuesT(temp_storage.load_values).Load(d_values_in + tile_offset, values, num_remaining);
+            BlockLoadValuesT(reinterpret_cast<_TempStorage*>(temp_storage)->load_values).Load(d_values_in + tile_offset, values, num_remaining);
         else
-            BlockLoadValuesT(temp_storage.load_values).Load(d_values_in + tile_offset, values);
+            BlockLoadValuesT(reinterpret_cast<_TempStorage*>(temp_storage)->load_values).Load(d_values_in + tile_offset, values);
 
         __syncthreads();
 
@@ -434,13 +447,13 @@ struct AgentReduceByKey
         {
             // Use custom flag operator to additionally flag the first out-of-bounds item
             GuardedInequalityWrapper<EqualityOpT> flag_op(equality_op, num_remaining);
-            BlockDiscontinuityKeys(temp_storage.discontinuity).FlagHeads(
+            BlockDiscontinuityKeys(reinterpret_cast<_TempStorage*>(temp_storage)->discontinuity).FlagHeads(
                 head_flags, keys, prev_keys, flag_op, tile_predecessor);
         }
         else
         {
             InequalityWrapper<EqualityOpT> flag_op(equality_op);
-            BlockDiscontinuityKeys(temp_storage.discontinuity).FlagHeads(
+            BlockDiscontinuityKeys(reinterpret_cast<_TempStorage*>(temp_storage)->discontinuity).FlagHeads(
                 head_flags, keys, prev_keys, flag_op, tile_predecessor);
         }
 
@@ -458,7 +471,7 @@ struct AgentReduceByKey
         if (tile_idx == 0)
         {
             // Scan first tile
-            BlockScanT(temp_storage.scan).ExclusiveScan(scan_items, scan_items, scan_op, block_aggregate);
+         //   BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).ExclusiveScan(scan_items, scan_items, scan_op, block_aggregate);
             num_segments_prefix = 0;
 
             // Update tile status if there are successor tiles
@@ -468,8 +481,8 @@ struct AgentReduceByKey
         else
         {
             // Scan non-first tile
-            TilePrefixCallbackOpT prefix_op(tile_state, temp_storage.prefix, scan_op, tile_idx);
-            BlockScanT(temp_storage.scan).ExclusiveScan(scan_items, scan_items, scan_op, prefix_op);
+            TilePrefixCallbackOpT prefix_op(tile_state, reinterpret_cast<_TempStorage*>(temp_storage)->prefix, scan_op, tile_idx);
+            //BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).ExclusiveScan(scan_items, scan_items, scan_op, prefix_op);
 
             num_segments_prefix     = prefix_op.GetExclusivePrefix().key;
             block_aggregate         = prefix_op.GetBlockAggregate();
@@ -515,7 +528,8 @@ struct AgentReduceByKey
     /**
      * Scan tiles of items as part of a dynamic chained scan
      */
-    __device__ __forceinline__ void ConsumeRange(
+    __device__ __forceinline__
+    void ConsumeRange(
         int                 num_items,          ///< Total number of input items
         ScanTileStateT&     tile_state,         ///< Global tile state descriptor
         int                 start_tile)         ///< The starting tile for the current grid

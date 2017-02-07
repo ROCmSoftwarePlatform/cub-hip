@@ -65,7 +65,9 @@ namespace histogram_gmem_atomics
         int         ACTIVE_CHANNELS,
         int         NUM_BINS,
         typename    PixelType>
-    __global__ void histogram_gmem_atomics(
+    __global__
+    inline
+    void histogram_gmem_atomics(
         hipLaunchParm   lp,
         const PixelType *in,
         int width,
@@ -113,7 +115,9 @@ namespace histogram_gmem_atomics
         int         NUM_PARTS,
         int         ACTIVE_CHANNELS,
         int         NUM_BINS>
-    __global__ void histogram_gmem_accum(
+    __global__
+    inline
+    void histogram_gmem_accum(
         hipLaunchParm   lp,
         const unsigned int *in,
         int n,
@@ -167,13 +171,13 @@ double run_gmem_atomics(
     GpuTimer gpu_timer;
     gpu_timer.Start();
 
-    histogram_gmem_atomics::hipLaunchKernel(HIP_KERNEL_NAME(histogram_gmem_atomics<NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>), dim3(grid), dim3(block), 0, 0, 
+    histogram_gmem_atomics::hipLaunchKernel(HIP_KERNEL_NAME(histogram_gmem_atomics<NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>), dim3(grid), dim3(block), 0, 0,
         d_image,
         width,
         height,
         d_part_hist);
 
-    histogram_gmem_atomics::hipLaunchKernel(HIP_KERNEL_NAME(histogram_gmem_accum<NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>), dim3(grid2), dim3(block2), 0, 0, 
+    histogram_gmem_atomics::hipLaunchKernel(HIP_KERNEL_NAME(histogram_gmem_accum<NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>), dim3(grid2), dim3(block2), 0, 0,
         d_part_hist,
         total_blocks,
         d_hist);

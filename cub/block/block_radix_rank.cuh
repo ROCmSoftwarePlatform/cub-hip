@@ -2,7 +2,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -181,7 +181,8 @@ private:
      ******************************************************************************/
 
     /// Shared storage reference
-    _TempStorage &temp_storage;
+    //_TempStorage &temp_storage;
+    std::uintptr_t temp_storage;
 
     /// Linear thread-id
     unsigned int linear_tid;
@@ -209,7 +210,7 @@ private:
      */
     __device__ __forceinline__ PackedCounter Upsweep()
     {
-        PackedCounter *smem_raking_ptr = temp_storage.raking_grid[linear_tid];
+        PackedCounter *smem_raking_ptr = reinterpret_cast<_TempStorage*>(temp_storage)->raking_grid[linear_tid];
         PackedCounter *raking_ptr;
 
         if (MEMOIZE_OUTER_SCAN)
@@ -235,7 +236,7 @@ private:
     __device__ __forceinline__ void ExclusiveDownsweep(
         PackedCounter raking_partial)
     {
-        PackedCounter *smem_raking_ptr = temp_storage.raking_grid[linear_tid];
+        PackedCounter *smem_raking_ptr = reinterpret_cast<_TempStorage*>(temp_storage)->raking_grid[linear_tid];
 
         PackedCounter *raking_ptr = (MEMOIZE_OUTER_SCAN) ?
             cached_segment :
@@ -265,7 +266,7 @@ private:
         #pragma unroll
         for (int LANE = 0; LANE < PADDED_COUNTER_LANES; LANE++)
         {
-            *((PackedCounter*) temp_storage.digit_counters[LANE][linear_tid]) = 0;
+            *((PackedCounter*) reinterpret_cast<_TempStorage*>(temp_storage)->digit_counters[LANE][linear_tid]) = 0;
         }
     }
 
@@ -302,7 +303,7 @@ private:
         // Compute exclusive sum
         PackedCounter exclusive_partial;
         PrefixCallBack prefix_call_back;
-        BlockScan(temp_storage.block_scan).ExclusiveSum(raking_partial, exclusive_partial, prefix_call_back);
+        BlockScan{reinterpret_cast<_TempStorage*>(temp_storage)->block_scan}.ExclusiveSum(raking_partial, exclusive_partial, prefix_call_back);
 
         // Downsweep scan with exclusive partial
         ExclusiveDownsweep(exclusive_partial);
@@ -324,7 +325,8 @@ public:
      */
     __device__ __forceinline__ BlockRadixRank()
     :
-        temp_storage(PrivateStorage()),
+        //temp_storage(PrivateStorage()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&PrivateStorage())},
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
     {}
 
@@ -335,7 +337,7 @@ public:
     __device__ __forceinline__ BlockRadixRank(
         TempStorage &temp_storage)             ///< [in] Reference to memory allocation having layout type TempStorage
     :
-        temp_storage(temp_storage.Alias()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},//temp_storage(temp_storage.Alias()),
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
     {}
 
@@ -382,7 +384,7 @@ public:
             }
 
             // Pointer to smem digit counter
-            digit_counters[ITEM] = &temp_storage.digit_counters[counter_lane][linear_tid][sub_counter];
+            digit_counters[ITEM] = &reinterpret_cast<_TempStorage*>(temp_storage)->digit_counters[counter_lane][linear_tid][sub_counter];
 
             // Load thread-exclusive prefix
             thread_prefixes[ITEM] = *digit_counters[ITEM];
@@ -435,7 +437,7 @@ public:
             unsigned int counter_lane   = (bin_idx & (COUNTER_LANES - 1));
             unsigned int sub_counter    = bin_idx >> (LOG_COUNTER_LANES);
 
-            exclusive_digit_prefix      = temp_storage.digit_counters[counter_lane][0][sub_counter];
+            exclusive_digit_prefix      = reinterpret_cast<_TempStorage*>(temp_storage)->digit_counters[counter_lane][0][sub_counter];
         }
     }
 };

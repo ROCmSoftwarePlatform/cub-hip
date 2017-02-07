@@ -1,4 +1,3 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -34,22 +33,28 @@
 // Ensure printing of CUDA runtime errors to console
 #define CUB_STDERR
 
-#include <stdio.h>
-#include <algorithm>
-#include <typeinfo>
+#include "test_util.h"
 
 #include <cub/util_allocator.cuh>
 #include <cub/device/device_radix_sort.cuh>
 #include <cub/device/device_segmented_radix_sort.cuh>
 
-#include <thrust/device_ptr.h>
-#include <thrust/sort.h>
-#include <thrust/reverse.h>
+#if defined(__HIP_PLATFORM_HCC__)
+    #include <bolt/amp/sort.h>
+    #include <bolt/amp/sort_by_key.h>
+#else
+    #include <thrust/device_ptr.h>
+    #include <thrust/sort.h>
+    #include <thrust/reverse.h>
+#endif
 
-#include "test_util.h"
+#include "hip/hip_runtime.h"
+
+#include <stdio.h>
+#include <algorithm>
+#include <typeinfo>
 
 using namespace cub;
-
 
 //---------------------------------------------------------------------
 // Globals, constants and typedefs
@@ -84,29 +89,32 @@ enum Backend
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-hipError_t Dispatch(
-    Int2Type<false>         is_descending,
-    Int2Type<CUB>           dispatch_to,
-    int                     *d_selector,
-    size_t                  *d_temp_storage_bytes,
-    hipError_t             *d_cdp_error,
-
-    void*                   d_temp_storage,
-    size_t&                 temp_storage_bytes,
-    DoubleBuffer<KeyT>      &d_keys,
-    DoubleBuffer<ValueT>    &d_values,
-    int                     num_items,
-    int                     num_segments,
-    const int               *d_segment_offsets,
-    int                     begin_bit,
-    int                     end_bit,
-    hipStream_t            stream,
-    bool                    debug_synchronous)
+hipError_t Dispatch(Int2Type<false>      is_descending,
+                    Int2Type<CUB>        dispatch_to,
+                    int                  *d_selector,
+                    size_t               *d_temp_storage_bytes,
+                    hipError_t           *d_cdp_error,
+                    void*                d_temp_storage,
+                    size_t&              temp_storage_bytes,
+                    DoubleBuffer<KeyT>   &d_keys,
+                    DoubleBuffer<ValueT> &d_values,
+                    int                  num_items,
+                    int                  num_segments,
+                    const int            *d_segment_offsets,
+                    int                  begin_bit,
+                    int                  end_bit,
+                    hipStream_t          stream,
+                    bool                 debug_synchronous)
 {
-    return DeviceRadixSort::SortPairs(
-        d_temp_storage, temp_storage_bytes,
-        d_keys, d_values,
-        num_items, begin_bit, end_bit, stream, debug_synchronous);
+    return DeviceRadixSort::SortPairs(d_temp_storage,
+                                      temp_storage_bytes,
+                                      d_keys,
+                                      d_values,
+                                      num_items,
+                                      begin_bit,
+                                      end_bit,
+                                      stream,
+                                      debug_synchronous);
 }
 
 /**
@@ -115,32 +123,38 @@ hipError_t Dispatch(
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-hipError_t Dispatch(
-    Int2Type<false>             is_descending,
-    Int2Type<CUB_NO_OVERWRITE>  dispatch_to,
-    int                         *d_selector,
-    size_t                      *d_temp_storage_bytes,
-    hipError_t                 *d_cdp_error,
-
-    void*                   d_temp_storage,
-    size_t&                 temp_storage_bytes,
-    DoubleBuffer<KeyT>      &d_keys,
-    DoubleBuffer<ValueT>    &d_values,
-    int                     num_items,
-    int                     num_segments,
-    const int               *d_segment_offsets,
-    int                     begin_bit,
-    int                     end_bit,
-    hipStream_t            stream,
-    bool                    debug_synchronous)
+hipError_t Dispatch(Int2Type<false>            is_descending,
+                    Int2Type<CUB_NO_OVERWRITE> dispatch_to,
+                    int                        *d_selector,
+                    size_t                     *d_temp_storage_bytes,
+                    hipError_t                 *d_cdp_error,
+                    void*                      d_temp_storage,
+                    size_t&                    temp_storage_bytes,
+                    DoubleBuffer<KeyT>         &d_keys,
+                    DoubleBuffer<ValueT>       &d_values,
+                    int                        num_items,
+                    int                        num_segments,
+                    const int                  *d_segment_offsets,
+                    int                        begin_bit,
+                    int                        end_bit,
+                    hipStream_t                stream,
+                    bool                       debug_synchronous)
 {
     KeyT      const *const_keys_itr     = d_keys.Current();
     ValueT    const *const_values_itr   = d_values.Current();
 
-    hipError_t retval = DeviceRadixSort::SortPairs(
-        d_temp_storage, temp_storage_bytes,
-        const_keys_itr, d_keys.Alternate(), const_values_itr, d_values.Alternate(),
-        num_items, begin_bit, end_bit, stream, debug_synchronous);
+    hipError_t retval = DeviceRadixSort::SortPairs(d_temp_storage,
+                                                   temp_storage_bytes,
+                                                   const_keys_itr,
+                                                   d_keys.Alternate(),
+                                                   const_values_itr,
+                                                   d_values.Alternate(),
+                                                   num_items,
+                                                   begin_bit,
+                                                   end_bit,
+                                                   stream,
+                                                   debug_synchronous);
+
 
     d_keys.selector ^= 1;
     d_values.selector ^= 1;
@@ -153,29 +167,32 @@ hipError_t Dispatch(
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-hipError_t Dispatch(
-    Int2Type<true>          is_descending,
-    Int2Type<CUB>           dispatch_to,
-    int                     *d_selector,
-    size_t                  *d_temp_storage_bytes,
-    hipError_t             *d_cdp_error,
-
-    void*                   d_temp_storage,
-    size_t&                 temp_storage_bytes,
-    DoubleBuffer<KeyT>      &d_keys,
-    DoubleBuffer<ValueT>    &d_values,
-    int                     num_items,
-    int                     num_segments,
-    const int               *d_segment_offsets,
-    int                     begin_bit,
-    int                     end_bit,
-    hipStream_t            stream,
-    bool                    debug_synchronous)
+hipError_t Dispatch(Int2Type<true>       is_descending,
+                    Int2Type<CUB>        dispatch_to,
+                    int                  *d_selector,
+                    size_t               *d_temp_storage_bytes,
+                    hipError_t           *d_cdp_error,
+                    void*                d_temp_storage,
+                    size_t&              temp_storage_bytes,
+                    DoubleBuffer<KeyT>   &d_keys,
+                    DoubleBuffer<ValueT> &d_values,
+                    int                  num_items,
+                    int                  num_segments,
+                    const int            *d_segment_offsets,
+                    int                  begin_bit,
+                    int                  end_bit,
+                    hipStream_t          stream,
+                    bool                 debug_synchronous)
 {
-    return DeviceRadixSort::SortPairsDescending(
-        d_temp_storage, temp_storage_bytes,
-        d_keys, d_values,
-        num_items, begin_bit, end_bit, stream, debug_synchronous);
+    return DeviceRadixSort::SortPairsDescending(d_temp_storage,
+                                                temp_storage_bytes,
+                                                d_keys,
+                                                d_values,
+                                                num_items,
+                                                begin_bit,
+                                                end_bit,
+                                                stream,
+                                                debug_synchronous);
 }
 
 
@@ -185,32 +202,37 @@ hipError_t Dispatch(
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-hipError_t Dispatch(
-    Int2Type<true>              is_descending,
-    Int2Type<CUB_NO_OVERWRITE>  dispatch_to,
-    int                         *d_selector,
-    size_t                      *d_temp_storage_bytes,
-    hipError_t                 *d_cdp_error,
-
-    void*                   d_temp_storage,
-    size_t&                 temp_storage_bytes,
-    DoubleBuffer<KeyT>      &d_keys,
-    DoubleBuffer<ValueT>    &d_values,
-    int                     num_items,
-    int                     num_segments,
-    const int               *d_segment_offsets,
-    int                     begin_bit,
-    int                     end_bit,
-    hipStream_t            stream,
-    bool                    debug_synchronous)
+hipError_t Dispatch(Int2Type<true>             is_descending,
+                    Int2Type<CUB_NO_OVERWRITE> dispatch_to,
+                    int                        *d_selector,
+                    size_t                     *d_temp_storage_bytes,
+                    hipError_t                 *d_cdp_error,
+                    void*                      d_temp_storage,
+                    size_t&                    temp_storage_bytes,
+                    DoubleBuffer<KeyT>         &d_keys,
+                    DoubleBuffer<ValueT>       &d_values,
+                    int                        num_items,
+                    int                        num_segments,
+                    const int                  *d_segment_offsets,
+                    int                        begin_bit,
+                    int                        end_bit,
+                    hipStream_t                stream,
+                    bool                       debug_synchronous)
 {
     KeyT      const *const_keys_itr     = d_keys.Current();
     ValueT    const *const_values_itr   = d_values.Current();
 
-    hipError_t retval = DeviceRadixSort::SortPairsDescending(
-        d_temp_storage, temp_storage_bytes,
-        const_keys_itr, d_keys.Alternate(), const_values_itr, d_values.Alternate(),
-        num_items, begin_bit, end_bit, stream, debug_synchronous);
+    hipError_t retval = DeviceRadixSort::SortPairsDescending(d_temp_storage,
+                                                             temp_storage_bytes,
+                                                             const_keys_itr,
+                                                             d_keys.Alternate(),
+                                                             const_values_itr,
+                                                             d_values.Alternate(),
+                                                             num_items,
+                                                             begin_bit,
+                                                             end_bit,
+                                                             stream,
+                                                             debug_synchronous);
 
     d_keys.selector ^= 1;
     d_values.selector ^= 1;
@@ -227,30 +249,35 @@ hipError_t Dispatch(
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-hipError_t Dispatch(
-    Int2Type<false>         is_descending,
-    Int2Type<CUB_SEGMENTED> dispatch_to,
-    int                     *d_selector,
-    size_t                  *d_temp_storage_bytes,
-    hipError_t             *d_cdp_error,
-
-    void*                   d_temp_storage,
-    size_t&                 temp_storage_bytes,
-    DoubleBuffer<KeyT>      &d_keys,
-    DoubleBuffer<ValueT>    &d_values,
-    int                     num_items,
-    int                     num_segments,
-    const int               *d_segment_offsets,
-    int                     begin_bit,
-    int                     end_bit,
-    hipStream_t            stream,
-    bool                    debug_synchronous)
+hipError_t Dispatch(Int2Type<false>         is_descending,
+                    Int2Type<CUB_SEGMENTED> dispatch_to,
+                    int                     *d_selector,
+                    size_t                  *d_temp_storage_bytes,
+                    hipError_t              *d_cdp_error,
+                    void*                   d_temp_storage,
+                    size_t&                 temp_storage_bytes,
+                    DoubleBuffer<KeyT>      &d_keys,
+                    DoubleBuffer<ValueT>    &d_values,
+                    int                     num_items,
+                    int                     num_segments,
+                    const int               *d_segment_offsets,
+                    int                     begin_bit,
+                    int                     end_bit,
+                    hipStream_t             stream,
+                    bool                    debug_synchronous)
 {
-    return DeviceSegmentedRadixSort::SortPairs(
-        d_temp_storage, temp_storage_bytes,
-        d_keys, d_values,
-        num_items, num_segments, d_segment_offsets, d_segment_offsets + 1,
-        begin_bit, end_bit, stream, debug_synchronous);
+    return DeviceSegmentedRadixSort::SortPairs(d_temp_storage,
+                                               temp_storage_bytes,
+                                               d_keys,
+                                               d_values,
+                                               num_items,
+                                               num_segments,
+                                               d_segment_offsets,
+                                               d_segment_offsets + 1,
+                                               begin_bit,
+                                               end_bit,
+                                               stream,
+                                               debug_synchronous);
 }
 
 /**
@@ -259,33 +286,40 @@ hipError_t Dispatch(
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-hipError_t Dispatch(
-    Int2Type<false>                         is_descending,
-    Int2Type<CUB_SEGMENTED_NO_OVERWRITE>    dispatch_to,
-    int                                     *d_selector,
-    size_t                                  *d_temp_storage_bytes,
-    hipError_t                             *d_cdp_error,
-
-    void*                   d_temp_storage,
-    size_t&                 temp_storage_bytes,
-    DoubleBuffer<KeyT>      &d_keys,
-    DoubleBuffer<ValueT>    &d_values,
-    int                     num_items,
-    int                     num_segments,
-    const int               *d_segment_offsets,
-    int                     begin_bit,
-    int                     end_bit,
-    hipStream_t            stream,
-    bool                    debug_synchronous)
+hipError_t Dispatch(Int2Type<false>                      is_descending,
+                    Int2Type<CUB_SEGMENTED_NO_OVERWRITE> dispatch_to,
+                    int                                  *d_selector,
+                    size_t                               *d_temp_storage_bytes,
+                    hipError_t                           *d_cdp_error,
+                    void*                                d_temp_storage,
+                    size_t&                              temp_storage_bytes,
+                    DoubleBuffer<KeyT>                   &d_keys,
+                    DoubleBuffer<ValueT>                 &d_values,
+                    int                                  num_items,
+                    int                                  num_segments,
+                    const int                            *d_segment_offsets,
+                    int                                  begin_bit,
+                    int                                  end_bit,
+                    hipStream_t                          stream,
+                    bool                                 debug_synchronous)
 {
     KeyT      const *const_keys_itr     = d_keys.Current();
     ValueT    const *const_values_itr   = d_values.Current();
 
-    hipError_t retval = DeviceSegmentedRadixSort::SortPairs(
-        d_temp_storage, temp_storage_bytes,
-        const_keys_itr, d_keys.Alternate(), const_values_itr, d_values.Alternate(),
-        num_items, num_segments, d_segment_offsets, d_segment_offsets + 1,
-        begin_bit, end_bit, stream, debug_synchronous);
+    hipError_t retval = DeviceSegmentedRadixSort::SortPairs(d_temp_storage,
+                                                            temp_storage_bytes,
+                                                            const_keys_itr,
+                                                            d_keys.Alternate(),
+                                                            const_values_itr,
+                                                            d_values.Alternate(),
+                                                            num_items,
+                                                            num_segments,
+                                                            d_segment_offsets,
+                                                            d_segment_offsets + 1,
+                                                            begin_bit,
+                                                            end_bit,
+                                                            stream,
+                                                            debug_synchronous);
 
     d_keys.selector ^= 1;
     d_values.selector ^= 1;
@@ -299,30 +333,35 @@ hipError_t Dispatch(
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-hipError_t Dispatch(
-    Int2Type<true>          is_descending,
-    Int2Type<CUB_SEGMENTED> dispatch_to,
-    int                     *d_selector,
-    size_t                  *d_temp_storage_bytes,
-    hipError_t             *d_cdp_error,
-
-    void*                   d_temp_storage,
-    size_t&                 temp_storage_bytes,
-    DoubleBuffer<KeyT>      &d_keys,
-    DoubleBuffer<ValueT>    &d_values,
-    int                     num_items,
-    int                     num_segments,
-    const int               *d_segment_offsets,
-    int                     begin_bit,
-    int                     end_bit,
-    hipStream_t            stream,
-    bool                    debug_synchronous)
+hipError_t Dispatch(Int2Type<true>          is_descending,
+                    Int2Type<CUB_SEGMENTED> dispatch_to,
+                    int                     *d_selector,
+                    size_t                  *d_temp_storage_bytes,
+                    hipError_t              *d_cdp_error,
+                    void*                   d_temp_storage,
+                    size_t&                 temp_storage_bytes,
+                    DoubleBuffer<KeyT>      &d_keys,
+                    DoubleBuffer<ValueT>    &d_values,
+                    int                     num_items,
+                    int                     num_segments,
+                    const int               *d_segment_offsets,
+                    int                     begin_bit,
+                    int                     end_bit,
+                    hipStream_t             stream,
+                    bool                    debug_synchronous)
 {
-    return DeviceSegmentedRadixSort::SortPairsDescending(
-        d_temp_storage, temp_storage_bytes,
-        d_keys, d_values,
-        num_items, num_segments, d_segment_offsets, d_segment_offsets + 1,
-        begin_bit, end_bit, stream, debug_synchronous);
+    return DeviceSegmentedRadixSort::SortPairsDescending(d_temp_storage,
+                                                         temp_storage_bytes,
+                                                         d_keys,
+                                                         d_values,
+                                                         num_items,
+                                                         num_segments,
+                                                         d_segment_offsets,
+                                                         d_segment_offsets + 1,
+                                                         begin_bit,
+                                                         end_bit,
+                                                         stream,
+                                                         debug_synchronous);
 }
 
 /**
@@ -331,33 +370,40 @@ hipError_t Dispatch(
 template <typename KeyT, typename ValueT>
 CUB_RUNTIME_FUNCTION
 __forceinline__
-hipError_t Dispatch(
-    Int2Type<true>                          is_descending,
-    Int2Type<CUB_SEGMENTED_NO_OVERWRITE>    dispatch_to,
-    int                                     *d_selector,
-    size_t                                  *d_temp_storage_bytes,
-    hipError_t                             *d_cdp_error,
-
-    void*                   d_temp_storage,
-    size_t&                 temp_storage_bytes,
-    DoubleBuffer<KeyT>      &d_keys,
-    DoubleBuffer<ValueT>    &d_values,
-    int                     num_items,
-    int                     num_segments,
-    const int               *d_segment_offsets,
-    int                     begin_bit,
-    int                     end_bit,
-    hipStream_t            stream,
-    bool                    debug_synchronous)
+hipError_t Dispatch(Int2Type<true>                       is_descending,
+                    Int2Type<CUB_SEGMENTED_NO_OVERWRITE> dispatch_to,
+                    int                                  *d_selector,
+                    size_t                               *d_temp_storage_bytes,
+                    hipError_t                           *d_cdp_error,
+                    void*                                d_temp_storage,
+                    size_t&                              temp_storage_bytes,
+                    DoubleBuffer<KeyT>                   &d_keys,
+                    DoubleBuffer<ValueT>                 &d_values,
+                    int                                  num_items,
+                    int                                  num_segments,
+                    const int                            *d_segment_offsets,
+                    int                                  begin_bit,
+                    int                                  end_bit,
+                    hipStream_t                          stream,
+                    bool                                 debug_synchronous)
 {
     KeyT      const *const_keys_itr     = d_keys.Current();
     ValueT    const *const_values_itr   = d_values.Current();
 
-    hipError_t retval = DeviceSegmentedRadixSort::SortPairsDescending(
-        d_temp_storage, temp_storage_bytes,
-        const_keys_itr, d_keys.Alternate(), const_values_itr, d_values.Alternate(),
-        num_items, num_segments, d_segment_offsets, d_segment_offsets + 1,
-        begin_bit, end_bit, stream, debug_synchronous);
+    hipError_t retval = DeviceSegmentedRadixSort::SortPairsDescending(d_temp_storage,
+                                                                      temp_storage_bytes,
+                                                                      const_keys_itr,
+                                                                      d_keys.Alternate(),
+                                                                      const_values_itr,
+                                                                      d_values.Alternate(),
+                                                                      num_items,
+                                                                      num_segments,
+                                                                      d_segment_offsets,
+                                                                      d_segment_offsets + 1,
+                                                                      begin_bit,
+                                                                      end_bit,
+                                                                      stream,
+                                                                      debug_synchronous);
 
     d_keys.selector ^= 1;
     d_values.selector ^= 1;
@@ -373,24 +419,22 @@ hipError_t Dispatch(
  * Dispatch keys-only to Thrust sorting entrypoint
  */
 template <int IS_DESCENDING, typename KeyT>
-hipError_t Dispatch(
-    Int2Type<IS_DESCENDING> is_descending,
-    Int2Type<THRUST>        dispatch_to,
-    int                     *d_selector,
-    size_t                  *d_temp_storage_bytes,
-    hipError_t             *d_cdp_error,
-
-    void                    *d_temp_storage,
-    size_t                  &temp_storage_bytes,
-    DoubleBuffer<KeyT>      &d_keys,
-    DoubleBuffer<NullType>  &d_values,
-    int                     num_items,
-    int                     num_segments,
-    const int               *d_segment_offsets,
-    int                     begin_bit,
-    int                     end_bit,
-    hipStream_t            stream,
-    bool                    debug_synchronous)
+hipError_t Dispatch(Int2Type<IS_DESCENDING> is_descending,
+                    Int2Type<THRUST>        dispatch_to,
+                    int                     *d_selector,
+                    size_t                  *d_temp_storage_bytes,
+                    hipError_t              *d_cdp_error,
+                    void                    *d_temp_storage,
+                    size_t                  &temp_storage_bytes,
+                    DoubleBuffer<KeyT>      &d_keys,
+                    DoubleBuffer<NullType>  &d_values,
+                    int                     num_items,
+                    int                     num_segments,
+                    const int               *d_segment_offsets,
+                    int                     begin_bit,
+                    int                     end_bit,
+                    hipStream_t             stream,
+                    bool                    debug_synchronous)
 {
 
     if (d_temp_storage == 0)
@@ -399,11 +443,19 @@ hipError_t Dispatch(
     }
     else
     {
-        thrust::device_ptr<KeyT> d_keys_wrapper(d_keys.Current());
+        #if defined(__HIP_PLATFORM_HCC__)
+            if (IS_DESCENDING) std::reverse(d_keys.Current(),
+                                            d_keys.Current() + num_items);
+            bolt::amp::sort(d_keys.Current(), d_keys.Current() + num_items);
+            if (IS_DESCENDING) std::reverse(d_keys.Current(),
+                                            d_keys.Current() + num_items);
+        #else
+            thrust::device_ptr<KeyT> d_keys_wrapper(d_keys.Current());
 
-        if (IS_DESCENDING) thrust::reverse(d_keys_wrapper, d_keys_wrapper + num_items);
-        thrust::sort(d_keys_wrapper, d_keys_wrapper + num_items);
-        if (IS_DESCENDING) thrust::reverse(d_keys_wrapper, d_keys_wrapper + num_items);
+            if (IS_DESCENDING) thrust::reverse(d_keys_wrapper, d_keys_wrapper + num_items);
+            thrust::sort(d_keys_wrapper, d_keys_wrapper + num_items);
+            if (IS_DESCENDING) thrust::reverse(d_keys_wrapper, d_keys_wrapper + num_items);
+        #endif
     }
 
     return hipSuccess;
@@ -414,24 +466,22 @@ hipError_t Dispatch(
  * Dispatch key-value pairs to Thrust sorting entrypoint
  */
 template <int IS_DESCENDING, typename KeyT, typename ValueT>
-hipError_t Dispatch(
-    Int2Type<IS_DESCENDING> is_descending,
-    Int2Type<THRUST>        dispatch_to,
-    int                     *d_selector,
-    size_t                  *d_temp_storage_bytes,
-    hipError_t             *d_cdp_error,
-
-    void                    *d_temp_storage,
-    size_t                  &temp_storage_bytes,
-    DoubleBuffer<KeyT>      &d_keys,
-    DoubleBuffer<ValueT>    &d_values,
-    int                     num_items,
-    int                     num_segments,
-    const int               *d_segment_offsets,
-    int                     begin_bit,
-    int                     end_bit,
-    hipStream_t            stream,
-    bool                    debug_synchronous)
+hipError_t Dispatch(Int2Type<IS_DESCENDING> is_descending,
+                    Int2Type<THRUST>        dispatch_to,
+                    int                     *d_selector,
+                    size_t                  *d_temp_storage_bytes,
+                    hipError_t              *d_cdp_error,
+                    void                    *d_temp_storage,
+                    size_t                  &temp_storage_bytes,
+                    DoubleBuffer<KeyT>      &d_keys,
+                    DoubleBuffer<ValueT>    &d_values,
+                    int                     num_items,
+                    int                     num_segments,
+                    const int               *d_segment_offsets,
+                    int                     begin_bit,
+                    int                     end_bit,
+                    hipStream_t             stream,
+                    bool                    debug_synchronous)
 {
 
     if (d_temp_storage == 0)
@@ -440,20 +490,40 @@ hipError_t Dispatch(
     }
     else
     {
-        thrust::device_ptr<KeyT>     d_keys_wrapper(d_keys.Current());
-        thrust::device_ptr<ValueT>   d_values_wrapper(d_values.Current());
+        #if defined(__HIP_PLATFORM_HCC__)
+            if (IS_DESCENDING) {
+                std::reverse(d_keys.Current(),
+                             d_keys.Current() + num_items);
+                std::reverse(d_values.Current(),
+                             d_values.Current() + num_items);
+            }
 
-        if (IS_DESCENDING) {
-            thrust::reverse(d_keys_wrapper, d_keys_wrapper + num_items);
-            thrust::reverse(d_values_wrapper, d_values_wrapper + num_items);
-        }
+            bolt::amp::sort_by_key(d_keys.Current(),
+                                   d_keys.Current() + num_items,
+                                   d_values.Current());
 
-        thrust::sort_by_key(d_keys_wrapper, d_keys_wrapper + num_items, d_values_wrapper);
+            if (IS_DESCENDING) {
+                std::reverse(d_keys.Current(),
+                             d_keys.Current() + num_items);
+                std::reverse(d_values.Current(),
+                             d_values.Current() + num_items);
+            }
+        #else
+            thrust::device_ptr<KeyT>     d_keys_wrapper(d_keys.Current());
+            thrust::device_ptr<ValueT>   d_values_wrapper(d_values.Current());
 
-        if (IS_DESCENDING) {
-            thrust::reverse(d_keys_wrapper, d_keys_wrapper + num_items);
-            thrust::reverse(d_values_wrapper, d_values_wrapper + num_items);
-        }
+            if (IS_DESCENDING) {
+                thrust::reverse(d_keys_wrapper, d_keys_wrapper + num_items);
+                thrust::reverse(d_values_wrapper, d_values_wrapper + num_items);
+            }
+
+            thrust::sort_by_key(d_keys_wrapper, d_keys_wrapper + num_items, d_values_wrapper);
+
+            if (IS_DESCENDING) {
+                thrust::reverse(d_keys_wrapper, d_keys_wrapper + num_items);
+                thrust::reverse(d_values_wrapper, d_values_wrapper + num_items);
+            }
+        #endif
     }
 
     return hipSuccess;
@@ -468,22 +538,22 @@ hipError_t Dispatch(
  * Simple wrapper kernel to invoke DeviceRadixSort
  */
 template <int IS_DESCENDING, typename KeyT, typename ValueT>
-__global__ void CnpDispatchKernel(
-    Int2Type<IS_DESCENDING> is_descending,
-    int                     *d_selector,
-    size_t                  *d_temp_storage_bytes,
-    hipError_t             *d_cdp_error,
-
-    void                    *d_temp_storage,
-    size_t                  temp_storage_bytes,
-    DoubleBuffer<KeyT>      d_keys,
-    DoubleBuffer<ValueT>    d_values,
-    int                     num_items,
-    int                     num_segments,
-    const int               *d_segment_offsets,
-    int                     begin_bit,
-    int                     end_bit,
-    bool                    debug_synchronous)
+__global__
+void CnpDispatchKernel(hipLaunchParm           lp,
+                       Int2Type<IS_DESCENDING> is_descending,
+                       int                     *d_selector,
+                       size_t                  *d_temp_storage_bytes,
+                       hipError_t              *d_cdp_error,
+                       void                    *d_temp_storage,
+                       size_t                  temp_storage_bytes,
+                       DoubleBuffer<KeyT>      d_keys,
+                       DoubleBuffer<ValueT>    d_values,
+                       int                     num_items,
+                       int                     num_segments,
+                       const int               *d_segment_offsets,
+                       int                     begin_bit,
+                       int                     end_bit,
+                       bool                    debug_synchronous)
 {
 #ifndef CUB_CDP
     *d_cdp_error            = hipErrorUnknown;
@@ -503,31 +573,43 @@ __global__ void CnpDispatchKernel(
  * Dispatch to CDP kernel
  */
 template <int IS_DESCENDING, typename KeyT, typename ValueT>
-hipError_t Dispatch(
-    Int2Type<IS_DESCENDING> is_descending,
-    Int2Type<CDP>           dispatch_to,
-    int                     *d_selector,
-    size_t                  *d_temp_storage_bytes,
-    hipError_t             *d_cdp_error,
-
-    void                    *d_temp_storage,
-    size_t                  &temp_storage_bytes,
-    DoubleBuffer<KeyT>      &d_keys,
-    DoubleBuffer<ValueT>    &d_values,
-    int                     num_items,
-    int                     num_segments,
-    const int               *d_segment_offsets,
-    int                     begin_bit,
-    int                     end_bit,
-    hipStream_t            stream,
-    bool                    debug_synchronous)
+hipError_t Dispatch(Int2Type<IS_DESCENDING> is_descending,
+                    Int2Type<CDP>           dispatch_to,
+                    int                     *d_selector,
+                    size_t                  *d_temp_storage_bytes,
+                    hipError_t              *d_cdp_error,
+                    void                    *d_temp_storage,
+                    size_t                  &temp_storage_bytes,
+                    DoubleBuffer<KeyT>      &d_keys,
+                    DoubleBuffer<ValueT>    &d_values,
+                    int                     num_items,
+                    int                     num_segments,
+                    const int               *d_segment_offsets,
+                    int                     begin_bit,
+                    int                     end_bit,
+                    hipStream_t             stream,
+                    bool                    debug_synchronous)
 {
     // Invoke kernel to invoke device-side dispatch
-    hipLaunchKernel(HIP_KERNEL_NAME(CnpDispatchKernel), dim3(1), dim3(1), 0, 0, 
-        is_descending, d_selector, d_temp_storage_bytes, d_cdp_error,
-        d_temp_storage, temp_storage_bytes, d_keys, d_values,
-        num_items, num_segments, d_segment_offsets,
-        begin_bit, end_bit, debug_synchronous);
+    hipLaunchKernel(HIP_KERNEL_NAME(CnpDispatchKernel),
+                    dim3(1),
+                    dim3(1),
+                    0,
+                    0,
+                    is_descending,
+                    d_selector,
+                    d_temp_storage_bytes,
+                    d_cdp_error,
+                    d_temp_storage,
+                    temp_storage_bytes,
+                    d_keys,
+                    d_values,
+                    num_items,
+                    num_segments,
+                    d_segment_offsets,
+                    begin_bit,
+                    end_bit,
+                    debug_synchronous);
 
     // Copy out selector
     CubDebugExit(hipMemcpy(&d_keys.selector, d_selector, sizeof(int) * 1, hipMemcpyDeviceToHost));
@@ -754,11 +836,22 @@ void Test(
     // Allocate temporary storage (and make it un-aligned)
     size_t  temp_storage_bytes  = 0;
     void    *d_temp_storage     = NULL;
-    CubDebugExit(Dispatch(
-        Int2Type<IS_DESCENDING>(), Int2Type<BACKEND>(), d_selector, d_temp_storage_bytes, d_cdp_error,
-        d_temp_storage, temp_storage_bytes, d_keys, d_values,
-        num_items, num_segments, d_segment_offsets,
-        begin_bit, end_bit, 0, true));
+    CubDebugExit(Dispatch(Int2Type<IS_DESCENDING>(),
+                          Int2Type<BACKEND>(),
+                          d_selector,
+                          d_temp_storage_bytes,
+                          d_cdp_error,
+                          d_temp_storage,
+                          temp_storage_bytes,
+                          d_keys,
+                          d_values,
+                          num_items,
+                          num_segments,
+                          d_segment_offsets,
+                          begin_bit,
+                          end_bit,
+                          0,
+                          true));
 
     CubDebugExit(g_allocator.DeviceAllocate(&d_temp_storage, temp_storage_bytes + 1));
     void* mis_aligned_temp = static_cast<char*>(d_temp_storage) + 1;
@@ -776,11 +869,22 @@ void Test(
     CubDebugExit(hipMemcpy(d_segment_offsets, h_segment_offsets, sizeof(int) * (num_segments + 1), hipMemcpyHostToDevice));
 
     // Run warmup/correctness iteration
-    CubDebugExit(Dispatch(
-        Int2Type<IS_DESCENDING>(), Int2Type<BACKEND>(), d_selector, d_temp_storage_bytes, d_cdp_error,
-        mis_aligned_temp, temp_storage_bytes, d_keys, d_values,
-        num_items, num_segments, d_segment_offsets,
-        begin_bit, end_bit, 0, true));
+    CubDebugExit(Dispatch(Int2Type<IS_DESCENDING>(),
+                          Int2Type<BACKEND>(),
+                          d_selector,
+                          d_temp_storage_bytes,
+                          d_cdp_error,
+                          mis_aligned_temp,
+                          temp_storage_bytes,
+                          d_keys,
+                          d_values,
+                          num_items,
+                          num_segments,
+                          d_segment_offsets,
+                          begin_bit,
+                          end_bit,
+                          0,
+                          true));
 
     // Flush any stdout/stderr
     fflush(stdout);
@@ -822,11 +926,22 @@ void Test(
         }
 
         gpu_timer.Start();
-        CubDebugExit(Dispatch(
-            Int2Type<IS_DESCENDING>(), Int2Type<BACKEND>(), d_selector, d_temp_storage_bytes, d_cdp_error,
-            mis_aligned_temp, temp_storage_bytes, d_keys, d_values,
-            num_items, num_segments, d_segment_offsets,
-            begin_bit, end_bit, 0, false));
+        CubDebugExit(Dispatch(Int2Type<IS_DESCENDING>(),
+                              Int2Type<BACKEND>(),
+                              d_selector,
+                              d_temp_storage_bytes,
+                              d_cdp_error,
+                              mis_aligned_temp,
+                              temp_storage_bytes,
+                              d_keys,
+                              d_values,
+                              num_items,
+                              num_segments,
+                              d_segment_offsets,
+                              begin_bit,
+                              end_bit,
+                              0,
+                              false));
         gpu_timer.Stop();
         elapsed_millis += gpu_timer.ElapsedMillis();
     }

@@ -2,7 +2,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -165,9 +165,14 @@ private:
     };
 
     /// Internal specialization.  Use SHFL-based scan if (architecture is >= SM30) and (LOGICAL_WARP_THREADS is a power-of-two)
-    typedef typename If<(PTX_ARCH >= 300) && (IS_POW_OF_TWO),
-        WarpScanShfl<T, LOGICAL_WARP_THREADS, PTX_ARCH>,
-        WarpScanSmem<T, LOGICAL_WARP_THREADS, PTX_ARCH> >::Type InternalWarpScan;
+    #if defined(__HIP_PLATFORM_HCC__)
+        typedef WarpScanShfl<T, LOGICAL_WARP_THREADS, PTX_ARCH> InternalWarpScan;
+    #else
+        typedef typename If<(PTX_ARCH >= 300) && (IS_POW_OF_TWO),
+            WarpScanShfl<T, LOGICAL_WARP_THREADS, PTX_ARCH>,
+            WarpScanSmem<T, LOGICAL_WARP_THREADS, PTX_ARCH> >::Type InternalWarpScan;
+    #endif
+
 
     /// Shared memory storage layout type for WarpScan
     typedef typename InternalWarpScan::TempStorage _TempStorage;
@@ -178,7 +183,8 @@ private:
      ******************************************************************************/
 
     /// Shared storage reference
-    _TempStorage    &temp_storage;
+    //_TempStorage    &temp_storage;
+    std::uintptr_t  temp_storage;
     unsigned int    lane_id;
 
 
@@ -204,7 +210,8 @@ public:
     __device__ __forceinline__ WarpScan(
         TempStorage &temp_storage)             ///< [in] Reference to memory allocation having layout type TempStorage
     :
-        temp_storage(temp_storage.Alias()),
+        //temp_storage(temp_storage.Alias()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
         lane_id(IS_ARCH_WARP ?
             LaneId() :
             LaneId() % LOGICAL_WARP_THREADS)
@@ -450,7 +457,7 @@ public:
         T               &inclusive_output,  ///< [out] Calling thread's output item.  May be aliased with \p input.
         ScanOp          scan_op)            ///< [in] Binary scan operator
     {
-        InternalWarpScan(temp_storage).InclusiveScan(input, inclusive_output, scan_op);
+        InternalWarpScan(*reinterpret_cast<_TempStorage*>(temp_storage)).InclusiveScan(input, inclusive_output, scan_op);
     }
 
 
@@ -501,7 +508,7 @@ public:
         ScanOp          scan_op,            ///< [in] Binary scan operator
         T               &warp_aggregate)    ///< [out] Warp-wide aggregate reduction of input items.
     {
-        InternalWarpScan(temp_storage).InclusiveScan(input, inclusive_output, scan_op, warp_aggregate);
+        InternalWarpScan(*reinterpret_cast<_TempStorage*>(temp_storage)).InclusiveScan(input, inclusive_output, scan_op, warp_aggregate);
     }
 
 
@@ -559,12 +566,11 @@ public:
         T inclusive_output;
         internal.InclusiveScan(input, inclusive_output, scan_op);
 
-        internal.Update(
-            input,
-            inclusive_output,
-            exclusive_output,
-            scan_op,
-            Int2Type<IS_INTEGER>());
+        internal.Update(input,
+                        inclusive_output,
+                        exclusive_output,
+                        scan_op,
+                        Int2Type<IS_INTEGER>());
     }
 
 
@@ -611,7 +617,7 @@ public:
         T               initial_value,      ///< [in] Initial value to seed the exclusive scan
         ScanOp          scan_op)            ///< [in] Binary scan operator
     {
-        InternalWarpScan internal(temp_storage);
+        InternalWarpScan internal(*reinterpret_cast<_TempStorage*>(temp_storage));
 
         T inclusive_output;
         internal.InclusiveScan(input, inclusive_output, scan_op);
@@ -672,7 +678,7 @@ public:
         ScanOp          scan_op,            ///< [in] Binary scan operator
         T               &warp_aggregate)    ///< [out] Warp-wide aggregate reduction of input items.
     {
-        InternalWarpScan internal(temp_storage);
+        InternalWarpScan internal(*reinterpret_cast<_TempStorage*>(temp_storage));
 
         T inclusive_output;
         internal.InclusiveScan(input, inclusive_output, scan_op);
@@ -734,7 +740,7 @@ public:
         ScanOp          scan_op,            ///< [in] Binary scan operator
         T               &warp_aggregate)    ///< [out] Warp-wide aggregate reduction of input items.
     {
-        InternalWarpScan internal(temp_storage);
+        InternalWarpScan internal(*reinterpret_cast<_TempStorage*>(temp_storage));
 
         T inclusive_output;
         internal.InclusiveScan(input, inclusive_output, scan_op);
@@ -803,7 +809,7 @@ public:
         T               &exclusive_output,  ///< [out] Calling thread's exclusive-scan output item.
         ScanOp          scan_op)            ///< [in] Binary scan operator
     {
-        InternalWarpScan internal(temp_storage);
+        InternalWarpScan internal(*reinterpret_cast<_TempStorage*>(temp_storage));
 
         internal.InclusiveScan(input, inclusive_output, scan_op);
 
@@ -863,7 +869,7 @@ public:
         T               initial_value,      ///< [in] Initial value to seed the exclusive scan
         ScanOp          scan_op)            ///< [in] Binary scan operator
     {
-        InternalWarpScan internal(temp_storage);
+        InternalWarpScan internal(*reinterpret_cast<_TempStorage*>(temp_storage));
 
         internal.InclusiveScan(input, inclusive_output, scan_op);
 
@@ -924,7 +930,7 @@ public:
         T               input,              ///< [in] The value to broadcast
         unsigned int    src_lane)           ///< [in] Which warp lane is to do the broadcasting
     {
-        return InternalWarpScan(temp_storage).Broadcast(input, src_lane);
+        return InternalWarpScan(*reinterpret_cast<_TempStorage*>(temp_storage)).Broadcast(input, src_lane);
     }
 
     //@}  end member group

@@ -233,7 +233,8 @@ struct AgentSpmv
     //---------------------------------------------------------------------
 
 
-    _TempStorage&                   temp_storage;         /// Reference to temp_storage
+    //_TempStorage&                   temp_storage;         /// Reference to temp_storage
+    std::uintptr_t                  temp_storage;
 
     SpmvParams<ValueT, OffsetT>&    spmv_params;
 
@@ -609,10 +610,12 @@ struct AgentSpmv
         // Turnstile
         if (hipThreadIdx_x == 0)
         {
-            __threadfence();
+            #if !defined(__HIP_PLATFORM_HCC__)
+                __threadfence();
+            #endif
             temp_storage.turnstile = atomicAdd(spmv_params.d_row_end_offsets - 1, 1);
         }
-        
+
         __syncthreads();
 
         // Last block through turnstile does fixup

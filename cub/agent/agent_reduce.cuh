@@ -160,7 +160,8 @@ struct AgentReduce
     // Per-thread fields
     //---------------------------------------------------------------------
 
-    _TempStorage&           temp_storage;       ///< Reference to temp_storage
+    //_TempStorage&           temp_storage;       ///< Reference to temp_storage
+    std::uintptr_t          temp_storage;
     InputIteratorT          d_in;               ///< Input data to reduce
     WrappedInputIteratorT   d_wrapped_in;       ///< Wrapped input data to reduce
     ReductionOp             reduction_op;       ///< Binary reduction operator
@@ -202,7 +203,8 @@ struct AgentReduce
         InputIteratorT          d_in,               ///< Input data to reduce
         ReductionOp             reduction_op)       ///< Binary reduction operator
     :
-        temp_storage(temp_storage.Alias()),
+        //temp_storage(temp_storage.Alias()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
         d_in(d_in),
         d_wrapped_in(d_in),
         reduction_op(reduction_op)
@@ -326,7 +328,7 @@ struct AgentReduce
             // First tile isn't full (not all threads have valid items)
             int valid_items = block_end - block_offset;
             ConsumeTile<true>(thread_aggregate, block_offset, valid_items, Int2Type<false>(), can_vectorize);
-            return BlockReduceT(temp_storage.reduce).Reduce(thread_aggregate, reduction_op, valid_items);
+            return BlockReduceT(reinterpret_cast<_TempStorage*>(temp_storage)->reduce).Reduce(thread_aggregate, reduction_op, valid_items);
         }
 
         // At least one full block
@@ -348,7 +350,7 @@ struct AgentReduce
         }
 
         // Compute block-wide reduction (all threads have valid items)
-        return BlockReduceT(temp_storage.reduce).Reduce(thread_aggregate, reduction_op);
+        return BlockReduceT(reinterpret_cast<_TempStorage*>(temp_storage)->reduce).Reduce(thread_aggregate, reduction_op);
     }
 
 
@@ -407,7 +409,7 @@ struct AgentReduce
             // First tile isn't full (not all threads have valid items)
             int valid_items = num_items - block_offset;
             ConsumeTile<true>(thread_aggregate, block_offset, valid_items, Int2Type<false>(), can_vectorize);
-            return BlockReduceT(temp_storage.reduce).Reduce(thread_aggregate, reduction_op, valid_items);
+            return BlockReduceT(reinterpret_cast<_TempStorage*>(temp_storage)->reduce).Reduce(thread_aggregate, reduction_op, valid_items);
         }
 
         // Consume first full tile of input
@@ -417,12 +419,12 @@ struct AgentReduce
         {
             // Dequeue a tile of items
             if (hipThreadIdx_x == 0)
-                temp_storage.dequeue_offset = queue.Drain(TILE_ITEMS) + even_share_base;
+                reinterpret_cast<_TempStorage*>(temp_storage)->dequeue_offset = queue.Drain(TILE_ITEMS) + even_share_base;
 
             __syncthreads();
 
             // Grab tile offset and check if we're done with full tiles
-            block_offset = temp_storage.dequeue_offset;
+            block_offset = reinterpret_cast<_TempStorage*>(temp_storage)->dequeue_offset;
 
             // Consume more full tiles
             while (block_offset + TILE_ITEMS <= num_items)
@@ -433,12 +435,12 @@ struct AgentReduce
 
                 // Dequeue a tile of items
                 if (hipThreadIdx_x == 0)
-                    temp_storage.dequeue_offset = queue.Drain(TILE_ITEMS) + even_share_base;
+                    reinterpret_cast<_TempStorage*>(temp_storage)->dequeue_offset = queue.Drain(TILE_ITEMS) + even_share_base;
 
                 __syncthreads();
 
                 // Grab tile offset and check if we're done with full tiles
-                block_offset = temp_storage.dequeue_offset;
+                block_offset = reinterpret_cast<_TempStorage*>(temp_storage)->dequeue_offset;
             }
 
             // Consume partial tile
@@ -450,7 +452,7 @@ struct AgentReduce
         }
 
         // Compute block-wide reduction (all threads have valid items)
-        return BlockReduceT(temp_storage.reduce).Reduce(thread_aggregate, reduction_op);
+        return BlockReduceT(reinterpret_cast<_TempStorage*>(temp_storage)->reduce).Reduce(thread_aggregate, reduction_op);
 
     }
 

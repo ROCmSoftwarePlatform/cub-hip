@@ -2,7 +2,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -66,14 +66,16 @@ namespace cub {
  *
  * \return The CUDA error.
  */
-__host__ __device__ __forceinline__ hipError_t Debug(
+__host__ __device__ __forceinline__
+static
+hipError_t Debug(
     hipError_t     error,
     const char*     filename,
     int             line)
 {
     (void)filename;
     (void)line;
-#ifdef CUB_STDERR
+#if defined(CUB_STDERR) && !defined(__HIP_DEVICE_COMPILE__)
     if (error)
     {
     #if (CUB_PTX_ARCH == 0)
@@ -115,8 +117,8 @@ __host__ __device__ __forceinline__ hipError_t Debug(
         #define _CubLog(format, ...) printf("[block (%d,%d,%d), thread (%d,%d,%d)]: " format, hipBlockIdx_z, hipBlockIdx_y, hipBlockIdx_x, hipThreadIdx_z, hipThreadIdx_y, hipThreadIdx_x, __VA_ARGS__);
     #endif
 #else
-// XXX shameless hack for clang around variadic printf... 
-//     Compilies w/o supplying -std=c++11 but shows warning, 
+// XXX shameless hack for clang around variadic printf...
+//     Compilies w/o supplying -std=c++11 but shows warning,
 //     so we sielence them :)
 #pragma clang diagnostic ignored "-Wc++11-extensions"
 #pragma clang diagnostic ignored "-Wunnamed-type-template-args"

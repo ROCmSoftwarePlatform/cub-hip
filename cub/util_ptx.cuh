@@ -2,7 +2,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -85,7 +85,9 @@ namespace cub {
 /**
  * \brief Shift-right then add.  Returns (\p x >> \p shift) + \p addend.
  */
-__device__ __forceinline__ unsigned int SHR_ADD(
+__device__ __forceinline__
+static
+unsigned int SHR_ADD(
     unsigned int x,
     unsigned int shift,
     unsigned int addend)
@@ -104,7 +106,9 @@ __device__ __forceinline__ unsigned int SHR_ADD(
 /**
  * \brief Shift-left then add.  Returns (\p x << \p shift) + \p addend.
  */
-__device__ __forceinline__ unsigned int SHL_ADD(
+__device__ __forceinline__
+static
+unsigned int SHL_ADD(
     unsigned int x,
     unsigned int shift,
     unsigned int addend)
@@ -125,7 +129,9 @@ __device__ __forceinline__ unsigned int SHL_ADD(
  * Bitfield-extract.
  */
 template <typename UnsignedBits, int BYTE_LEN>
-__device__ __forceinline__ unsigned int BFE(
+__device__ __forceinline__
+static
+unsigned int BFE(
     UnsignedBits            source,
     unsigned int            bit_start,
     unsigned int            num_bits,
@@ -146,7 +152,9 @@ __device__ __forceinline__ unsigned int BFE(
  * Bitfield-extract for 64-bit types.
  */
 template <typename UnsignedBits>
-__device__ __forceinline__ unsigned int BFE(
+__device__ __forceinline__
+static
+unsigned int BFE(
     UnsignedBits            source,
     unsigned int            bit_start,
     unsigned int            num_bits,
@@ -162,7 +170,9 @@ __device__ __forceinline__ unsigned int BFE(
  * \brief Bitfield-extract.  Extracts \p num_bits from \p source starting at bit-offset \p bit_start.  The input \p source may be an 8b, 16b, 32b, or 64b unsigned integer type.
  */
 template <typename UnsignedBits>
-__device__ __forceinline__ unsigned int BFE(
+__device__ __forceinline__
+static
+unsigned int BFE(
     UnsignedBits source,
     unsigned int bit_start,
     unsigned int num_bits)
@@ -174,8 +184,9 @@ __device__ __forceinline__ unsigned int BFE(
 /**
  * \brief Bitfield insert.  Inserts the \p num_bits least significant bits of \p y into \p x at bit-offset \p bit_start.
  */
-__device__ __forceinline__ void BFI(
-    unsigned int &ret,
+__device__ __forceinline__ void
+static
+BFI(unsigned int &ret,
     unsigned int x,
     unsigned int y,
     unsigned int bit_start,
@@ -196,7 +207,9 @@ __device__ __forceinline__ void BFI(
 /**
  * \brief Three-operand add.  Returns \p x + \p y + \p z.
  */
-__device__ __forceinline__ unsigned int IADD3(unsigned int x, unsigned int y, unsigned int z)
+__device__ __forceinline__
+static
+unsigned int IADD3(unsigned int x, unsigned int y, unsigned int z)
 {
 #if CUB_PTX_ARCH >= 200 && defined(__HIP_PLATFORM_NVCC__)
     asm volatile("vadd.u32.u32.u32.add %0, %1, %2, %3;" : "=r"(x) : "r"(x), "r"(y), "r"(z));
@@ -233,7 +246,9 @@ __device__ __forceinline__ unsigned int IADD3(unsigned int x, unsigned int y, un
  * \endcode
  *
  */
-__device__ __forceinline__ int PRMT(unsigned int a, unsigned int b, unsigned int index)
+__device__ __forceinline__
+static
+int PRMT(unsigned int a, unsigned int b, unsigned int index)
 {
     int ret;
 #ifdef __HIP_PLATFORM_NVCC__
@@ -266,7 +281,9 @@ __device__ __forceinline__ int PRMT(unsigned int a, unsigned int b, unsigned int
 /**
  * Sync-threads barrier.
  */
-__device__ __forceinline__ void BAR(int count)
+__device__ __forceinline__
+static
+void BAR(int count)
 {
 #ifdef __HIP_PLATFORM_NVCC__
     asm volatile("bar.sync 1, %0;" : : "r"(count));
@@ -279,7 +296,9 @@ __device__ __forceinline__ void BAR(int count)
 /**
  * Floating point multiply. (Mantissa LSB rounds towards zero.)
  */
-__device__ __forceinline__ float FMUL_RZ(float a, float b)
+__device__ __forceinline__
+static
+float FMUL_RZ(float a, float b)
 {
     float d;
 #ifdef __HIP_PLATFORM_NVCC__
@@ -294,7 +313,9 @@ __device__ __forceinline__ float FMUL_RZ(float a, float b)
 /**
  * Floating point multiply-add. (Mantissa LSB rounds towards zero.)
  */
-__device__ __forceinline__ float FFMA_RZ(float a, float b, float c)
+__device__ __forceinline__
+static
+float FFMA_RZ(float a, float b, float c)
 {
     float d;
 #ifdef __HIP_PLATFORM_NVCC__
@@ -310,17 +331,21 @@ __device__ __forceinline__ float FFMA_RZ(float a, float b, float c)
 /**
  * \brief Terminates the calling thread
  */
-__device__ __forceinline__ void ThreadExit() {
+__device__ __forceinline__
+static
+void ThreadExit() {
 #ifdef __HIP_PLATFORM_NVCC__
     asm volatile("exit;");
 #endif
-}    
+}
 
 
 /**
  * \brief  Abort execution and generate an interrupt to the host CPU
  */
-__device__ __forceinline__ void ThreadTrap() {
+__device__ __forceinline__
+static
+void ThreadTrap() {
 #ifdef __HIP_PLATFORM_NVCC__
     asm volatile("trap;");
 #endif
@@ -330,7 +355,9 @@ __device__ __forceinline__ void ThreadTrap() {
 /**
  * \brief Returns the row-major linear thread identifier for a multidimensional threadblock
  */
-__device__ __forceinline__ int RowMajorTid(int block_dim_x, int block_dim_y, int block_dim_z)
+__device__ __forceinline__
+static
+int RowMajorTid(int block_dim_x, int block_dim_y, int block_dim_z)
 {
     return ((block_dim_z == 1) ? 0 : (hipThreadIdx_z * block_dim_x * block_dim_y)) +
             ((block_dim_y == 1) ? 0 : (hipThreadIdx_y * block_dim_x)) +
@@ -341,14 +368,17 @@ __device__ __forceinline__ int RowMajorTid(int block_dim_x, int block_dim_y, int
 /**
  * \brief Returns the warp lane ID of the calling thread
  */
-__device__ __forceinline__ unsigned int LaneId()
+__device__ __forceinline__
+static
+inline
+unsigned int LaneId()
 {
     unsigned int ret;
 #ifdef __HIP_PLATFORM_NVCC__
     asm volatile("mov.u32 %0, %%laneid;" : "=r"(ret) );
 #elif defined(__HIP_PLATFORM_HCC__)
-    int Tid = hipBlockIdx_x * hipBlockDim_x * hipBlockDim_y + hipThreadIdx_y * hipBlockDim_x + hipThreadIdx_x;
-    ret =  Tid % 32;
+    ret = hipThreadIdx_x % warpSize; //hipBlockIdx_x * hipBlockDim_x * hipBlockDim_y + hipThreadIdx_y * hipBlockDim_x + hipThreadIdx_x;
+    //ret =  Tid % 32;
 #endif
     return ret;
 }
@@ -357,7 +387,10 @@ __device__ __forceinline__ unsigned int LaneId()
 /**
  * \brief Returns the warp ID of the calling thread.  Warp ID is guaranteed to be unique among warps, but may not correspond to a zero-based ranking within the thread block.
  */
-__device__ __forceinline__ unsigned int WarpId()
+__device__ __forceinline__
+static
+inline
+unsigned int WarpId()
 {
     unsigned int ret;
 #ifdef __HIP_PLATFORM_NVCC__
@@ -372,7 +405,9 @@ __device__ __forceinline__ unsigned int WarpId()
 /**
  * \brief Returns the warp lane mask of all lanes less than the calling thread
  */
-__device__ __forceinline__ unsigned int LaneMaskLt()
+__device__ __forceinline__
+static
+unsigned int LaneMaskLt()
 {
     unsigned int ret;
 #ifdef __HIP_PLATFORM_NVCC__
@@ -388,7 +423,9 @@ __device__ __forceinline__ unsigned int LaneMaskLt()
 /**
  * \brief Returns the warp lane mask of all lanes less than or equal to the calling thread
  */
-__device__ __forceinline__ unsigned int LaneMaskLe()
+__device__ __forceinline__
+static
+unsigned int LaneMaskLe()
 {
     unsigned int ret;
 #ifdef __HIP_PLATFORM_NVCC__
@@ -404,7 +441,9 @@ __device__ __forceinline__ unsigned int LaneMaskLe()
 /**
  * \brief Returns the warp lane mask of all lanes greater than the calling thread
  */
-__device__ __forceinline__ unsigned int LaneMaskGt()
+__device__ __forceinline__
+static
+unsigned int LaneMaskGt()
 {
     unsigned int ret;
 #ifdef __HIP_PLATFORM_NVCC__
@@ -420,7 +459,9 @@ __device__ __forceinline__ unsigned int LaneMaskGt()
 /**
  * \brief Returns the warp lane mask of all lanes greater than or equal to the calling thread
  */
-__device__ __forceinline__ unsigned int LaneMaskGe()
+__device__ __forceinline__
+static
+unsigned int LaneMaskGe()
 {
     unsigned int ret;
 #ifdef __HIP_PLATFORM_NVCC__
@@ -444,8 +485,10 @@ __device__ __forceinline__ unsigned int LaneMaskGe()
  * Shuffle word up
  */
 template <typename ShuffleWordT, int STEP>
-__device__ __forceinline__ void ShuffleUp(
-    ShuffleWordT*   input, 
+__device__ __forceinline__
+static
+void ShuffleUp(
+    ShuffleWordT*   input,
     ShuffleWordT*   output,
     int             src_offset,
     int             first_lane,
@@ -468,8 +511,10 @@ __device__ __forceinline__ void ShuffleUp(
  * Shuffle word up
  */
 template <typename ShuffleWordT>
-__device__ __forceinline__ void ShuffleUp(
-    ShuffleWordT*   /*input*/, 
+__device__ __forceinline__
+static
+void ShuffleUp(
+    ShuffleWordT*   /*input*/,
     ShuffleWordT*   /*output*/,
     int             /*src_offset*/,
     int             /*first_lane*/,
@@ -482,8 +527,10 @@ __device__ __forceinline__ void ShuffleUp(
  * Shuffle word down
  */
 template <typename ShuffleWordT, int STEP>
-__device__ __forceinline__ void ShuffleDown(
-    ShuffleWordT*   input, 
+__device__ __forceinline__
+static
+void ShuffleDown(
+    ShuffleWordT*   input,
     ShuffleWordT*   output,
     int             src_offset,
     int             last_lane,
@@ -506,8 +553,10 @@ __device__ __forceinline__ void ShuffleDown(
  * Shuffle word down
  */
 template <typename ShuffleWordT>
-__device__ __forceinline__ void ShuffleDown(
-    ShuffleWordT*   /*input*/, 
+__device__ __forceinline__
+static
+void ShuffleDown(
+    ShuffleWordT*   /*input*/,
     ShuffleWordT*   /*output*/,
     int             /*src_offset*/,
     int             /*last_lane*/,
@@ -519,8 +568,10 @@ __device__ __forceinline__ void ShuffleDown(
  * Shuffle index
  */
 template <typename ShuffleWordT, int STEP>
-__device__ __forceinline__ void ShuffleIdx(
-    ShuffleWordT*   input, 
+__device__ __forceinline__
+static
+void ShuffleIdx(
+    ShuffleWordT*   input,
     ShuffleWordT*   output,
     int             src_lane,
     int             last_lane,
@@ -544,8 +595,10 @@ __device__ __forceinline__ void ShuffleIdx(
  * Shuffle index
  */
 template <typename ShuffleWordT>
-__device__ __forceinline__ void ShuffleIdx(
-    ShuffleWordT*   /*input*/, 
+__device__ __forceinline__
+static
+void ShuffleIdx(
+    ShuffleWordT*   /*input*/,
     ShuffleWordT*   /*output*/,
     int             /*src_lane*/,
     int             /*last_lane*/,
@@ -588,7 +641,9 @@ __device__ __forceinline__ void ShuffleIdx(
  *
  */
 template <typename T>
-__device__ __forceinline__ T ShuffleUp(
+__device__ __forceinline__
+static
+T ShuffleUp(
     T               input,              ///< [in] The value to broadcast
     int             src_offset,         ///< [in] The relative down-offset of the peer to read from
     int             first_lane = 0)     ///< [in] Index of first lane in segment
@@ -596,7 +651,7 @@ __device__ __forceinline__ T ShuffleUp(
     typedef typename UnitWord<T>::ShuffleWord ShuffleWord;
 
     const int       WORDS           = (sizeof(T) + sizeof(ShuffleWord) - 1) / sizeof(ShuffleWord);
- 
+
     T               output;
     ShuffleWord     *output_alias   = reinterpret_cast<ShuffleWord *>(&output);
     ShuffleWord     *input_alias    = reinterpret_cast<ShuffleWord *>(&input);
@@ -657,7 +712,9 @@ __device__ __forceinline__ T ShuffleUp(
  *
  */
 template <typename T>
-__device__ __forceinline__ T ShuffleDown(
+__device__ __forceinline__
+static
+T ShuffleDown(
     T               input,                                  ///< [in] The value to broadcast
     int             src_offset,                             ///< [in] The relative up-offset of the peer to read from
     int             last_lane = CUB_PTX_WARP_THREADS - 1)   ///< [in] Index of first lane in segment
@@ -706,7 +763,9 @@ __device__ __forceinline__ T ShuffleDown(
  * - Available only for SM3.0 or newer
  */
 template <typename T>
-__device__ __forceinline__ T ShuffleIndex(
+__device__ __forceinline__
+static
+T ShuffleIndex(
     T               input,                                          ///< [in] The value to broadcast
     int             src_lane,                                       ///< [in] Which warp lane is to do the broadcasting
     int             logical_warp_threads)                           ///< [in] Number of threads per logical warp
@@ -724,7 +783,7 @@ __device__ __forceinline__ T ShuffleIndex(
     asm volatile("shfl.idx.b32 %0, %1, %2, %3;"
         : "=r"(shuffle_word) : "r"((unsigned int) input_alias[0]), "r"(src_lane), "r"(logical_warp_threads - 1));
 #elif defined(__HIP_PLATFORM_HCC__)
-    //TODO:(mcw) To find equivalent in hip 
+    //TODO:(mcw) To find equivalent in hip
     //shuffle_word = __shfl_idx((unsigned int) input_alias[0], src_lane, logical_warp_threads - 1);
 #endif
     output_alias[0] = shuffle_word;
@@ -779,7 +838,9 @@ __device__ __forceinline__ T ShuffleIndex(
  *
  */
 template <typename T>
-__device__ __forceinline__ T ShuffleIndex(
+__device__ __forceinline__
+static
+T ShuffleIndex(
     T               input,              ///< [in] The value to broadcast
     int             src_lane)           ///< [in] Which warp lane is to do the broadcasting
 {
@@ -794,7 +855,9 @@ __device__ __forceinline__ T ShuffleIndex(
  * \brief Portable implementation of __all
  * \ingroup WarpModule
  */
-__device__ __forceinline__ int WarpAll(int cond)
+__device__ __forceinline__
+static
+int WarpAll(int cond)
 {
 #if CUB_PTX_ARCH < 120
 
@@ -820,7 +883,9 @@ __device__ __forceinline__ int WarpAll(int cond)
  * \brief Portable implementation of __any
  * \ingroup WarpModule
  */
-__device__ __forceinline__ int WarpAny(int cond)
+__device__ __forceinline__
+static
+int WarpAny(int cond)
 {
 #if CUB_PTX_ARCH < 120
 

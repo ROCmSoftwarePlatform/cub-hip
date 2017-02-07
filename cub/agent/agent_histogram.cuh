@@ -212,7 +212,8 @@ struct AgentHistogram
     //---------------------------------------------------------------------
 
     /// Reference to temp_storage
-    _TempStorage &temp_storage;
+    //_TempStorage &temp_storage;
+    std::uintptr_t temp_storage;
 
     /// Sample input iterator (with cache modifier applied, if possible)
     WrappedSampleIteratorT d_wrapped_samples;
@@ -270,7 +271,7 @@ struct AgentHistogram
         CounterT* privatized_histograms[NUM_ACTIVE_CHANNELS];
 
         for (int CHANNEL = 0; CHANNEL < NUM_ACTIVE_CHANNELS; ++CHANNEL)
-            privatized_histograms[CHANNEL] = temp_storage.histograms[CHANNEL];
+            privatized_histograms[CHANNEL] = reinterpret_cast<_TempStorage*>(temp_storage)->histograms[CHANNEL];
 
         InitBinCounters(privatized_histograms);
     }
@@ -298,8 +299,8 @@ struct AgentHistogram
         for (int CHANNEL = 0; CHANNEL < NUM_ACTIVE_CHANNELS; ++CHANNEL)
         {
             int channel_bins = num_privatized_bins[CHANNEL];
-            for (int privatized_bin = hipThreadIdx_x; 
-                    privatized_bin < channel_bins;  
+            for (int privatized_bin = hipThreadIdx_x;
+                    privatized_bin < channel_bins;
                     privatized_bin += BLOCK_THREADS)
             {
                 int         output_bin  = -1;
@@ -323,7 +324,7 @@ struct AgentHistogram
     {
         CounterT* privatized_histograms[NUM_ACTIVE_CHANNELS];
         for (int CHANNEL = 0; CHANNEL < NUM_ACTIVE_CHANNELS; ++CHANNEL)
-            privatized_histograms[CHANNEL] = temp_storage.histograms[CHANNEL];
+            privatized_histograms[CHANNEL] = reinterpret_cast<_TempStorage*>(temp_storage)->histograms[CHANNEL];
 
         StoreOutput(privatized_histograms);
     }
@@ -417,7 +418,7 @@ struct AgentHistogram
         CounterT* privatized_histograms[NUM_ACTIVE_CHANNELS];
 
         for (int CHANNEL = 0; CHANNEL < NUM_ACTIVE_CHANNELS; ++CHANNEL)
-            privatized_histograms[CHANNEL] = temp_storage.histograms[CHANNEL];
+            privatized_histograms[CHANNEL] = reinterpret_cast<_TempStorage*>(temp_storage)->histograms[CHANNEL];
 
         AccumulatePixels(samples, is_valid, privatized_histograms, Int2Type<IS_RLE_COMPRESS>());
     }
@@ -452,7 +453,7 @@ struct AgentHistogram
         WrappedPixelIteratorT d_wrapped_pixels((PixelT*) (d_native_samples + block_offset));
 
         // Load using a wrapped pixel iterator
-        BlockLoadPixelT(temp_storage.pixel_load).Load(
+        BlockLoadPixelT(reinterpret_cast<_TempStorage*>(temp_storage)->pixel_load).Load(
             d_wrapped_pixels,
             reinterpret_cast<AliasedPixels&>(samples));
     }
@@ -469,7 +470,7 @@ struct AgentHistogram
         WrappedQuadIteratorT d_wrapped_quads((QuadT*) (d_native_samples + block_offset));
 
         // Load using a wrapped quad iterator
-        BlockLoadQuadT(temp_storage.quad_load).Load(
+        BlockLoadQuadT(reinterpret_cast<_TempStorage*>(temp_storage)->quad_load).Load(
             d_wrapped_quads,
             reinterpret_cast<AliasedQuads&>(samples));
     }
@@ -496,7 +497,7 @@ struct AgentHistogram
         typedef SampleT AliasedSamples[SAMPLES_PER_THREAD];
 
         // Load using sample iterator
-        BlockLoadSampleT(temp_storage.sample_load).Load(
+        BlockLoadSampleT(reinterpret_cast<_TempStorage*>(temp_storage)->sample_load).Load(
             d_wrapped_samples + block_offset,
             reinterpret_cast<AliasedSamples&>(samples));
     }
@@ -516,7 +517,7 @@ struct AgentHistogram
         int valid_pixels = valid_samples / NUM_CHANNELS;
 
         // Load using a wrapped pixel iterator
-        BlockLoadPixelT(temp_storage.pixel_load).Load(
+        BlockLoadPixelT(reinterpret_cast<_TempStorage*>(temp_storage)->pixel_load).Load(
             d_wrapped_pixels,
             reinterpret_cast<AliasedPixels&>(samples),
             valid_pixels);
@@ -532,7 +533,7 @@ struct AgentHistogram
     {
         typedef SampleT AliasedSamples[SAMPLES_PER_THREAD];
 
-        BlockLoadSampleT(temp_storage.sample_load).Load(
+        BlockLoadSampleT(reinterpret_cast<_TempStorage*>(temp_storage)->sample_load).Load(
             d_wrapped_samples + block_offset,
             reinterpret_cast<AliasedSamples&>(samples),
             valid_samples);
@@ -606,7 +607,7 @@ struct AgentHistogram
                 // Consume a partially-full tile at the end of the row
                 OffsetT num_remaining = (num_row_pixels * NUM_CHANNELS) - col_offset;
                 ConsumeTile<IS_ALIGNED, false>(tile_offset, num_remaining);
-            } 
+            }
             else
             {
                 // Consume full tile
@@ -617,11 +618,11 @@ struct AgentHistogram
 
             // Get next tile
             if (hipThreadIdx_x == 0)
-                temp_storage.tile_idx = tile_queue.Drain(1) + num_even_share_tiles;
+                reinterpret_cast<_TempStorage*>(temp_storage)->tile_idx = tile_queue.Drain(1) + num_even_share_tiles;
 
             __syncthreads();
 
-            tile_idx = temp_storage.tile_idx;
+            tile_idx = reinterpret_cast<_TempStorage*>(temp_storage)->tile_idx;
         }
     }
 

@@ -237,7 +237,8 @@ struct AgentRadixSortDownsweep
     //---------------------------------------------------------------------
 
     // Shared storage for this CTA
-    _TempStorage    &temp_storage;
+    //_TempStorage    &temp_storage;
+    std::uintptr_t temp_storage;
 
     // Input and output device pointers
     KeysItr         d_keys_in;
@@ -276,7 +277,7 @@ struct AgentRadixSortDownsweep
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
             UnsignedBits digit          = BFE(twiddled_keys[ITEM], current_bit, num_bits);
-            relative_bin_offsets[ITEM]  = temp_storage.relative_bin_offsets[digit];
+            relative_bin_offsets[ITEM]  = reinterpret_cast<_TempStorage*>(temp_storage)->relative_bin_offsets[digit];
 
             // Un-twiddle
             UnsignedBits key            = Traits<KeyT>::TwiddleOut(twiddled_keys[ITEM]);
@@ -300,7 +301,7 @@ struct AgentRadixSortDownsweep
         OffsetT                                 valid_items,
         Int2Type<RADIX_SORT_SCATTER_TWO_PHASE>  /*scatter_algorithm*/)
     {
-        UnsignedBits *smem = reinterpret_cast<UnsignedBits*>(&temp_storage.exchange_keys);
+        UnsignedBits *smem = reinterpret_cast<UnsignedBits*>(&reinterpret_cast<_TempStorage*>(temp_storage)->exchange_keys);
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
@@ -317,7 +318,7 @@ struct AgentRadixSortDownsweep
 
             UnsignedBits digit = BFE(key, current_bit, num_bits);
 
-            relative_bin_offsets[ITEM] = temp_storage.relative_bin_offsets[digit];
+            relative_bin_offsets[ITEM] = reinterpret_cast<_TempStorage*>(temp_storage)->relative_bin_offsets[digit];
 
             // Un-twiddle
             key = Traits<KeyT>::TwiddleOut(key);
@@ -366,7 +367,7 @@ struct AgentRadixSortDownsweep
     {
         __syncthreads();
 
-        ValueT *smem = reinterpret_cast<ValueT*>(&temp_storage.exchange_values);
+        ValueT *smem = reinterpret_cast<ValueT*>(&reinterpret_cast<_TempStorage*>(temp_storage)->exchange_values);
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
@@ -394,7 +395,7 @@ struct AgentRadixSortDownsweep
      */
     template <typename BlockLoadT, typename T, typename InputIteratorT>
     __device__ __forceinline__ void LoadItems(
-        BlockLoadT      &block_loader, 
+        BlockLoadT      &block_loader,
         T               (&items)[ITEMS_PER_THREAD],
         InputIteratorT  d_in,
         OffsetT         /*valid_items*/,
@@ -425,7 +426,7 @@ struct AgentRadixSortDownsweep
      */
     template <typename BlockLoadT, typename T, typename InputIteratorT>
     __device__ __forceinline__ void LoadItems(
-        BlockLoadT      &block_loader, 
+        BlockLoadT      &block_loader,
         T               (&items)[ITEMS_PER_THREAD],
         InputIteratorT  d_in,
         OffsetT         valid_items,
@@ -465,7 +466,7 @@ struct AgentRadixSortDownsweep
 
         ValueT values[ITEMS_PER_THREAD];
 
-        BlockLoadValues loader(temp_storage.load_values);
+        BlockLoadValues loader(reinterpret_cast<_TempStorage*>(temp_storage)->load_values);
         LoadItems(
             loader,
             values,
@@ -513,12 +514,12 @@ struct AgentRadixSortDownsweep
         UnsignedBits default_key = (IS_DESCENDING) ? LOWEST_KEY : MAX_KEY;
 
         // Load tile of keys
-        BlockLoadKeys loader(temp_storage.load_keys);
+        BlockLoadKeys loader(reinterpret_cast<_TempStorage*>(temp_storage)->load_keys);
         LoadItems(
             loader,
             keys,
             d_keys_in + block_offset,
-            valid_items, 
+            valid_items,
             default_key,
             Int2Type<FULL_TILE>());
 
@@ -533,7 +534,7 @@ struct AgentRadixSortDownsweep
 
         // Rank the twiddled keys
         int exclusive_digit_prefix;
-        BlockRadixRank(temp_storage.ranking).RankKeys(
+        BlockRadixRank(reinterpret_cast<_TempStorage*>(temp_storage)->ranking).RankKeys(
             twiddled_keys,
             ranks,
             current_bit,
@@ -546,7 +547,7 @@ struct AgentRadixSortDownsweep
         if (hipThreadIdx_x < RADIX_DIGITS)
         {
             // Store exclusive prefix
-            temp_storage.exclusive_digit_prefix[hipThreadIdx_x] = exclusive_digit_prefix;
+            reinterpret_cast<_TempStorage*>(temp_storage)->exclusive_digit_prefix[hipThreadIdx_x] = exclusive_digit_prefix;
         }
 
         __syncthreads();
@@ -560,14 +561,14 @@ struct AgentRadixSortDownsweep
                 // Get inclusive digit prefix from exclusive prefix (higher bins come first)
                 inclusive_digit_prefix = (hipThreadIdx_x == 0) ?
                     (BLOCK_THREADS * ITEMS_PER_THREAD) :
-                    temp_storage.exclusive_digit_prefix[hipThreadIdx_x - 1];
+                    reinterpret_cast<_TempStorage*>(temp_storage)->exclusive_digit_prefix[hipThreadIdx_x - 1];
             }
             else
             {
                 // Get inclusive digit prefix from exclusive prefix (lower bins come first)
                 inclusive_digit_prefix = (hipThreadIdx_x == RADIX_DIGITS - 1) ?
                     (BLOCK_THREADS * ITEMS_PER_THREAD) :
-                    temp_storage.exclusive_digit_prefix[hipThreadIdx_x + 1];
+                    reinterpret_cast<_TempStorage*>(temp_storage)->exclusive_digit_prefix[hipThreadIdx_x + 1];
             }
         }
 
@@ -579,7 +580,7 @@ struct AgentRadixSortDownsweep
 
 
             bin_offset -= exclusive_digit_prefix;
-            temp_storage.relative_bin_offsets[hipThreadIdx_x] = bin_offset;
+            reinterpret_cast<_TempStorage*>(temp_storage)->relative_bin_offsets[hipThreadIdx_x] = bin_offset;
             bin_offset += inclusive_digit_prefix;
         }
 
@@ -664,7 +665,8 @@ struct AgentRadixSortDownsweep
         int             current_bit,
         int             num_bits)
     :
-        temp_storage(temp_storage.Alias()),
+        //temp_storage(temp_storage.Alias()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
         bin_offset(bin_offset),
         d_keys_in(reinterpret_cast<const UnsignedBits*>(d_keys_in)),
         d_keys_out(reinterpret_cast<UnsignedBits*>(d_keys_out)),
@@ -707,7 +709,8 @@ struct AgentRadixSortDownsweep
         int             current_bit,
         int             num_bits)
     :
-        temp_storage(temp_storage.Alias()),
+        //temp_storage(temp_storage.Alias()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
         d_keys_in(reinterpret_cast<const UnsignedBits*>(d_keys_in)),
         d_keys_out(reinterpret_cast<UnsignedBits*>(d_keys_out)),
         d_values_in(d_values_in),

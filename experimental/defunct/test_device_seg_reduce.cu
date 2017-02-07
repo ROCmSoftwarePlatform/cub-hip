@@ -318,7 +318,8 @@ struct BlockSegReduceRegion
     // Thread fields
     //---------------------------------------------------------------------
 
-    _TempStorage                    &temp_storage;          ///< Reference to shared storage
+    //_TempStorage                    &temp_storage;          ///< Reference to shared storage
+    std::uintptr_t                  temp_storage;
     WrappedSegmentOffsetIterator    d_segment_end_offsets;  ///< A sequence of \p num_segments segment end-offsets
     WrappedValueIterator            d_values;               ///< A sequence of \p num_values data to reduce
     OutputIteratorT                  d_output;               ///< A sequence of \p num_segments segment totals
@@ -968,7 +969,8 @@ struct BlockSegReduceRegionByKey
     // Thread fields
     //---------------------------------------------------------------------
 
-    _TempStorage                &temp_storage;          ///< Reference to shared storage
+    //_TempStorage                &temp_storage;          ///< Reference to shared storage
+    std::uintptr_t              temp_storage;
     WrappedInputIteratorT       d_tuple_partials;       ///< A sequence of partial reduction tuples to scan
     OutputIteratorT              d_output;               ///< A sequence of segment totals
     Value                       identity;               ///< Identity value (for zero-length segments)
@@ -1118,7 +1120,9 @@ struct BlockSegReduceRegionByKey
 template <
     typename SegmentOffsetIterator,             ///< Random-access input iterator type for reading segment end-offsets
     typename OffsetT>                           ///< Signed integer type for global offsets
-__global__ void SegReducePartitionKernel(
+__global__
+inline
+void SegReducePartitionKernel(
     hipLaunchKernel             lp,
     SegmentOffsetIterator       d_segment_end_offsets,  ///< [in] A sequence of \p num_segments segment end-offsets
     IndexPair<OffsetT>          *d_block_idx,
@@ -1176,7 +1180,9 @@ template <
     typename OffsetT,                           ///< Signed integer type for global offsets
     typename Value>                             ///< Value type
 __launch_bounds__ (BlockSegReduceRegionPolicy::BLOCK_THREADS)
-__global__ void SegReduceRegionKernel(
+__global__
+inline
+void SegReduceRegionKernel(
     hipLaunchKernel             lp,
     SegmentOffsetIterator       d_segment_end_offsets,  ///< [in] A sequence of \p num_segments segment end-offsets
     ValueIterator               d_values,               ///< [in] A sequence of \p num_values values
@@ -1260,7 +1266,9 @@ template <
     typename    OffsetT,                                ///< Signed integer type for global offsets
     typename    Value>                                  ///< Value type
 __launch_bounds__ (BlockSegReduceRegionByKeyPolicy::BLOCK_THREADS, 1)
-__global__ void SegReduceRegionByKeyKernel(
+__global__
+inline
+void SegReduceRegionByKeyKernel(
     hipLaunchKernel             lp,
     InputIteratorT          d_tuple_partials,           ///< [in] A sequence of partial reduction tuples
     OutputIteratorT          d_output,                   ///< [out] A sequence of \p num_segments segment totals
@@ -1638,7 +1646,7 @@ struct DeviceSegReduceDispatch
                     partition_grid_size, partition_block_size, (long long) stream);
 
                 // Invoke seg_reduce_partition_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(seg_reduce_partition_kernel), dim3(partition_grid_size), dim3(partition_block_size), 0, stream, 
+                hipLaunchKernel(HIP_KERNEL_NAME(seg_reduce_partition_kernel), dim3(partition_grid_size), dim3(partition_block_size), 0, stream,
                     d_segment_end_offsets,  ///< [in] A sequence of \p num_segments segment end-offsets
                     d_block_idx,
                     num_partition_samples,
@@ -1658,7 +1666,7 @@ struct DeviceSegReduceDispatch
             if (CubDebug(error = hipDeviceSetSharedMemConfig(hipSharedMemBankSizeEightByte))) break;
 
             // Invoke seg_reduce_region_kernel
-            hipLaunchKernel(HIP_KERNEL_NAME(seg_reduce_region_kernel), dim3(seg_reduce_region_grid_size), dim3(seg_reduce_region_config.block_threads), 0, stream, 
+            hipLaunchKernel(HIP_KERNEL_NAME(seg_reduce_region_kernel), dim3(seg_reduce_region_grid_size), dim3(seg_reduce_region_config.block_threads), 0, stream,
                 d_segment_end_offsets,
                 d_values,
                 d_output,
@@ -1681,7 +1689,7 @@ struct DeviceSegReduceDispatch
                     1, seg_reduce_region_by_key_config.block_threads, (long long) stream, seg_reduce_region_by_key_config.items_per_thread);
 
                 // Invoke seg_reduce_region_by_key_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(seg_reduce_region_by_key_kernel), dim3(1), dim3(seg_reduce_region_by_key_config.block_threads), 0, stream, 
+                hipLaunchKernel(HIP_KERNEL_NAME(seg_reduce_region_by_key_kernel), dim3(1), dim3(seg_reduce_region_by_key_config.block_threads), 0, stream,
                     d_tuple_partials,
                     d_output,
                     num_segments,

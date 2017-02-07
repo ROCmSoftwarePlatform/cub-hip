@@ -66,7 +66,9 @@ template <
     bool            HAS_ALPHA,                  ///< Whether the input parameter Alpha is 1
     bool            HAS_BETA>                   ///< Whether the input parameter Beta is 0
 __launch_bounds__ (int(SpmvPolicyT::BLOCK_THREADS))
-__global__ void DeviceSpmvKernel(
+__global__
+inline
+void DeviceSpmvKernel(
     SpmvParams<ValueT, OffsetT>     spmv_params,                ///< [in] SpMV input parameter bundle
     int                             merge_items_per_block,      ///< [in] Number of merge tiles per block
     KeyValuePair<OffsetT,ValueT>*   d_tile_carry_pairs)         ///< [out] Pointer to the temporary array carry-out dot product row-ids, one per block

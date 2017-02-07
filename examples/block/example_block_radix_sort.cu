@@ -79,7 +79,9 @@ template <
     int         BLOCK_THREADS,
     int         ITEMS_PER_THREAD>
 __launch_bounds__ (BLOCK_THREADS)
-__global__ void BlockSortKernel(
+__global__
+inline
+void BlockSortKernel(
     hipLaunchParm lp,
     Key         *d_in,          // Tile of input
     Key         *d_out,         // Tile of output
@@ -214,7 +216,7 @@ void Test()
     fflush(stdout);
 
     // Run kernel once to prime caches and check result
-    hipLaunchKernel(HIP_KERNEL_NAME(BlockSortKernel<Key, BLOCK_THREADS, ITEMS_PER_THREAD>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0, 
+    hipLaunchKernel(HIP_KERNEL_NAME(BlockSortKernel<Key, BLOCK_THREADS, ITEMS_PER_THREAD>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0,
         d_in,
         d_out,
         d_elapsed);
@@ -240,7 +242,7 @@ void Test()
         timer.Start();
 
         // Run kernel
-        hipLaunchKernel(HIP_KERNEL_NAME(BlockSortKernel<Key, BLOCK_THREADS, ITEMS_PER_THREAD>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0, 
+        hipLaunchKernel(HIP_KERNEL_NAME(BlockSortKernel<Key, BLOCK_THREADS, ITEMS_PER_THREAD>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0,
             d_in,
             d_out,
             d_elapsed);

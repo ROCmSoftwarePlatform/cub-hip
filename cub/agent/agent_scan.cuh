@@ -185,7 +185,8 @@ struct AgentScan
     // Per-thread fields
     //---------------------------------------------------------------------
 
-    _TempStorage&               temp_storage;       ///< Reference to temp_storage
+    //_TempStorage&               temp_storage;       ///< Reference to temp_storage
+    std::uintptr_t              temp_storage;
     WrappedInputIteratorT       d_in;               ///< Input data
     OutputIteratorT             d_out;              ///< Output data
     ScanOpT                     scan_op;            ///< Binary scan operator
@@ -200,14 +201,13 @@ struct AgentScan
      * Exclusive scan specialization (first tile)
      */
     __device__ __forceinline__
-    void ScanTile(
-        OutputT             (&items)[ITEMS_PER_THREAD],
-        OutputT             init_value,
-        ScanOpT             scan_op,
-        OutputT             &block_aggregate,
-        Int2Type<false>     /*is_inclusive*/)
+    void ScanTile(OutputT         (&items)[ITEMS_PER_THREAD],
+                  OutputT         init_value,
+                  ScanOpT         scan_op,
+                  OutputT         &block_aggregate,
+                  Int2Type<false> /*is_inclusive*/)
     {
-        BlockScanT(temp_storage.scan).ExclusiveScan(items, items, init_value, scan_op, block_aggregate);
+        BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).ExclusiveScan(items, items, init_value, scan_op, block_aggregate);
         block_aggregate = scan_op(init_value, block_aggregate);
     }
 
@@ -216,14 +216,13 @@ struct AgentScan
      * Inclusive scan specialization (first tile)
      */
     __device__ __forceinline__
-    void ScanTile(
-        OutputT             (&items)[ITEMS_PER_THREAD],
-        InitValueT          /*init_value*/,
-        ScanOpT             scan_op,
-        OutputT             &block_aggregate,
-        Int2Type<true>      /*is_inclusive*/)
+    void ScanTile(OutputT        (&items)[ITEMS_PER_THREAD],
+                  InitValueT     /*init_value*/,
+                  ScanOpT        scan_op,
+                  OutputT        &block_aggregate,
+                  Int2Type<true> /*is_inclusive*/)
     {
-        BlockScanT(temp_storage.scan).InclusiveScan(items, items, scan_op, block_aggregate);
+        BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).InclusiveScan(items, items, scan_op, block_aggregate);
     }
 
 
@@ -232,13 +231,12 @@ struct AgentScan
      */
     template <typename PrefixCallback>
     __device__ __forceinline__
-    void ScanTile(
-        OutputT             (&items)[ITEMS_PER_THREAD],
-        ScanOpT             scan_op,
-        PrefixCallback      &prefix_op,
-        Int2Type<false>     /*is_inclusive*/)
+    void ScanTile(OutputT         (&items)[ITEMS_PER_THREAD],
+                  ScanOpT         scan_op,
+                  PrefixCallback  &prefix_op,
+                  Int2Type<false> /*is_inclusive*/)
     {
-        BlockScanT(temp_storage.scan).ExclusiveScan(items, items, scan_op, prefix_op);
+    //    BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).ExclusiveScan(items, items, scan_op, prefix_op);
     }
 
 
@@ -247,13 +245,12 @@ struct AgentScan
      */
     template <typename PrefixCallback>
     __device__ __forceinline__
-    void ScanTile(
-        OutputT             (&items)[ITEMS_PER_THREAD],
-        ScanOpT             scan_op,
-        PrefixCallback      &prefix_op,
-        Int2Type<true>      /*is_inclusive*/)
-    {
-        BlockScanT(temp_storage.scan).InclusiveScan(items, items, scan_op, prefix_op);
+    void ScanTile(OutputT        (&items)[ITEMS_PER_THREAD],
+                  ScanOpT        scan_op,
+                  PrefixCallback &prefix_op,
+                  Int2Type<true> /*is_inclusive*/)
+    {// TODO: I IZ HERE!
+        BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).InclusiveScan(items, items, scan_op, prefix_op);
     }
 
 
@@ -270,7 +267,8 @@ struct AgentScan
         ScanOpT         scan_op,            ///< Binary scan operator
         InitValueT      init_value)         ///< Initial value to seed the exclusive scan
     :
-        temp_storage(temp_storage.Alias()),
+        //temp_storage(temp_storage.Alias()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
         d_in(d_in),
         d_out(d_out),
         scan_op(scan_op),
@@ -296,9 +294,9 @@ struct AgentScan
         OutputT items[ITEMS_PER_THREAD];
 
         if (IS_LAST_TILE)
-            BlockLoadT(temp_storage.load).Load(d_in + tile_offset, items, num_remaining);
+            BlockLoadT(reinterpret_cast<_TempStorage*>(temp_storage)->load).Load(d_in + tile_offset, items, num_remaining);
         else
-            BlockLoadT(temp_storage.load).Load(d_in + tile_offset, items);
+            BlockLoadT(reinterpret_cast<_TempStorage*>(temp_storage)->load).Load(d_in + tile_offset, items);
 
         __syncthreads();
 
@@ -314,7 +312,7 @@ struct AgentScan
         else
         {
             // Scan non-first tile
-            TilePrefixCallbackOpT prefix_op(tile_state, temp_storage.prefix, scan_op, tile_idx);
+            TilePrefixCallbackOpT prefix_op(tile_state, reinterpret_cast<_TempStorage*>(temp_storage)->prefix, scan_op, tile_idx);
             ScanTile(items, scan_op, prefix_op, Int2Type<IS_INCLUSIVE>());
         }
 
@@ -322,9 +320,9 @@ struct AgentScan
 
         // Store items
         if (IS_LAST_TILE)
-            BlockStoreT(temp_storage.store).Store(d_out + tile_offset, items, num_remaining);
+            BlockStoreT(reinterpret_cast<_TempStorage*>(temp_storage)->store).Store(d_out + tile_offset, items, num_remaining);
         else
-            BlockStoreT(temp_storage.store).Store(d_out + tile_offset, items);
+            BlockStoreT(reinterpret_cast<_TempStorage*>(temp_storage)->store).Store(d_out + tile_offset, items);
     }
 
 
@@ -349,7 +347,7 @@ struct AgentScan
         else if (num_remaining > 0)
         {
             // Last tile
-            ConsumeTile<true>(num_remaining, tile_idx, tile_offset, tile_state);
+         //   ConsumeTile<true>(num_remaining, tile_idx, tile_offset, tile_state);
         }
     }
 
@@ -373,9 +371,9 @@ struct AgentScan
         OutputT items[ITEMS_PER_THREAD];
 
         if (IS_LAST_TILE)
-            BlockLoadT(temp_storage.load).Load(d_in + tile_offset, items, valid_items);
+            BlockLoadT(reinterpret_cast<_TempStorage*>(temp_storage)->load).Load(d_in + tile_offset, items, valid_items);
         else
-            BlockLoadT(temp_storage.load).Load(d_in + tile_offset, items);
+            BlockLoadT(reinterpret_cast<_TempStorage*>(temp_storage)->load).Load(d_in + tile_offset, items);
 
         __syncthreads();
 
@@ -395,9 +393,9 @@ struct AgentScan
 
         // Store items
         if (IS_LAST_TILE)
-            BlockStoreT(temp_storage.store).Store(d_out + tile_offset, items, valid_items);
+            BlockStoreT(reinterpret_cast<_TempStorage*>(temp_storage)->store).Store(d_out + tile_offset, items, valid_items);
         else
-            BlockStoreT(temp_storage.store).Store(d_out + tile_offset, items);
+            BlockStoreT(reinterpret_cast<_TempStorage*>(temp_storage)->store).Store(d_out + tile_offset, items);
     }
 
 

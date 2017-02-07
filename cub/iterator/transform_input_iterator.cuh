@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -41,12 +41,16 @@
 #include "../util_device.cuh"
 #include "../util_namespace.cuh"
 
-/*#if (THRUST_VERSION >= 100700)
-    // This iterator is compatible with Thrust API 1.7 and newer
-    #include <thrust/iterator/iterator_facade.h>
-    #include <thrust/iterator/iterator_traits.h>
-#endif // THRUST_VERSION
-*/
+#if defined(__HIP_PLATFORM_HCC__)
+#else
+    #include <thrust/version.h>
+
+    #if (THRUST_VERSION >= 100700)
+        // This iterator is compatible with Thrust API 1.7 and newer
+        #include <thrust/iterator/iterator_facade.h>
+        #include <thrust/iterator/iterator_traits.h>
+    #endif // THRUST_VERSION
+#endif
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -125,22 +129,27 @@ public:
     typedef ValueType*                          pointer;                ///< The type of a pointer to an element the iterator can point to
     typedef ValueType                           reference;              ///< The type of a reference to an element the iterator can point to
 
-/*#if (THRUST_VERSION >= 100700)
-    // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
-    typedef typename thrust::detail::iterator_facade_category<
-        thrust::any_system_tag,
-        thrust::random_access_traversal_tag,
-        value_type,
-        reference
-      >::type iterator_category;                                        ///< The iterator category
-#else*/
-    typedef std::random_access_iterator_tag     iterator_category;      ///< The iterator category
-//#endif  // THRUST_VERSION
+    #if defined(__HIP_PLATFORM_HCC__)
+        typedef std::random_access_iterator_tag     iterator_category;  ///< The iterator category
+    #else
+        #if (THRUST_VERSION >= 100700)
+            // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
+            typedef typename thrust::detail::iterator_facade_category<
+                thrust::device_system_tag,
+                thrust::random_access_traversal_tag,
+                value_type,
+                reference
+            >::type iterator_category;                                  ///< The iterator category
+        #endif // THRUST_VERSION
+    #endif
 
-private:
+    private:
 
-    ConversionOp    conversion_op;
-    InputIteratorT  input_itr;
+    typedef typename std::conditional<std::is_pointer<InputIteratorT>::value,
+                                      std::uintptr_t,
+                                      InputIteratorT>::type IterT;
+    ConversionOp conversion_op;
+    IterT        input_itr;
 
 public:
 
@@ -150,35 +159,39 @@ public:
         ConversionOp        conversion_op)      ///< Conversion functor to wrap
     :
         conversion_op(conversion_op),
-        input_itr(input_itr)
+        input_itr((IterT)input_itr)
+    {}
+    __host__ __device__ __forceinline__
+    TransformInputIterator(const TransformInputIterator& x)
+        : conversion_op{x.conversion_op}, input_itr{x.input_itr}
     {}
 
     /// Postfix increment
     __host__ __device__ __forceinline__ self_type operator++(int)
     {
         self_type retval = *this;
-        input_itr++;
+        input_itr = (IterT)((InputIteratorT)input_itr + 1);
         return retval;
     }
 
     /// Prefix increment
     __host__ __device__ __forceinline__ self_type operator++()
     {
-        input_itr++;
+        input_itr = (IterT)((InputIteratorT)input_itr + 1);
         return *this;
     }
 
     /// Indirection
     __host__ __device__ __forceinline__ reference operator*() const
     {
-        return conversion_op(*input_itr);
+        return conversion_op(*(InputIteratorT)input_itr);
     }
 
     /// Addition
     template <typename Distance>
     __host__ __device__ __forceinline__ self_type operator+(Distance n) const
     {
-        self_type retval(input_itr + n, conversion_op);
+        self_type retval(((InputIteratorT)input_itr) + n, conversion_op);
         return retval;
     }
 
@@ -186,7 +199,7 @@ public:
     template <typename Distance>
     __host__ __device__ __forceinline__ self_type& operator+=(Distance n)
     {
-        input_itr += n;
+        input_itr = (IterT)((InputIteratorT)input_itr + n);
         return *this;
     }
 
@@ -194,7 +207,7 @@ public:
     template <typename Distance>
     __host__ __device__ __forceinline__ self_type operator-(Distance n) const
     {
-        self_type retval(input_itr - n, conversion_op);
+        self_type retval((InputIteratorT)input_itr - n, conversion_op);
         return retval;
     }
 
@@ -202,27 +215,27 @@ public:
     template <typename Distance>
     __host__ __device__ __forceinline__ self_type& operator-=(Distance n)
     {
-        input_itr -= n;
+        input_itr = (IterT)((InputIteratorT)input_itr - n);
         return *this;
     }
 
     /// Distance
     __host__ __device__ __forceinline__ difference_type operator-(self_type other) const
     {
-        return input_itr - other.input_itr;
+        return (InputIteratorT)input_itr - (InputIteratorT)other.input_itr;
     }
 
     /// Array subscript
     template <typename Distance>
     __host__ __device__ __forceinline__ reference operator[](Distance n) const
     {
-        return conversion_op(input_itr[n]);
+        return conversion_op(((InputIteratorT)input_itr)[n]);
     }
 
     /// Structure dereference
     __host__ __device__ __forceinline__ pointer operator->()
     {
-        return &conversion_op(*input_itr);
+        return &conversion_op(*(InputIteratorT)input_itr);
     }
 
     /// Equal to
@@ -242,6 +255,9 @@ public:
     {
         return os;
     }
+
+    __host__ __device__
+    ~TransformInputIterator() {}
 };
 
 

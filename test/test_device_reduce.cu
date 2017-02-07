@@ -1,4 +1,3 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -34,9 +33,7 @@
 // Ensure printing of CUDA runtime errors to console
 #define CUB_STDERR
 
-#include <stdio.h>
-#include <limits>
-#include <typeinfo>
+#include "test_util.h"
 
 #include <cub/util_allocator.cuh>
 #include <cub/device/device_reduce.cuh>
@@ -44,10 +41,18 @@
 #include <cub/iterator/constant_input_iterator.cuh>
 #include <cub/iterator/discard_output_iterator.cuh>
 
-#include <thrust/device_ptr.h>
-#include <thrust/reduce.h>
+#if defined(__HIP_PLATFORM_HCC__)
+    #include <bolt/amp/reduce.h>
+#else
+    #include <thrust/device_ptr.h>
+    #include <thrust/reduce.h>
+#endif
 
-#include "test_util.h"
+#include "hip/hip_runtime.h"
+
+#include <stdio.h>
+#include <limits>
+#include <typeinfo>
 
 using namespace cub;
 
@@ -80,7 +85,8 @@ struct CustomMax
 {
     /// Boolean max operator, returns <tt>(a > b) ? a : b</tt>
     template <typename OutputT>
-    __host__ __device__ __forceinline__ OutputT operator()(const OutputT &a, const OutputT &b)
+    __host__ __device__ __forceinline__
+    OutputT operator()(const OutputT &a, const OutputT &b)
     {
         return CUB_MAX(a, b);
     }
@@ -127,9 +133,15 @@ hipError_t Dispatch(
     hipError_t error = hipSuccess;
     for (int i = 0; i < timing_timing_iterations; ++i)
     {
-        error = DeviceReduce::Reduce(d_temp_storage, temp_storage_bytes,
-            d_in, d_out, num_items, reduction_op, identity,
-            stream, debug_synchronous);
+        error = DeviceReduce::Reduce(d_temp_storage,
+                                     temp_storage_bytes,
+                                     d_in,
+                                     d_out,
+                                     num_items,
+                                     reduction_op,
+                                     identity,
+                                     stream,
+                                     debug_synchronous);
     }
     return error;
 }
@@ -543,14 +555,26 @@ hipError_t Dispatch(
         OutputT init;
         CubDebugExit(hipMemcpy(&init, d_in + 0, sizeof(OutputT), hipMemcpyDeviceToHost));
 
-        thrust::device_ptr<OutputT> d_in_wrapper(d_in);
+        #if !defined(__HIP_PLATFORM_HCC__)
+            thrust::device_ptr<OutputT> d_in_wrapper(d_in);
+        #endif
         OutputT retval;
         for (int i = 0; i < timing_timing_iterations; ++i)
         {
-            retval = thrust::reduce(d_in_wrapper, d_in_wrapper + num_items, init, reduction_op);
+            #if defined(__HIP_PLATFORM_HCC__)
+                retval = bolt::amp::reduce(d_in,
+                                           d_in + num_items,
+                                           init,
+                                           reduction_op);
+            #else
+                retval = thrust::reduce(d_in_wrapper,
+                                        d_in_wrapper + num_items,
+                                        init,
+                                        reduction_op);
+            #endif
         }
 
-        if (!Equals<OutputIteratorT, DiscardOutputIterator<int> >::VALUE)
+        if (!Equals<OutputIteratorT, DiscardOutputIterator<int>>::VALUE)
             CubDebugExit(hipMemcpy(d_out, &retval, sizeof(OutputT), hipMemcpyHostToDevice));
     }
 
@@ -589,11 +613,17 @@ hipError_t Dispatch(
     }
     else
     {
-        thrust::device_ptr<OutputT> d_in_wrapper(d_in);
+        #if !defined(__HIP_PLATFORM_HCC__)
+            thrust::device_ptr<OutputT> d_in_wrapper(d_in);
+        #endif
         OutputT retval;
         for (int i = 0; i < timing_timing_iterations; ++i)
         {
-            retval = thrust::reduce(d_in_wrapper, d_in_wrapper + num_items);
+            #if defined(__HIP_PLATFORM_HCC__)
+                retval = bolt::amp::reduce(d_in, d_in + num_items);
+            #else
+                retval = thrust::reduce(d_in_wrapper, d_in_wrapper + num_items);
+            #endif
         }
 
         if (!Equals<OutputIteratorT, DiscardOutputIterator<int> >::VALUE)
@@ -615,7 +645,10 @@ template <
     typename            InputIteratorT,
     typename            OutputIteratorT,
     typename            ReductionOpT>
-__global__ void CnpDispatchKernel(
+__global__
+inline
+void CnpDispatchKernel(
+    hipLaunchParm lp,
     int                 timing_timing_iterations,
     size_t              *d_temp_storage_bytes,
     hipError_t         *d_cdp_error,
@@ -633,8 +666,20 @@ __global__ void CnpDispatchKernel(
 #ifndef CUB_CDP
     *d_cdp_error = hipErrorUnknown;
 #else
-    *d_cdp_error = Dispatch(Int2Type<CUB>(), timing_timing_iterations, d_temp_storage_bytes, d_cdp_error, d_temp_storage, temp_storage_bytes,
-        d_in, d_out, num_items, max_segments, d_segment_offsets, reduction_op, 0, debug_synchronous);
+    *d_cdp_error = Dispatch(Int2Type<CUB>(),
+                            timing_timing_iterations,
+                            d_temp_storage_bytes,
+                            d_cdp_error,
+                            d_temp_storage,
+                            temp_storage_bytes,
+                            d_in,
+                            d_out,
+                            num_items,
+                            max_segments,
+                            d_segment_offsets,
+                            reduction_op,
+                            0,
+                            debug_synchronous);
     *d_temp_storage_bytes = temp_storage_bytes;
 #endif
 }
@@ -1288,10 +1333,10 @@ int main(int argc, char** argv)
         TestType<long, long>(max_items, max_segments);
         TestType<long long, long long>(max_items, max_segments);
 
-        TestType<uchar2, uchar2>(max_items, max_segments);
-        TestType<uint2, uint2>(max_items, max_segments);
-        TestType<ulonglong2, ulonglong2>(max_items, max_segments);
-        TestType<ulonglong4, ulonglong4>(max_items, max_segments);
+        //TestType<uchar2, uchar2>(max_items, max_segments);
+        //TestType<uint2, uint2>(max_items, max_segments);
+        //TestType<ulonglong2, ulonglong2>(max_items, max_segments);
+        //TestType<ulonglong4, ulonglong4>(max_items, max_segments);
 
         TestType<TestFoo, TestFoo>(max_items, max_segments);
         TestType<TestBar, TestBar>(max_items, max_segments);

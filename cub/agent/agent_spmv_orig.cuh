@@ -250,7 +250,8 @@ struct AgentSpmv
     //---------------------------------------------------------------------
 
 
-    _TempStorage&                   temp_storage;         /// Reference to temp_storage
+    //_TempStorage&                   temp_storage;         /// Reference to temp_storage
+    std::uintptr_t                  temp_storage;
 
     SpmvParams<ValueT, OffsetT>&    spmv_params;
 
@@ -295,7 +296,7 @@ struct AgentSpmv
     {
         int         tile_num_rows           = tile_end_coord.x - tile_start_coord.x;
         int         tile_num_nonzeros       = tile_end_coord.y - tile_start_coord.y;
-        OffsetT*    s_tile_row_end_offsets  = &temp_storage.merge_items[0].row_end_offset;
+        OffsetT*    s_tile_row_end_offsets  = &reinterpret_cast<_TempStorage*>(temp_storage)->merge_items[0].row_end_offset;
 
         // Gather the row end-offsets for the merge tile into shared memory
         for (int item = hipThreadIdx_x; item <= tile_num_rows; item += BLOCK_THREADS)
@@ -368,7 +369,7 @@ struct AgentSpmv
         scan_item.value = running_total;
         scan_item.key   = thread_current_coord.x;
 
-        BlockScanT(temp_storage.scan).ExclusiveScan(scan_item, scan_item, scan_op, tile_carry);
+        BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).ExclusiveScan(scan_item, scan_item, scan_op, tile_carry);
 
         if (tile_num_rows > 0)
         {
@@ -497,8 +498,8 @@ struct AgentSpmv
 
 #else
 
-        OffsetT*    s_tile_row_end_offsets  = &temp_storage.merge_items[0].row_end_offset;
-        ValueT*     s_tile_nonzeros         = &temp_storage.merge_items[tile_num_rows + ITEMS_PER_THREAD].nonzero;
+        OffsetT*    s_tile_row_end_offsets  = &reinterpret_cast<_TempStorage*>(temp_storage)->merge_items[0].row_end_offset;
+        ValueT*     s_tile_nonzeros         = &reinterpret_cast<_TempStorage*>(temp_storage)->merge_items[tile_num_rows + ITEMS_PER_THREAD].nonzero;
 
         // Gather the nonzeros for the merge tile into shared memory
         if (tile_num_nonzeros > 0)
@@ -588,7 +589,7 @@ struct AgentSpmv
         scan_item.value = running_total;
         scan_item.key = thread_current_coord.x;
 
-        BlockScanT(temp_storage.scan).ExclusiveScan(scan_item, scan_item, scan_op, tile_carry);
+        BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).ExclusiveScan(scan_item, scan_item, scan_op, tile_carry);
 
         if (hipThreadIdx_x == 0)
         {
@@ -602,7 +603,7 @@ struct AgentSpmv
             __syncthreads();
 
             // Scan downsweep and scatter
-            ValueT* s_partials = &temp_storage.merge_items[0].nonzero;
+            ValueT* s_partials = &reinterpret_cast<_TempStorage*>(temp_storage)->merge_items[0].nonzero;
 
             if (scan_item.key != scan_segment[0].key)
             {
@@ -883,18 +884,18 @@ struct AgentSpmv
                     spmv_params.num_nonzeros,
                     tile_coord);
 
-                temp_storage.tile_coords[hipThreadIdx_x] = tile_coord;
+                reinterpret_cast<_TempStorage*>(temp_storage)->tile_coords[hipThreadIdx_x] = tile_coord;
             }
             else
             {
-                temp_storage.tile_coords[hipThreadIdx_x] = d_tile_coordinates[tile_idx + hipThreadIdx_x];
+                reinterpret_cast<_TempStorage*>(temp_storage)->tile_coords[hipThreadIdx_x] = d_tile_coordinates[tile_idx + hipThreadIdx_x];
             }
         }
 
         __syncthreads();
 
-        CoordinateT tile_start_coord     = temp_storage.tile_coords[0];
-        CoordinateT tile_end_coord       = temp_storage.tile_coords[1];
+        CoordinateT tile_start_coord     = reinterpret_cast<_TempStorage*>(temp_storage)->tile_coords[0];
+        CoordinateT tile_end_coord       = reinterpret_cast<_TempStorage*>(temp_storage)->tile_coords[1];
 
         // Consume multi-segment tile
         KeyValuePairT tile_carry = ConsumeTile(

@@ -1,5 +1,6 @@
 #include <cub/cub.cuh>
 
+inline
 void a()
 {
     printf("a() called\n");

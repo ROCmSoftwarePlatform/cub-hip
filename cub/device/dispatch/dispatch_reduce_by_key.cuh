@@ -44,6 +44,32 @@
 #include "../../grid/grid_queue.cuh"
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
+//
+//namespace {
+//    // TODO: temporary!
+//    template<typename T>
+//    struct Wrapper {
+//        char d_[sizeof(T)];
+//
+//        __host__ __device__
+//        Wrapper(const T& x)
+//        {
+//            const char* it = reinterpret_cast<const char*>(&x);
+//            for (auto i = 0u; i != sizeof(T); ++i) {
+//                d_[i] = it[i];
+//            }
+//        }
+//
+//        __host__ __device__
+//        Wrapper(const Wrapper& x)
+//        {
+//            for (auto i = 0u; i != sizeof(T); ++i) d_[i] = x.d_[i];
+//        }
+//
+//        __host__ __device__
+//        operator T() const { return reinterpret_cast<const T&>(d_); }
+//    };
+//}
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -70,18 +96,21 @@ template <
     typename            ReductionOpT,                           ///< ValueT reduction operator type
     typename            OffsetT>                                ///< Signed integer type for global offsets
 __launch_bounds__ (int(AgentReduceByKeyPolicyT::BLOCK_THREADS), 1)
-__global__ void DeviceReduceByKeyKernel(
-    hipLaunchParm               lp,
-    KeysInputIteratorT          d_keys_in,                      ///< Pointer to the input sequence of keys
-    UniqueOutputIteratorT       d_unique_out,                   ///< Pointer to the output sequence of unique keys (one key per run)
-    ValuesInputIteratorT        d_values_in,                    ///< Pointer to the input sequence of corresponding values
-    AggregatesOutputIteratorT   d_aggregates_out,               ///< Pointer to the output sequence of value aggregates (one aggregate per run)
-    NumRunsOutputIteratorT      d_num_runs_out,                 ///< Pointer to total number of runs encountered (i.e., the length of d_unique_out)
-    ScanTileStateT              tile_state,                     ///< Tile status interface
-    int                         start_tile,                     ///< The starting tile for the current grid
-    EqualityOpT                 equality_op,                    ///< KeyT equality operator
-    ReductionOpT                reduction_op,                   ///< ValueT reduction operator
-    OffsetT                     num_items)                      ///< Total number of items to select from
+__global__
+__attribute__((used))
+inline
+void DeviceReduceByKeyKernel(
+    hipLaunchParm                      lp,
+    Wrapper<KeysInputIteratorT>        d_keys_in,                      ///< Pointer to the input sequence of keys
+    Wrapper<UniqueOutputIteratorT>     d_unique_out,                   ///< Pointer to the output sequence of unique keys (one key per run)
+    Wrapper<ValuesInputIteratorT>      d_values_in,                    ///< Pointer to the input sequence of corresponding values
+    Wrapper<AggregatesOutputIteratorT> d_aggregates_out,               ///< Pointer to the output sequence of value aggregates (one aggregate per run)
+    NumRunsOutputIteratorT             d_num_runs_out,                 ///< Pointer to total number of runs encountered (i.e., the length of d_unique_out)
+    ScanTileStateT                     tile_state,                     ///< Tile status interface
+    int                                start_tile,                     ///< The starting tile for the current grid
+    EqualityOpT                        equality_op,                    ///< KeyT equality operator
+    ReductionOpT                       reduction_op,                   ///< ValueT reduction operator
+    OffsetT                            num_items)                      ///< Total number of items to select from
 {
     // Thread block type for reducing tiles of value segments
     typedef AgentReduceByKey<
@@ -100,10 +129,16 @@ __global__ void DeviceReduceByKeyKernel(
     __shared__ typename AgentReduceByKeyT::TempStorage temp_storage;
 
     // Process tiles
-    AgentReduceByKeyT(temp_storage, d_keys_in, d_unique_out, d_values_in, d_aggregates_out, d_num_runs_out, equality_op, reduction_op).ConsumeRange(
-        num_items,
-        tile_state,
-        start_tile);
+    AgentReduceByKeyT(temp_storage,
+                      d_keys_in,
+                      d_unique_out,
+                      d_values_in,
+                      d_aggregates_out,
+                      d_num_runs_out,
+                      equality_op,
+                      reduction_op).ConsumeRange(num_items,
+                                                 tile_state,
+                                                 start_tile);
 }
 
 
@@ -430,10 +465,14 @@ struct DispatchReduceByKey
             if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(init_kernel), dim3(%d), dim3(%d), 0, %lld, )\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
 
             // Invoke init_kernel to initialize tile descriptors
-            hipLaunchKernel(HIP_KERNEL_NAME(init_kernel), dim3(init_grid_size), dim3(INIT_KERNEL_THREADS), 0, stream, 
-                tile_state,
-                num_tiles,
-                d_num_runs_out);
+            hipLaunchKernel(HIP_KERNEL_NAME(init_kernel),
+                            dim3(init_grid_size),
+                            dim3(INIT_KERNEL_THREADS),
+                            0,
+                            stream,
+                            tile_state,
+                            num_tiles,
+                            d_num_runs_out);
 
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;
@@ -447,10 +486,10 @@ struct DispatchReduceByKey
 
             // Get SM occupancy for reduce_by_key_kernel
             int reduce_by_key_sm_occupancy;
-            if (CubDebug(error = MaxSmOccupancy(
-                reduce_by_key_sm_occupancy,            // out
-                (const void *)reduce_by_key_kernel,
-                reduce_by_key_config.block_threads))) break;
+//            if (CubDebug(error = MaxSmOccupancy(
+//                reduce_by_key_sm_occupancy,            // out
+//                (const void *)reduce_by_key_kernel,
+//                reduce_by_key_config.block_threads))) break;
 
             // Get max x-dimension of grid
             int max_dim_x;
@@ -465,17 +504,21 @@ struct DispatchReduceByKey
                     start_tile, scan_grid_size, reduce_by_key_config.block_threads, (long long) stream, reduce_by_key_config.items_per_thread, reduce_by_key_sm_occupancy);
 
                 // Invoke reduce_by_key_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(reduce_by_key_kernel), dim3(scan_grid_size), dim3(reduce_by_key_config.block_threads), 0, stream, 
-                    d_keys_in,
-                    d_unique_out,
-                    d_values_in,
-                    d_aggregates_out,
-                    d_num_runs_out,
-                    tile_state,
-                    start_tile,
-                    equality_op,
-                    reduction_op,
-                    num_items);
+                hipLaunchKernel(HIP_KERNEL_NAME(reduce_by_key_kernel),
+                                dim3(scan_grid_size),
+                                dim3(reduce_by_key_config.block_threads),
+                                0,
+                                stream,
+                                d_keys_in,
+                                d_unique_out,
+                                d_values_in,
+                                d_aggregates_out,
+                                d_num_runs_out,
+                                tile_state,
+                                start_tile,
+                                equality_op,
+                                reduction_op,
+                                num_items);
 
                 // Check for failure to launch
                 if (CubDebug(error = hipPeekAtLastError())) break;
@@ -541,7 +584,16 @@ struct DispatchReduceByKey
                 debug_synchronous,
                 ptx_version,
                 DeviceCompactInitKernel<ScanTileStateT, NumRunsOutputIteratorT>,
-                DeviceReduceByKeyKernel<PtxReduceByKeyPolicy, KeysInputIteratorT, UniqueOutputIteratorT, ValuesInputIteratorT, AggregatesOutputIteratorT, NumRunsOutputIteratorT, ScanTileStateT, EqualityOpT, ReductionOpT, OffsetT>,
+                DeviceReduceByKeyKernel<PtxReduceByKeyPolicy,
+                                        KeysInputIteratorT,
+                                        UniqueOutputIteratorT,
+                                        ValuesInputIteratorT,
+                                        AggregatesOutputIteratorT,
+                                        NumRunsOutputIteratorT,
+                                        ScanTileStateT,
+                                        EqualityOpT,
+                                        ReductionOpT,
+                                        OffsetT>,
                 reduce_by_key_config))) break;
         }
         while (0);

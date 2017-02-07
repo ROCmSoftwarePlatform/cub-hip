@@ -35,6 +35,8 @@
 
 #pragma once
 
+#include "../../hip_helpers/serialising_wrapper.hpp"
+
 #include <stdio.h>
 #include <iterator>
 
@@ -62,7 +64,10 @@ namespace cub {
  */
 template <
     typename            ScanTileStateT>     ///< Tile status interface type
-__global__ void DeviceScanInitKernel(
+__global__
+__attribute__((used))
+inline
+void DeviceScanInitKernel(
     hipLaunchParm       lp,
     ScanTileStateT      tile_state,         ///< [in] Tile status interface
     int                 num_tiles)          ///< [in] Number of tiles
@@ -77,7 +82,10 @@ __global__ void DeviceScanInitKernel(
 template <
     typename                ScanTileStateT,         ///< Tile status interface type
     typename                NumSelectedIteratorT>   ///< Output iterator type for recording the number of items selected
-__global__ void DeviceCompactInitKernel(
+__global__
+__attribute__((used))
+inline
+void DeviceCompactInitKernel(
     hipLaunchParm           lp,
     ScanTileStateT          tile_state,             ///< [in] Tile status interface
     int                     num_tiles,              ///< [in] Number of tiles
@@ -104,14 +112,17 @@ template <
     typename            InitValueT,         ///< Initial value to seed the exclusive scan (cub::NullType for inclusive scans)
     typename            OffsetT>            ///< Signed integer type for global offsets
 __launch_bounds__ (int(ScanPolicyT::BLOCK_THREADS), 1)
-__global__ void DeviceScanKernel(
+__global__
+__attribute__((used))
+inline
+void DeviceScanKernel(
     hipLaunchParm       lp,
-    InputIteratorT      d_in,               ///< Input data
-    OutputIteratorT     d_out,              ///< Output data
-    ScanTileStateT      tile_state,         ///< Tile status interface
+    Wrapper<InputIteratorT>      d_in,               ///< Input data
+    Wrapper<OutputIteratorT>     d_out,              ///< Output data
+    Wrapper<ScanTileStateT>      tile_state,         ///< Tile status interface
     int                 start_tile,         ///< The starting tile for the current grid
-    ScanOpT             scan_op,            ///< Binary scan functor 
-    InitValueT          init_value,         ///< Initial value to seed the exclusive scan
+    Wrapper<ScanOpT>             scan_op,            ///< Binary scan functor
+    Wrapper<InitValueT>          init_value,         ///< Initial value to seed the exclusive scan
     OffsetT             num_items)          ///< Total number of scan items for the entire problem
 {
     // Thread block type for scanning input tiles
@@ -127,9 +138,10 @@ __global__ void DeviceScanKernel(
     __shared__ typename AgentScanT::TempStorage temp_storage;
 
     // Process tiles
+    ScanTileStateT foo = tile_state;
     AgentScanT(temp_storage, d_in, d_out, scan_op, init_value).ConsumeRange(
         num_items,
-        tile_state,
+        foo,//tile_state,
         start_tile);
 }
 
@@ -387,7 +399,7 @@ struct DispatchScan
         size_t&             temp_storage_bytes,     ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         InputIteratorT      d_in,                   ///< [in] Pointer to the input sequence of data items
         OutputIteratorT     d_out,                  ///< [out] Pointer to the output sequence of data items
-        ScanOpT             scan_op,                ///< [in] Binary scan functor 
+        ScanOpT             scan_op,                ///< [in] Binary scan functor
         InitValueT          init_value,             ///< [in] Initial value to seed the exclusive scan
         OffsetT             num_items,              ///< [in] Total number of input items (i.e., the length of \p d_in)
         hipStream_t        stream,                 ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
@@ -457,7 +469,7 @@ struct DispatchScan
             if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(init_kernel), dim3(%d), dim3(%d), 0, %lld, )\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
 
             // Invoke init_kernel to initialize tile descriptors
-            hipLaunchKernel(HIP_KERNEL_NAME(init_kernel), dim3(init_grid_size), dim3(INIT_KERNEL_THREADS), 0, stream, 
+            hipLaunchKernel(HIP_KERNEL_NAME(init_kernel), dim3(init_grid_size), dim3(INIT_KERNEL_THREADS), 0, stream,
                 tile_state,
                 num_tiles);
 
@@ -487,7 +499,7 @@ struct DispatchScan
                     start_tile, scan_grid_size, scan_kernel_config.block_threads, (long long) stream, scan_kernel_config.items_per_thread, scan_sm_occupancy);
 
                 // Invoke scan_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(scan_kernel), dim3(scan_grid_size), dim3(scan_kernel_config.block_threads), 0, stream, 
+                hipLaunchKernel(HIP_KERNEL_NAME(scan_kernel), dim3(scan_grid_size), dim3(scan_kernel_config.block_threads), 0, stream,
                     d_in,
                     d_out,
                     tile_state,
@@ -520,7 +532,7 @@ struct DispatchScan
         size_t&         temp_storage_bytes,     ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         InputIteratorT  d_in,                   ///< [in] Pointer to the input sequence of data items
         OutputIteratorT d_out,                  ///< [out] Pointer to the output sequence of data items
-        ScanOpT         scan_op,                ///< [in] Binary scan functor 
+        ScanOpT         scan_op,                ///< [in] Binary scan functor
         InitValueT      init_value,             ///< [in] Initial value to seed the exclusive scan
         OffsetT         num_items,              ///< [in] Total number of input items (i.e., the length of \p d_in)
         hipStream_t    stream,                 ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.

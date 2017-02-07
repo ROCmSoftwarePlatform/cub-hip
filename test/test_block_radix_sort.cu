@@ -34,16 +34,16 @@
 // Ensure printing of CUDA runtime errors to console
 #define CUB_STDERR
 
-#include <stdio.h>
-#include <algorithm>
-#include <iostream>
+#include "test_util.h"
 
 #include <cub/block/block_radix_sort.cuh>
 #include <cub/block/block_load.cuh>
 #include <cub/block/block_store.cuh>
 #include <cub/util_allocator.cuh>
 
-#include "test_util.h"
+#include <stdio.h>
+#include <algorithm>
+#include <iostream>
 
 using namespace cub;
 
@@ -62,7 +62,8 @@ CachingDeviceAllocator  g_allocator(true);
 
 /// Specialized descending, blocked -> blocked
 template <int BLOCK_THREADS, typename BlockRadixSort, int ITEMS_PER_THREAD, typename Key, typename Value>
-__device__ __forceinline__ void TestBlockSort(
+__device__ __forceinline__
+void TestBlockSort(
     typename BlockRadixSort::TempStorage &temp_storage,
     Key                         (&keys)[ITEMS_PER_THREAD],
     Value                       (&values)[ITEMS_PER_THREAD],
@@ -82,7 +83,8 @@ __device__ __forceinline__ void TestBlockSort(
 
 /// Specialized descending, blocked -> striped
 template <int BLOCK_THREADS, typename BlockRadixSort, int ITEMS_PER_THREAD, typename Key, typename Value>
-__device__ __forceinline__ void TestBlockSort(
+__device__ __forceinline__
+void TestBlockSort(
     typename BlockRadixSort::TempStorage &temp_storage,
     Key                         (&keys)[ITEMS_PER_THREAD],
     Value                       (&values)[ITEMS_PER_THREAD],
@@ -102,7 +104,8 @@ __device__ __forceinline__ void TestBlockSort(
 
 /// Specialized ascending, blocked -> blocked
 template <int BLOCK_THREADS, typename BlockRadixSort, int ITEMS_PER_THREAD, typename Key, typename Value>
-__device__ __forceinline__ void TestBlockSort(
+__device__ __forceinline__
+void TestBlockSort(
     typename BlockRadixSort::TempStorage &temp_storage,
     Key                         (&keys)[ITEMS_PER_THREAD],
     Value                       (&values)[ITEMS_PER_THREAD],
@@ -122,7 +125,8 @@ __device__ __forceinline__ void TestBlockSort(
 
 /// Specialized ascending, blocked -> striped
 template <int BLOCK_THREADS, typename BlockRadixSort, int ITEMS_PER_THREAD, typename Key, typename Value>
-__device__ __forceinline__ void TestBlockSort(
+__device__ __forceinline__
+void TestBlockSort(
     typename BlockRadixSort::TempStorage &temp_storage,
     Key                         (&keys)[ITEMS_PER_THREAD],
     Value                       (&values)[ITEMS_PER_THREAD],
@@ -157,15 +161,20 @@ template <
     typename            Key,
     typename            Value>
 __launch_bounds__ (BLOCK_THREADS, 1)
-__global__ void Kernel(
+__global__
+void Kernel(
     hipLaunchParm               lp,
-    Key                         *d_keys,
-    Value                       *d_values,
+    char* foo,//Key                         *d_keys,
+    char* bar,//Value                       *d_values,
     int                         begin_bit,
     int                         end_bit,
-    clock_t                     *d_elapsed)
+    char* baz)//clock_t                     *d_elapsed)
 {
     // Threadblock load/store abstraction types
+    Key* d_keys = reinterpret_cast<Key*>(foo);
+    Value* d_values = reinterpret_cast<Value*>(d_values);
+    clock_t* d_elapsed = reinterpret_cast<clock_t*>(d_elapsed);
+
     typedef BlockRadixSort<
             Key,
             BLOCK_THREADS,
@@ -191,8 +200,16 @@ __global__ void Kernel(
     clock_t stop;
     clock_t start = clock();
 
-    TestBlockSort<BLOCK_THREADS, BlockRadixSortT>(
-        temp_storage, keys, values, d_keys, d_values, begin_bit, end_bit, stop, Int2Type<DESCENDING>(), Int2Type<BLOCKED_OUTPUT>());
+    TestBlockSort<BLOCK_THREADS, BlockRadixSortT>(temp_storage,
+                                                  keys,
+                                                  values,
+                                                  d_keys,
+                                                  d_values,
+                                                  begin_bit,
+                                                  end_bit,
+                                                  stop,
+                                                  Int2Type<DESCENDING>(),
+                                                  Int2Type<BLOCKED_OUTPUT>());
 
     // Store time
     if (hipThreadIdx_x == 0)
@@ -393,8 +410,25 @@ void TestDriver(
     //hipDeviceSetSharedMemConfig(SMEM_CONFIG);
 
     // Run kernel
-    hipLaunchKernel(HIP_KERNEL_NAME(Kernel<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, SMEM_CONFIG, DESCENDING, BLOCKED_OUTPUT>), dim3(1), dim3(BLOCK_THREADS), 0, 0, 
-        d_keys, d_values, begin_bit, end_bit, d_elapsed);
+    hipLaunchKernel(HIP_KERNEL_NAME(Kernel<BLOCK_THREADS,
+                                           ITEMS_PER_THREAD,
+                                           RADIX_BITS,
+                                           MEMOIZE_OUTER_SCAN,
+                                           INNER_SCAN_ALGORITHM,
+                                           SMEM_CONFIG,
+                                           DESCENDING,
+                                           BLOCKED_OUTPUT,
+                                           Key,
+                                           Value>),
+                    dim3(1),
+                    dim3(BLOCK_THREADS),
+                    0,
+                    0,
+                    reinterpret_cast<char*>(d_keys),
+                    reinterpret_cast<char*>(d_values),
+                    begin_bit,
+                    end_bit,
+                    reinterpret_cast<char*>(d_elapsed));
 
     // Flush kernel output / errors
     CubDebugExit(hipPeekAtLastError());

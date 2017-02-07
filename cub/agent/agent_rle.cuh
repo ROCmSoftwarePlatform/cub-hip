@@ -91,7 +91,7 @@ struct AgentRlePolicy
  ******************************************************************************/
 
 /**
- * \brief AgentRle implements a stateful abstraction of CUDA thread blocks for participating in device-wide run-length-encode 
+ * \brief AgentRle implements a stateful abstraction of CUDA thread blocks for participating in device-wide run-length-encode
  */
 template <
     typename    AgentRlePolicyT,        ///< Parameterized AgentRlePolicyT tuning policy type
@@ -166,6 +166,9 @@ struct AgentRle
             else
                 return true;
         }
+
+        __host__ __device__
+        ~OobInequalityOp() {}
     };
 
 
@@ -248,7 +251,8 @@ struct AgentRle
     // Per-thread fields
     //---------------------------------------------------------------------
 
-    _TempStorage&                   temp_storage;       ///< Reference to temp_storage
+    //_TempStorage&                   temp_storage;       ///< Reference to temp_storage
+    std::uintptr_t                  temp_storage;
 
     WrappedInputIteratorT           d_in;               ///< Pointer to input sequence of data items
     OffsetsOutputIteratorT          d_offsets_out;      ///< Input run offsets
@@ -273,7 +277,8 @@ struct AgentRle
         EqualityOpT                 equality_op,        ///< [in] T equality operator
         OffsetT                     num_items)          ///< [in] Total number of input items
     :
-        temp_storage(temp_storage.Alias()),
+        //temp_storage(temp_storage.Alias()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
         d_in(d_in),
         d_offsets_out(d_offsets_out),
         d_lengths_out(d_lengths_out),
@@ -303,7 +308,7 @@ struct AgentRle
         {
             // First-and-last-tile always head-flags the first item and tail-flags the last item
 
-            BlockDiscontinuityT(temp_storage.discontinuity).FlagHeadsAndTails(
+            BlockDiscontinuityT(reinterpret_cast<_TempStorage*>(temp_storage)->discontinuity).FlagHeadsAndTails(
                 head_flags, tail_flags, items, inequality_op);
         }
         else if (FIRST_TILE)
@@ -315,7 +320,7 @@ struct AgentRle
             if (hipThreadIdx_x == BLOCK_THREADS - 1)
                 tile_successor_item = d_in[tile_offset + TILE_ITEMS];
 
-            BlockDiscontinuityT(temp_storage.discontinuity).FlagHeadsAndTails(
+            BlockDiscontinuityT(reinterpret_cast<_TempStorage*>(temp_storage)->discontinuity).FlagHeadsAndTails(
                 head_flags, tail_flags, tile_successor_item, items, inequality_op);
         }
         else if (LAST_TILE)
@@ -327,7 +332,7 @@ struct AgentRle
             if (hipThreadIdx_x == 0)
                 tile_predecessor_item = d_in[tile_offset - 1];
 
-            BlockDiscontinuityT(temp_storage.discontinuity).FlagHeadsAndTails(
+            BlockDiscontinuityT(reinterpret_cast<_TempStorage*>(temp_storage)->discontinuity).FlagHeadsAndTails(
                 head_flags, tile_predecessor_item, tail_flags, items, inequality_op);
         }
         else
@@ -342,7 +347,7 @@ struct AgentRle
             if (hipThreadIdx_x == 0)
                 tile_predecessor_item = d_in[tile_offset - 1];
 
-            BlockDiscontinuityT(temp_storage.discontinuity).FlagHeadsAndTails(
+            BlockDiscontinuityT(reinterpret_cast<_TempStorage*>(temp_storage)->discontinuity).FlagHeadsAndTails(
                 head_flags, tile_predecessor_item, tail_flags, tile_successor_item, items, inequality_op);
         }
 
@@ -379,7 +384,7 @@ struct AgentRle
 
         LengthOffsetPair thread_inclusive;
         LengthOffsetPair thread_aggregate = ThreadReduce(lengths_and_num_runs, scan_op);
-        WarpScanPairs(temp_storage.warp_scan[warp_id]).Scan(
+        WarpScanPairs(reinterpret_cast<_TempStorage*>(temp_storage)->warp_scan[warp_id]).Scan(
             thread_aggregate,
             thread_inclusive,
             thread_exclusive_in_warp,
@@ -388,14 +393,14 @@ struct AgentRle
 
         // Last lane in each warp shares its warp-aggregate
         if (lane_id == WARP_THREADS - 1)
-            temp_storage.warp_aggregates.Alias()[warp_id] = thread_inclusive;
+            reinterpret_cast<_TempStorage*>(temp_storage)->warp_aggregates.Alias()[warp_id] = thread_inclusive;
 
         __syncthreads();
 
         // Accumulate total selected and the warp-wide prefix
         warp_exclusive_in_tile          = identity;
-        warp_aggregate                  = temp_storage.warp_aggregates.Alias()[warp_id];
-        tile_aggregate                  = temp_storage.warp_aggregates.Alias()[0];
+        warp_aggregate                  = reinterpret_cast<_TempStorage*>(temp_storage)->warp_aggregates.Alias()[warp_id];
+        tile_aggregate                  = reinterpret_cast<_TempStorage*>(temp_storage)->warp_aggregates.Alias()[0];
 
         #pragma unroll
         for (int WARP = 1; WARP < WARPS; ++WARP)
@@ -403,7 +408,7 @@ struct AgentRle
             if (warp_id == WARP)
                 warp_exclusive_in_tile = tile_aggregate;
 
-            tile_aggregate = scan_op(tile_aggregate, temp_storage.warp_aggregates.Alias()[WARP]);
+            tile_aggregate = scan_op(tile_aggregate, reinterpret_cast<_TempStorage*>(temp_storage)->warp_aggregates.Alias()[WARP]);
         }
     }
 
@@ -430,7 +435,7 @@ struct AgentRle
         // Locally compact items within the warp (first warp)
         if (warp_id == 0)
         {
-            WarpExchangePairs(temp_storage.exchange_pairs[0]).ScatterToStriped(lengths_and_offsets, thread_num_runs_exclusive_in_warp);
+            WarpExchangePairs(reinterpret_cast<_TempStorage*>(temp_storage)->exchange_pairs[0]).ScatterToStriped(lengths_and_offsets, thread_num_runs_exclusive_in_warp);
         }
 
         // Locally compact items within the warp (remaining warps)
@@ -441,7 +446,7 @@ struct AgentRle
 
             if (warp_id == SLICE)
             {
-                WarpExchangePairs(temp_storage.exchange_pairs[0]).ScatterToStriped(lengths_and_offsets, thread_num_runs_exclusive_in_warp);
+                WarpExchangePairs(reinterpret_cast<_TempStorage*>(temp_storage)->exchange_pairs[0]).ScatterToStriped(lengths_and_offsets, thread_num_runs_exclusive_in_warp);
             }
         }
 
@@ -495,14 +500,15 @@ struct AgentRle
             run_lengths[ITEM] = lengths_and_offsets[ITEM].value;
         }
 
-        WarpExchangeOffsets(temp_storage.exchange_offsets[warp_id]).ScatterToStriped(run_offsets, thread_num_runs_exclusive_in_warp);
+        WarpExchangeOffsets(reinterpret_cast<_TempStorage*>(temp_storage)->exchange_offsets[warp_id]).ScatterToStriped(run_offsets, thread_num_runs_exclusive_in_warp);
 
-        if (sizeof(LengthT) == sizeof(OffsetT))
-            __threadfence_block();
+        if (sizeof(LengthT) == sizeof(OffsetT));
+            // TODO: temporarily disabled as HIP does not support it yet.
+            //__threadfence_block();
         else
             __syncthreads();
 
-        WarpExchangeLengths(temp_storage.exchange_lengths[warp_id]).ScatterToStriped(run_lengths, thread_num_runs_exclusive_in_warp);
+        WarpExchangeLengths(reinterpret_cast<_TempStorage*>(temp_storage)->exchange_lengths[warp_id]).ScatterToStriped(run_lengths, thread_num_runs_exclusive_in_warp);
 
         // Global scatter
         #pragma unroll
@@ -611,7 +617,8 @@ struct AgentRle
      */
     template <
         bool                LAST_TILE>
-    __device__ __forceinline__ LengthOffsetPair ConsumeTile(
+    __device__ __forceinline__
+    LengthOffsetPair ConsumeTile(
         OffsetT             num_items,          ///< Total number of global input items
         OffsetT             num_remaining,      ///< Number of global input items remaining (including this tile)
         int                 tile_idx,           ///< Tile index
@@ -625,9 +632,9 @@ struct AgentRle
             // Load items
             T items[ITEMS_PER_THREAD];
             if (LAST_TILE)
-                BlockLoadT(temp_storage.load).Load(d_in + tile_offset, items, num_remaining, T());
+                BlockLoadT(reinterpret_cast<_TempStorage*>(temp_storage)->load).Load(d_in + tile_offset, items, num_remaining, T());
             else
-                BlockLoadT(temp_storage.load).Load(d_in + tile_offset, items);
+                BlockLoadT(reinterpret_cast<_TempStorage*>(temp_storage)->load).Load(d_in + tile_offset, items);
 
             if (SYNC_AFTER_LOAD)
                 __syncthreads();
@@ -666,7 +673,7 @@ struct AgentRle
             OffsetT             thread_num_runs_exclusive_in_warp[ITEMS_PER_THREAD];
             LengthOffsetPair    lengths_and_num_runs2[ITEMS_PER_THREAD];
 
-            // Downsweep scan through lengths_and_num_runs
+//            // Downsweep scan through lengths_and_num_runs
             ThreadScanExclusive(lengths_and_num_runs, lengths_and_num_runs2, scan_op, thread_exclusive_in_warp);
 
             // Zip
@@ -705,9 +712,9 @@ struct AgentRle
             // Load items
             T items[ITEMS_PER_THREAD];
             if (LAST_TILE)
-                BlockLoadT(temp_storage.load).Load(d_in + tile_offset, items, num_remaining, T());
+                BlockLoadT(reinterpret_cast<_TempStorage*>(temp_storage)->load).Load(d_in + tile_offset, items, num_remaining, T());
             else
-                BlockLoadT(temp_storage.load).Load(d_in + tile_offset, items);
+                BlockLoadT(reinterpret_cast<_TempStorage*>(temp_storage)->load).Load(d_in + tile_offset, items);
 
             if (SYNC_AFTER_LOAD)
                 __syncthreads();
@@ -735,18 +742,18 @@ struct AgentRle
                 lengths_and_num_runs);
 
             // First warp computes tile prefix in lane 0
-            TilePrefixCallbackOpT prefix_op(tile_status, temp_storage.prefix, Sum(), tile_idx);
+            TilePrefixCallbackOpT prefix_op(tile_status, reinterpret_cast<_TempStorage*>(temp_storage)->prefix, Sum(), tile_idx);
             unsigned int warp_id = ((WARPS == 1) ? 0 : hipThreadIdx_x / WARP_THREADS);
             if (warp_id == 0)
             {
                 prefix_op(tile_aggregate);
                 if (hipThreadIdx_x == 0)
-                    temp_storage.tile_exclusive = prefix_op.exclusive_prefix;
+                    reinterpret_cast<_TempStorage*>(temp_storage)->tile_exclusive = prefix_op.exclusive_prefix;
             }
 
             __syncthreads();
 
-            LengthOffsetPair tile_exclusive_in_global = temp_storage.tile_exclusive;
+            LengthOffsetPair tile_exclusive_in_global = reinterpret_cast<_TempStorage*>(temp_storage)->tile_exclusive;
 
             // Update thread_exclusive_in_warp to fold in warp and tile run-lengths
             LengthOffsetPair thread_exclusive = scan_op(tile_exclusive_in_global, warp_exclusive_in_tile);

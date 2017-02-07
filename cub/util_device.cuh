@@ -2,7 +2,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -108,8 +108,11 @@ hipError_t AliasTemporaries(
 /**
  * Empty kernel for querying PTX manifest metadata (e.g., version) for the current device
  */
-template <typename T>
-__global__ void EmptyKernel(hipLaunchParm lp, int x) { }
+template <typename T = void>
+__global__
+__attribute__((used))
+inline
+void EmptyKernel(hipLaunchParm lp, int x) { }
 
 
 #endif  // DOXYGEN_SHOULD_SKIP_THIS
@@ -323,8 +326,10 @@ struct ChainedPolicy
    /// Specializes and dispatches op in accordance to the first policy in the chain of adequate PTX version
    template <typename FunctorT>
    CUB_RUNTIME_FUNCTION __forceinline__
-   static hipError_t Invoke(int ptx_version, FunctorT &op)
+   static
+   hipError_t Invoke(int ptx_version, FunctorT &op)
    {
+       return hipError_t{};
        if (ptx_version < PTX_VERSION) {
            return PrevPolicyT::Invoke(ptx_version, op);
        }
