@@ -126,3 +126,47 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
+
+
+
+##Running the tests##
+Run the following commands to run the CUB tests.
+```
+	* cd test
+	* make <test_name>
+    * ./bin/<executable>
+```
+
+
+**Basic functionality test**
+```
+$ make link
+$ ./bin/link_main_sm200_nvvm_abi_nocdp_x86_64_thorough
+```
+
+**Other tests**
+* test_iterator
+* test_allocator
+* test_warp_scan
+* test_warp_reduce
+
+
+**Device tests**
+* test_device_reduce
+* test_device_histogram
+* test_device_scan
+* test_device_radix_sort
+* test_device_reduce_by_key
+* test_device_run_length_encode
+* test_device_select_unique
+* test_device_select_if
+
+
+**Block tests**
+* test_block_reduce_raking
+* test_block_reduce_warp_reductions
+* test_block_scan_raking
+* test_block_scan_raking_memorize
+* test_block_scan_warp_scans
+* test_block_radix_sort_keys
+* test_block_radix_sort_pairs
