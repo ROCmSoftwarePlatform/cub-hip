@@ -33,7 +33,7 @@
 
 #pragma once
 
-#include "../../hip_helpers/serialising_wrapper.hpp"
+#include "../../../hip_helpers/serialising_wrapper.hpp"
 
 #include "../../thread/thread_operators.cuh"
 #include "../../util_type.cuh"
