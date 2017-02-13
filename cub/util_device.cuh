@@ -108,6 +108,7 @@ hipError_t AliasTemporaries(
 /**
  * Empty kernel for querying PTX manifest metadata (e.g., version) for the current device
  */
+template <typename T>
 __global__ void EmptyKernel(hipLaunchParm lp, int x) { }
 
 
@@ -120,7 +121,7 @@ CUB_RUNTIME_FUNCTION __forceinline__ hipError_t PtxVersion(int &ptx_version)
 {
     struct Dummy
     {
-        //TODO:(mcw) Use EmptyKernel function pointer to get ptxVersion
+        //TODO:(mcw) Use EmptyKernel<void> function pointer to get ptxVersion
         //      Once hipFuncGetAttributes() API is supported
 
         /// Type definition of the EmptyKernel kernel entry point
@@ -132,7 +133,7 @@ CUB_RUNTIME_FUNCTION __forceinline__ hipError_t PtxVersion(int &ptx_version)
         CUB_RUNTIME_FUNCTION __forceinline__
         void Empty()
         {
-            //return EmptyKernel;
+            //return EmptyKernel<void>;
         }
     };
 
@@ -151,7 +152,7 @@ CUB_RUNTIME_FUNCTION __forceinline__ hipError_t PtxVersion(int &ptx_version)
 
     hipError_t error = hipSuccess;
         //cudaFuncAttributes empty_kernel_attrs;
-        //if (cubDebug(error = cudaFuncGetAttributes(&empty_kernel_attrs, EmptyKernel))) break;
+        //if (cubDebug(error = cudaFuncGetAttributes(&empty_kernel_attrs, EmptyKernel<void>))) break;
         //ptx_version = empty_kernel_attrs.ptxVersion * 10;
 
         //Temporary fix: TODO:(mcw) revert once PTX operations are supported in HIP
