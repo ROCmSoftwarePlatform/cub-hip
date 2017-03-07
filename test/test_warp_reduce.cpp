@@ -272,7 +272,13 @@ void PartialWarpReduceKernel(
 
     // Test partial-warp reduce
     int warp_id = hipThreadIdx_x / LOGICAL_WARP_THREADS;
-    T output = DeviceTest<T, ReductionOp, WarpReduce>::Reduce(
+
+    T output ;
+
+    //if (valid_warp_threads == 1)
+//	output = 2;
+  //  else
+	output =  DeviceTest<T, ReductionOp, WarpReduce>::Reduce(
         temp_storage[warp_id], input, reduction_op, valid_warp_threads);
 
     // Record elapsed clocks
@@ -566,8 +572,8 @@ void TestReduce(
                         d_in,
                         d_out,
                         reduction_op,
-                        d_elapsed,
-                        valid_warp_threads);
+			d_elapsed,
+			valid_warp_threads);
     }
 
     CubDebugExit(hipPeekAtLastError());
@@ -617,6 +623,9 @@ void TestSegmentedReduce(
     // Initialize problem
     Initialize(gen_mode, flag_entropy, h_in, h_flags, WARPS, LOGICAL_WARP_THREADS, LOGICAL_WARP_THREADS, reduction_op, h_head_out, h_tail_out);
 
+
+	for(int i = 0 ; i < BLOCK_THREADS ; i++)
+		std::cout<<std::endl<<CoutCast(h_in[i])<<"\t"<<CoutCast(h_flags[i])<<"\t"<<CoutCast(h_head_out[i])<<"\t"<<CoutCast(h_tail_out[i]); 	
     // Initialize/clear device arrays
     T           *d_in = NULL;
     int         *d_flags = NULL;
@@ -735,8 +744,8 @@ void Test(
         TestReduce<WARPS, LOGICAL_WARP_THREADS, T>(gen_mode, reduction_op, valid_warp_threads);
 
         // With wrapper to ensure no ops called on OOB lanes
-        WrapperFunctor<ReductionOp, LOGICAL_WARP_THREADS> wrapped_op(reduction_op, valid_warp_threads);
-        TestReduce<WARPS, LOGICAL_WARP_THREADS, T>(gen_mode, wrapped_op, valid_warp_threads);
+        //WrapperFunctor<ReductionOp, LOGICAL_WARP_THREADS> wrapped_op(reduction_op, valid_warp_threads);
+        //TestReduce<WARPS, LOGICAL_WARP_THREADS, T>(gen_mode, wrapped_op, valid_warp_threads);
     }
 
     // Full tile

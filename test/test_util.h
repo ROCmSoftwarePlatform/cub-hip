@@ -518,7 +518,7 @@ void InitValue(GenMode gen_mode, T &value, int index = 0)
          break;
 #endif
      case UNIFORM:
-        value /= 2;
+        value = 2;
         break;
     case INTEGER_SEED:
     default:
@@ -1363,17 +1363,17 @@ int CompareDeviceResults(
     hipMemcpy(h_data, d_data, sizeof(T) * num_items, hipMemcpyDeviceToHost);
 
     // Display data
-    if (display_data)
+    if (1)
     {   // TODO: the below is temporarily disabled.
         printf("Reference:\n");
         for (int i = 0; i < int(num_items); i++)
         {
-        //    std::cout << CoutCast(h_reference[i]) << ", ";
+            std::cout << CoutCast(h_reference[i]) << ", ";
         }
         printf("\n\nComputed:\n");
         for (int i = 0; i < int(num_items); i++)
         {
-        //    std::cout << CoutCast(h_data[i]) << ", ";
+            std::cout << CoutCast(h_data[i]) << ", ";
         }
         printf("\n\n");
     }

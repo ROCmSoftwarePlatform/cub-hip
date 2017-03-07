@@ -115,6 +115,8 @@ struct Sum
     {
         return a + b;
     }
+    uint8_t _dummyPad;
+    __device__ __host__ ~Sum(){};
 };
 
 
