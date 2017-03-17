@@ -79,6 +79,8 @@ struct WrapperFunctor
     {
         return op(a, b);
     }
+    uint8_t dummyVar;
+    __host__ __device__ ~WrapperFunctor() {}
 };
 
 //---------------------------------------------------------------------
@@ -259,9 +261,9 @@ void WarpScanKernel(hipLaunchParm lp,
     T data = d_in[hipThreadIdx_x];
 
     // Start cycle timer
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
     clock_t start = clock();
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
 
     T aggregate;
 
@@ -276,9 +278,9 @@ void WarpScanKernel(hipLaunchParm lp,
                Int2Type<Traits<T>::PRIMITIVE>());
 
     // Stop cycle timer
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
     clock_t stop = clock();
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
 
     // Store data
     d_out[hipThreadIdx_x] = data;

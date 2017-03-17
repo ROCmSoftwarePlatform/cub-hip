@@ -1363,7 +1363,7 @@ int CompareDeviceResults(
     hipMemcpy(h_data, d_data, sizeof(T) * num_items, hipMemcpyDeviceToHost);
 
     // Display data
-    if (1)
+    if (display_data)
     {   // TODO: the below is temporarily disabled.
         printf("Reference:\n");
         for (int i = 0; i < int(num_items); i++)
