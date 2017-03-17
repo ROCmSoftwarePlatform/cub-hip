@@ -441,20 +441,31 @@ unsigned int LaneMaskLe()
 /**
  * \brief Returns the warp lane mask of all lanes greater than the calling thread
  */
+
+#ifdef __HIP_PLATFORM_NVCC__
 __device__ __forceinline__
 static
 unsigned int LaneMaskGt()
 {
     unsigned int ret;
-#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("mov.u32 %0, %%lanemask_gt;" : "=r"(ret) );
-#elif defined(__HIP_PLATFORM_HCC__)
-    unsigned int Tid = hipBlockIdx_x * hipBlockDim_x * hipBlockDim_y + hipThreadIdx_y * hipBlockDim_x + hipThreadIdx_x;
-    unsigned int lane = Tid % 32;
-    ret = ~((2 << lane) - 1);
-#endif
     return ret;
 }
+#endif
+
+#ifdef __HIP_PLATFORM_HCC__
+__device__ __forceinline__
+static
+unsigned long long LaneMaskGt()
+{
+    unsigned long long ret;
+    const unsigned long long val = 2 ;
+    unsigned int Tid = hipBlockIdx_x * hipBlockDim_x * hipBlockDim_y + hipThreadIdx_y * hipBlockDim_x + hipThreadIdx_x;
+    unsigned int lane = Tid % warpSize;
+    ret = ~((val << lane) - 1);
+    return ret;
+}
+#endif
 
 /**
  * \brief Returns the warp lane mask of all lanes greater than or equal to the calling thread

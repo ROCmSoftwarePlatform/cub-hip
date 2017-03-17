@@ -132,6 +132,8 @@ struct Max
     {
         return CUB_MAX(a, b);
     }
+    uint8_t _dummyPad;
+    __device__ __host__ ~Max(){};
 };
 
 

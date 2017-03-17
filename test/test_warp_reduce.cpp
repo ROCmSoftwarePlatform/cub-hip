@@ -623,9 +623,6 @@ void TestSegmentedReduce(
     // Initialize problem
     Initialize(gen_mode, flag_entropy, h_in, h_flags, WARPS, LOGICAL_WARP_THREADS, LOGICAL_WARP_THREADS, reduction_op, h_head_out, h_tail_out);
 
-
-	for(int i = 0 ; i < BLOCK_THREADS ; i++)
-		std::cout<<std::endl<<CoutCast(h_in[i])<<"\t"<<CoutCast(h_flags[i])<<"\t"<<CoutCast(h_head_out[i])<<"\t"<<CoutCast(h_tail_out[i]); 	
     // Initialize/clear device arrays
     T           *d_in = NULL;
     int         *d_flags = NULL;
@@ -879,10 +876,20 @@ int main(int argc, char** argv)
     for (int i = 0; i <= g_repeat; ++i)
     {
         // Test logical warp sizes
+
+	#ifdef __HIP_PLATFORM_NVCC__
         Test<32>();
         Test<16>();
         Test<9>();
         Test<7>();
+	#endif
+
+	#ifdef __HIP_PLATFORM_HCC__
+        Test<64>();
+        Test<32>();
+        Test<17>();
+        Test<13>();
+        #endif
     }
 
 #endif

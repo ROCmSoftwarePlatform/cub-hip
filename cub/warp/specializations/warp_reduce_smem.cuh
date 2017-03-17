@@ -193,7 +193,14 @@ struct WarpReduceSmem
         Int2Type<true>  /*has_ballot*/)         ///< [in] Marker type for whether the target arch has ballot functionality
     {
         // Get the start flags for each thread in the warp.
+	
+	#ifdef __HIP_PLATFORM_NVCC__
         int warp_flags = __ballot(flag);
+	#endif
+
+	#ifdef __HIP_PLATFORM_HCC__
+        long long warp_flags = __ballot(flag);
+        #endif
 
         if (!HEAD_SEGMENTED)
             warp_flags <<= 1;
@@ -208,10 +215,16 @@ struct WarpReduceSmem
         }
 
         // Find next flag
-        int next_flag = __clz(__brev(warp_flags));
 
+	#ifdef __HIP_PLATFORM_NVCC__
+        int next_flag = __clz(__brev(warp_flags));
+	#endif
+
+	#ifdef __HIP_PLATFORM_HCC__
+        int next_flag = __clzll(__brevll(warp_flags));
+        #endif
         // Clip the next segment at the warp boundary if necessary
-        if (LOGICAL_WARP_THREADS != 32)
+        if (LOGICAL_WARP_THREADS != warpSize)
             next_flag = CUB_MIN(next_flag, LOGICAL_WARP_THREADS);
 
         #pragma unroll
