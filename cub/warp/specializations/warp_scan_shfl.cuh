@@ -130,7 +130,16 @@ struct WarpScanShfl
             "}"
             : "=r"(output) : "r"(input), "r"(offset), "r"(shfl_c), "r"(input));
 #elif defined(__HIP_PLATFORM_HCC__)
-        output = input + __shfl_up(input, (unsigned int)offset, shfl_c);
+        register int r0;
+        register int lane_id;
+        register bool pred = false ;
+        r0 = __shfl_up(input, offset, shfl_c);
+        lane_id = (hipThreadIdx_x % LOGICAL_WARP_THREADS) - offset ;
+        if (lane_id >=0)
+          pred = true;
+        if (pred == true)
+          r0 = r0 + input ;
+        output = r0;
 #endif
         return output;
     }
@@ -185,7 +194,16 @@ struct WarpScanShfl
             "}"
             : "=f"(output) : "f"(input), "r"(offset), "r"(shfl_c), "f"(input));
 #elif defined(__HIP_PLATFORM_HCC__)
-        output = input + __shfl_up(input, (unsigned int)offset, shfl_c);
+        register float r0;
+        register int lane_id;
+        register bool pred = false;
+        r0 = __shfl_up(input, offset, shfl_c);
+        lane_id = (hipThreadIdx_x % LOGICAL_WARP_THREADS) - offset;
+        if (lane_id >= 0 )//&& lane_id <= shfl_c)
+          pred = true;
+        if (pred == true)
+          r0 = r0 + input ;
+        output = r0;
 #endif
         return output;
     }
@@ -257,13 +275,21 @@ struct WarpScanShfl
             "}"
             : "=l"(output) : "l"(input), "r"(offset), "r"(shfl_c), "l"(input));
 #elif defined(__HIP_PLATFORM_HCC__)
-        unsigned long hi, lo;
+        register unsigned int hi, lo;
+        int lane_id;
+        register bool pred = false;
         lo = 0xFFFFFFFF & input;
         hi = 0xFFFFFFFF & (input >> 32);
-        lo = (unsigned long)__shfl_up((int)lo, (unsigned int)offset, shfl_c);
-        hi = (unsigned long)__shfl_up((int)hi, (unsigned int)offset, shfl_c);
-        long long out = (long long)lo | ((long long)hi << 32);
-        output = input + out;
+        lo = __shfl_up((int)lo, offset, shfl_c);
+        hi = __shfl_up((int)hi, offset, shfl_c);
+        register long long r0 = 0x0000;
+        r0 = ((r0 | hi) << 32) | lo;
+        lane_id = (hipThreadIdx_x % LOGICAL_WARP_THREADS) - offset;
+        if (lane_id >= 0 )
+          pred = true;
+        if (pred == true)
+          r0 = input + r0;
+        output = r0;
 #endif
         return output;
     }

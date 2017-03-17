@@ -593,8 +593,7 @@ void ShuffleIdx(
     asm volatile("shfl.idx.b32 %0, %1, %2, %3;"
         : "=r"(word) : "r"(word), "r"(src_lane), "r"(last_lane));
 #elif defined(__HIP_PLATFORM_HCC__)
-    //TODO:(mcw) To find equivalent in hip
-    //word = __shfl_idx(word, src_lane, last_lane);
+    word = __shfl((int)word, src_lane, last_lane);
 #endif
     output[STEP] = (ShuffleWordT) word;
 
@@ -794,8 +793,7 @@ T ShuffleIndex(
     asm volatile("shfl.idx.b32 %0, %1, %2, %3;"
         : "=r"(shuffle_word) : "r"((unsigned int) input_alias[0]), "r"(src_lane), "r"(logical_warp_threads - 1));
 #elif defined(__HIP_PLATFORM_HCC__)
-    //TODO:(mcw) To find equivalent in hip
-    //shuffle_word = __shfl_idx((unsigned int) input_alias[0], src_lane, logical_warp_threads - 1);
+    shuffle_word = __shfl((int) input_alias[0], src_lane);
 #endif
     output_alias[0] = shuffle_word;
 
@@ -806,8 +804,7 @@ T ShuffleIndex(
         asm volatile("shfl.idx.b32 %0, %1, %2, %3;"
             : "=r"(shuffle_word) : "r"((unsigned int) input_alias[WORD]), "r"(src_lane), "r"(logical_warp_threads - 1));
 #elif defined(__HIP_PLATFORM_HCC__)
-        //TODO:(mcw) To find equivalent in hip
-        //shuffle_word = __shfl_idx((unsigned int) input_alias[WORD], src_lane, logical_warp_threads - 1);
+        shuffle_word = __shfl((int) input_alias[WORD], src_lane);
 #endif
         output_alias[WORD] = shuffle_word;
     }
