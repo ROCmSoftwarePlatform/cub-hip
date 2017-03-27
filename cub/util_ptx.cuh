@@ -377,8 +377,8 @@ unsigned int LaneId()
 #ifdef __HIP_PLATFORM_NVCC__
     asm volatile("mov.u32 %0, %%laneid;" : "=r"(ret) );
 #elif defined(__HIP_PLATFORM_HCC__)
-    ret = hipThreadIdx_x % warpSize; //hipBlockIdx_x * hipBlockDim_x * hipBlockDim_y + hipThreadIdx_y * hipBlockDim_x + hipThreadIdx_x;
-    //ret =  Tid % 32;
+    int Tid = (hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x ;
+    ret =  Tid % warpSize;
 #endif
     return ret;
 }
