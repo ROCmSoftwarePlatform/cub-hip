@@ -164,17 +164,13 @@ __launch_bounds__ (BLOCK_THREADS, 1)
 __global__
 void Kernel(
     hipLaunchParm               lp,
-    char* foo,//Key                         *d_keys,
-    char* bar,//Value                       *d_values,
+    Key                         *d_keys,
+    Value                       *d_values,
     int                         begin_bit,
     int                         end_bit,
-    char* baz)//clock_t                     *d_elapsed)
+    clock_t                     *d_elapsed)
 {
     // Threadblock load/store abstraction types
-    Key* d_keys = reinterpret_cast<Key*>(foo);
-    Value* d_values = reinterpret_cast<Value*>(d_values);
-    clock_t* d_elapsed = reinterpret_cast<clock_t*>(d_elapsed);
-
     typedef BlockRadixSort<
             Key,
             BLOCK_THREADS,
@@ -407,7 +403,7 @@ void TestDriver(
 
     // Set shared memory config
     //TODO:(mcw) revert once hipDeviceSetCacheConfig is supported in HIP
-    //hipDeviceSetSharedMemConfig(SMEM_CONFIG);
+    hipDeviceSetSharedMemConfig(SMEM_CONFIG);
 
     // Run kernel
     hipLaunchKernel(HIP_KERNEL_NAME(Kernel<BLOCK_THREADS,
@@ -424,11 +420,11 @@ void TestDriver(
                     dim3(BLOCK_THREADS),
                     0,
                     0,
-                    reinterpret_cast<char*>(d_keys),
-                    reinterpret_cast<char*>(d_values),
+                    d_keys,
+                    d_values,
                     begin_bit,
                     end_bit,
-                    reinterpret_cast<char*>(d_elapsed));
+                    d_elapsed);
 
     // Flush kernel output / errors
     CubDebugExit(hipPeekAtLastError());
@@ -594,7 +590,8 @@ void TestKeysAndPairs()
     // Test pairs sorting with only 4-byte configs
     Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, char>();        // With small-values
     Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, Key>();         // With same-values
-    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, TestFoo>();     // With large values
+    // TODO: these are temporarily disabled due to compiler breakage.
+    //Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, TestFoo>();     // With large values
 }
 
 
