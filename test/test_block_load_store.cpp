@@ -49,7 +49,6 @@
 #include <stdio.h>
 
 using namespace cub;
-
 //---------------------------------------------------------------------
 // Globals, constants and typedefs
 //---------------------------------------------------------------------
@@ -78,15 +77,11 @@ __launch_bounds__ (BLOCK_THREADS, 1)
 __global__
 inline
 void Kernel(hipLaunchParm   lp,
-            Wrapper<InputIteratorT> foo_in,
-            Wrapper<OutputIteratorT> foo_out_unguarded,
-            Wrapper<OutputIteratorT> foo_out_guarded,
+	    InputIteratorT d_in,
+	    OutputIteratorT d_out_unguarded,
+	    OutputIteratorT d_out_guarded,
             int             num_items)
 {
-    InputIteratorT d_in = foo_in;
-    OutputIteratorT d_out_unguarded = foo_out_unguarded;
-    OutputIteratorT d_out_guarded = foo_out_guarded;
-
     enum
     {
         TILE_SIZE = BLOCK_THREADS * ITEMS_PER_THREAD
@@ -192,9 +187,9 @@ void TestKernel(
                     dim3(BLOCK_THREADS),
                     0,
                     0,
-                    Wrapper<InputIteratorT>{d_in},
-                    Wrapper<DiscardOutputIterator<OffsetT>>{discard_itr},
-                    Wrapper<DiscardOutputIterator<OffsetT>>{discard_itr},
+                    d_in,
+                    discard_itr,
+                    discard_itr,
                     guarded_elements);
 
     // Test with regular output iterator
@@ -208,9 +203,9 @@ void TestKernel(
                     dim3(BLOCK_THREADS),
                     0,
                     0,
-                    Wrapper<InputIteratorT>{d_in},
-                    Wrapper<OutputIteratorT>{d_out_unguarded_itr},
-                    Wrapper<OutputIteratorT>{d_out_guarded_itr},
+		    d_in,
+		    d_out_unguarded_itr,
+		    d_out_guarded_itr,
                     guarded_elements);
 
     CubDebugExit(hipPeekAtLastError());
@@ -365,14 +360,17 @@ void TestIterator(
         "sizeof(T)(%d)\n",
             grid_size, guarded_elements, unguarded_elements, BLOCK_THREADS, ITEMS_PER_THREAD, LOAD_ALGORITHM, STORE_ALGORITHM, LOAD_MODIFIER, STORE_MODIFIER, (int) sizeof(T));
 
-    TestKernel<T,
+	CacheModifiedInputIterator<LOAD_MODIFIER, T>((T*)d_in) ;
+	CacheModifiedOutputIterator<STORE_MODIFIER, T>((T*)d_out_unguarded);
+	CacheModifiedOutputIterator<STORE_MODIFIER, T>((T*)d_out_guarded);
+	TestKernel<T,
                BLOCK_THREADS,
                ITEMS_PER_THREAD,
                LOAD_ALGORITHM,
                STORE_ALGORITHM>(h_in,
-                                CacheModifiedInputIterator<LOAD_MODIFIER, T>(d_in),
-                                CacheModifiedOutputIterator<STORE_MODIFIER, T>(d_out_unguarded),
-                                CacheModifiedOutputIterator<STORE_MODIFIER, T>(d_out_guarded),
+                                d_in,
+                                d_out_unguarded,
+                                d_out_guarded,
                                 d_out_unguarded,
                                 d_out_guarded,
                                 grid_size,
@@ -545,7 +543,13 @@ void TestStrategy(
 template<typename T, int BLOCK_THREADS>
 void TestItemsPerThread(int grid_size, float fraction_valid)
 {
+    #ifdef __HIP_PLATFORM_NVCC__
     Int2Type<BLOCK_THREADS % 32 == 0> is_warp_multiple;
+    #endif
+
+    #ifdef __HIP_PLATFORM_HCC__
+    Int2Type<BLOCK_THREADS % 64 == 0> is_warp_multiple;
+    #endif
 
     TestStrategy<T, BLOCK_THREADS, 1>(grid_size, fraction_valid, is_warp_multiple);
     TestStrategy<T, BLOCK_THREADS, 3>(grid_size, fraction_valid, is_warp_multiple);
@@ -562,11 +566,21 @@ void TestThreads(
     int grid_size,
     float fraction_valid)
 {
+    #ifdef __HIP_PLATFORM_NVCC__
     TestItemsPerThread<T, 15>(grid_size, fraction_valid);
     TestItemsPerThread<T, 32>(grid_size, fraction_valid);
     TestItemsPerThread<T, 72>(grid_size, fraction_valid);
     TestItemsPerThread<T, 96>(grid_size, fraction_valid);
     TestItemsPerThread<T, 128>(grid_size, fraction_valid);
+    #endif
+
+   #ifdef __HIP_PLATFORM_HCC__
+   TestItemsPerThread<T, 30>(grid_size, fraction_valid);
+   TestItemsPerThread<T, 64>(grid_size, fraction_valid);
+   TestItemsPerThread<T, 144>(grid_size, fraction_valid);
+   TestItemsPerThread<T, 192>(grid_size, fraction_valid);
+   TestItemsPerThread<T, 256>(grid_size, fraction_valid);
+   #endif
 }
 
 
@@ -612,12 +626,12 @@ int main(int argc, char** argv)
     //       is a requirement.
 //    TestThreads<long2>(2, 0.8f);
 
-    if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
+    //if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
     // TODO: this is disabled because HIP's vector types are not Regular, which
     //       is a requirement.
     //       TestThreads<double2>(2, 0.8f);
-    TestThreads<TestFoo>(2, 0.8f);
-    TestThreads<TestBar>(2, 0.8f);
+    //TestThreads<TestFoo>(2, 0.8f);
+    //TestThreads<TestBar>(2, 0.8f);
 
 #endif
 
