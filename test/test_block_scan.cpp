@@ -416,7 +416,7 @@ void DeviceTest(BlockScanT &block_scan,
                 Int2Type<BASIC> test_mode,
                 IsPrimitiveT is_primitive)
 {
-//    block_scan.InclusiveScan(data, data, scan_op);
+    block_scan.InclusiveScan(data, data, scan_op);
 }
 
 /// Inclusive scan (AGGREGATE, 1)
@@ -436,7 +436,7 @@ void DeviceTest(BlockScanT &block_scan,
                 Int2Type<AGGREGATE> test_mode,
                 IsPrimitiveT is_primitive)
 {
-//    block_scan.InclusiveScan(data[0], data[0], scan_op, block_aggregate);
+    block_scan.InclusiveScan(data[0], data[0], scan_op, block_aggregate);
 }
 
 /// Inclusive scan (AGGREGATE, ITEMS_PER_THREAD)
@@ -457,7 +457,7 @@ void DeviceTest(BlockScanT &block_scan,
                 Int2Type<AGGREGATE> test_mode,
                 IsPrimitiveT is_primitive)
 {
-//    block_scan.InclusiveScan(data, data, scan_op, block_aggregate);
+    block_scan.InclusiveScan(data, data, scan_op, block_aggregate);
 }
 
 /// Inclusive scan (PREFIX, 1)
@@ -477,7 +477,7 @@ void DeviceTest(BlockScanT &block_scan,
                 Int2Type<PREFIX> test_mode,
                 IsPrimitiveT is_primitive)
 {
-//    block_scan.InclusiveScan(data[0], data[0], scan_op, prefix_op);
+    block_scan.InclusiveScan(data[0], data[0], scan_op, prefix_op);
 }
 
 /// Inclusive scan (PREFIX, ITEMS_PER_THREAD)
@@ -498,7 +498,7 @@ void DeviceTest(BlockScanT &block_scan,
                 Int2Type<PREFIX> test_mode,
                 IsPrimitiveT is_primitive)
 {
-//    block_scan.InclusiveScan(data, data, scan_op, prefix_op);
+    block_scan.InclusiveScan(data, data, scan_op, prefix_op);
 }
 
 
@@ -519,7 +519,7 @@ void DeviceTest(BlockScanT &block_scan,
                 Int2Type<BASIC> test_mode,
                 Int2Type<true> is_primitive)
 {
-//    block_scan.InclusiveSum(data[0], data[0]);
+    block_scan.InclusiveSum(data[0], data[0]);
 }
 
 /// Inclusive sum (BASIC, ITEMS_PER_THREAD)
@@ -538,7 +538,7 @@ void DeviceTest(BlockScanT &block_scan,
                 Int2Type<BASIC> test_mode,
                 Int2Type<true> is_primitive)
 {
-//    block_scan.InclusiveSum(data, data);
+    block_scan.InclusiveSum(data, data);
 }
 
 /// Inclusive sum (AGGREGATE, 1)
@@ -554,7 +554,7 @@ void DeviceTest(BlockScanT &block_scan,
                 Int2Type<AGGREGATE> test_mode,
                 Int2Type<true> is_primitive)
 {
-//    block_scan.InclusiveSum(data[0], data[0], block_aggregate);
+    block_scan.InclusiveSum(data[0], data[0], block_aggregate);
 }
 
 /// Inclusive sum (AGGREGATE, ITEMS_PER_THREAD)
@@ -573,7 +573,7 @@ void DeviceTest(BlockScanT &block_scan,
                 Int2Type<AGGREGATE> test_mode,
                 Int2Type<true> is_primitive)
 {
-//    block_scan.InclusiveSum(data, data, block_aggregate);
+    block_scan.InclusiveSum(data, data, block_aggregate);
 }
 
 /// Inclusive sum (PREFIX, 1)
@@ -591,7 +591,7 @@ void DeviceTest(BlockScanT &block_scan,
                 Int2Type<PREFIX> test_mode,
                 Int2Type<true> is_primitive)
 {
-//    block_scan.InclusiveSum(data[0], data[0], prefix_op);
+    block_scan.InclusiveSum(data[0], data[0], prefix_op);
 }
 
 /// Inclusive sum (PREFIX, ITEMS_PER_THREAD)
@@ -610,7 +610,7 @@ void DeviceTest(BlockScanT &block_scan,
                 Int2Type<PREFIX> test_mode,
                 Int2Type<true> is_primitive)
 {
-//    block_scan.InclusiveSum(data, data, prefix_op);
+    block_scan.InclusiveSum(data, data, prefix_op);
 }
 
 
