@@ -576,8 +576,7 @@ struct DispatchReduce :
                 if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(prepare_drain_kernel), dim3(1), dim3(1), 0, %lld, )\n", (long long) stream);
 
                 // Invoke prepare_drain_kernel
-                //TODO:(mcw) No kernel definition is found
-                //hipLaunchKernel(HIP_KERNEL_NAME(prepare_drain_kernel), dim3(1), dim3(1), 0, stream, queue, num_items);
+                hipLaunchKernel(HIP_KERNEL_NAME(prepare_drain_kernel), dim3(1), dim3(1), 0, stream, queue, num_items);
 
                 // Check for failure to launch
                 if (CubDebug(error = hipPeekAtLastError())) break;
