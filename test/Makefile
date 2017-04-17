@@ -74,13 +74,13 @@ endif
 #-------------------------------------------------------------------------------
 
 # Includes
-INC += -I$(CUB_DIR) -I$(CUB_DIR)test -I$(CUB_DIR)external/bolt/include -I${HIP_INC} 
+INC += -I$(CUB_DIR) -I$(CUB_DIR)test -I$(CUB_DIR)external/bolt/include -I$(CUB_DIR)external/boost -I${HIP_INC} 
 
 # Suffix to append to each binary
 SUFFIX = $(BIN_SUFFIX)_$(TEST_SUFFIX)
 
 # Define test arch
-DEFINES += -DTEST_ARCH=$(TEST_ARCH)
+DEFINES += -DTEST_ARCH=$(TEST_ARCH) -DGENERIC_GRID_LAUNCH=0 -fdeclspec
 
 
 #-------------------------------------------------------------------------------
