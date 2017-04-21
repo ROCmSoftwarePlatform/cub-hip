@@ -173,7 +173,11 @@ struct ScanTileState<T, true>
     __host__ __device__ __forceinline__
     ScanTileState()
     :
+#if defined(__HIP_PLATFORM_NVCC__)
         d_tile_status(NULL)
+#elif defined(__HIP_PLATFORM_HCC__)
+       d_tile_status(0)
+#endif
     {}
     __host__ __device__ __forceinline__
     ScanTileState(const ScanTileState& x) : d_tile_status{x.d_tile_status} {}
@@ -310,9 +314,15 @@ struct ScanTileState<T, false>
     __host__ __device__ __forceinline__
     ScanTileState()
     :
+#if defined(__HIP_PLATFORM_NVCC__)
         d_tile_status(NULL),
         d_tile_partial(NULL),
         d_tile_inclusive(NULL)
+#elif defined(__HIP_PLATFORM_HCC__)
+        d_tile_status(0),
+        d_tile_partial(0),
+        d_tile_inclusive(0)
+#endif
     {}
 
 
@@ -552,7 +562,11 @@ struct ReduceByKeyScanTileState<ValueT, KeyT, true>
     __host__ __device__ __forceinline__
     ReduceByKeyScanTileState()
     :
+#if defined(__HIP_PLATFORM_NVCC__)
         d_tile_status(NULL)
+#elif defined(__HIP_PLATFORM_HCC__)
+        d_tile_status(0)
+#endif
     {}
 
     __host__ __device__ __forceinline__

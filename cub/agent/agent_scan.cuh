@@ -236,7 +236,7 @@ struct AgentScan
                   PrefixCallback  &prefix_op,
                   Int2Type<false> /*is_inclusive*/)
     {
-    //    BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).ExclusiveScan(items, items, scan_op, prefix_op);
+        BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).ExclusiveScan(items, items, scan_op, prefix_op);
     }
 
 
@@ -347,7 +347,7 @@ struct AgentScan
         else if (num_remaining > 0)
         {
             // Last tile
-         //   ConsumeTile<true>(num_remaining, tile_idx, tile_offset, tile_state);
+            ConsumeTile<true>(num_remaining, tile_idx, tile_offset, tile_state);
         }
     }
 
@@ -461,7 +461,7 @@ struct AgentScan
             ConsumeTile<false, false>(range_offset, prefix_op, valid_items);
         }
     }
-
+__host__ __device__ ~AgentScan(){}
 };
 
 
