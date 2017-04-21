@@ -232,6 +232,7 @@ public:
     {
         return scan_op(b, a);
     }
+  __host__ __device__ ~SwizzleScanOp(){}
 };
 
 
@@ -276,6 +277,7 @@ struct ReduceBySegmentOp
                 op(first.value, second.value);          // The second partial reduction does not span a reset, so accumulate both into the running aggregate
         return retval;
     }
+  __host__ __device__ ~ReduceBySegmentOp(){}
 };
 
 

@@ -80,7 +80,7 @@ INC += -I$(CUB_DIR) -I$(CUB_DIR)test -I$(CUB_DIR)external/bolt/include -I$(CUB_D
 SUFFIX = $(BIN_SUFFIX)_$(TEST_SUFFIX)
 
 # Define test arch
-DEFINES += -DTEST_ARCH=$(TEST_ARCH) -DGENERIC_GRID_LAUNCH=0 -fdeclspec
+DEFINES += -DTEST_ARCH=$(TEST_ARCH)
 
 
 #-------------------------------------------------------------------------------
