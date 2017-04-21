@@ -162,7 +162,7 @@ CUB_RUNTIME_FUNCTION __forceinline__ hipError_t PtxVersion(int &ptx_version)
     hipDeviceProp_t deviceProp;
     error = hipGetDeviceProperties(&deviceProp, 0);
     if(error == hipSuccess)
-      ptx_version = deviceProp.major * 10;
+      ptx_version = 520;//deviceProp.major * 10;
     return error;
 
 #endif

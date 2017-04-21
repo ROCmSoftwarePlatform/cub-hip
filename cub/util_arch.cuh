@@ -52,61 +52,7 @@ namespace cub {
 #ifdef __HIP_PLATFORM_NVCC__
         #define CUB_PTX_ARCH __CUDA_ARCH__
 #elif defined(__HIP_PLATFORM_HCC__)
-        #if __HIP_ARCH_HAS_GLOBAL_INT32_ATOMICS__ || \
-            __HIP_ARCH_HAS_GLOBAL_FLOAT_ATOMIC_EXCH__
-            #define CUB_PTX_ARCH 110
-        #endif
-
-        #if __HIP_ARCH_HAS_SHARED_INT32_ATOMICS__ || \
-            __HIP_ARCH_HAS_SHARED_FLOAT_ATOMIC_EXCH__ || \
-            __HIP_ARCH_HAS_SHARED_INT64_ATOMICS__ || \
-            __HIP_ARCH_HAS_DOUBLES__ || \
-            __HIP_ARCH_HAS_WARP_VOTE__
-            #ifndef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 120
-            #else
-                #undef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 120
-            #endif
-        #endif
-
-        #if __HIP_ARCH_HAS_GLOBAL_INT64_ATOMICS__ || \
-            __HIP_ARCH_HAS_WARP_BALLOT__ || \
-            __HIP_ARCH_HAS_THREAD_FENCE_SYSTEM__ || \
-            __HIP_ARCH_HAS_SYNC_THREAD_EXT__ || \
-            __HIP_ARCH_HAS_SURFACE_FUNCS__ || \
-            __HIP_ARCH_HAS_3DGRID__
-            #ifndef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 200
-            #else
-                #undef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 200
-            #endif
-        #endif
-
-        #if __HIP_ARCH_HAS_WARP_SHUFFLE__
-            #ifndef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 300
-            #else
-                #undef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 300
-            #endif
-        #endif
-
-        #if __HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__ || \
-            __HIP_ARCH_HAS_DYNAMIC_PARALLEL__
-            #ifndef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 350
-            #else
-                #undef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 350
-            #endif
-        #endif
-
-        #ifndef CUB_PTX_ARCH
-            #define CUB_PTX_ARCH 0
-        #endif
-    #else
+       #define CUB_PTX_ARCH 520
 #endif
     #endif
 #endif
