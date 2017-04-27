@@ -471,7 +471,7 @@ struct AgentReduceByKey
         if (tile_idx == 0)
         {
             // Scan first tile
-         //   BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).ExclusiveScan(scan_items, scan_items, scan_op, block_aggregate);
+            BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).ExclusiveScan(scan_items, scan_items, scan_op, block_aggregate);
             num_segments_prefix = 0;
 
             // Update tile status if there are successor tiles
@@ -482,7 +482,7 @@ struct AgentReduceByKey
         {
             // Scan non-first tile
             TilePrefixCallbackOpT prefix_op(tile_state, reinterpret_cast<_TempStorage*>(temp_storage)->prefix, scan_op, tile_idx);
-            //BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).ExclusiveScan(scan_items, scan_items, scan_op, prefix_op);
+            BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).ExclusiveScan(scan_items, scan_items, scan_op, prefix_op);
 
             num_segments_prefix     = prefix_op.GetExclusivePrefix().key;
             block_aggregate         = prefix_op.GetBlockAggregate();
@@ -550,7 +550,7 @@ struct AgentReduceByKey
             ConsumeTile<true>(num_remaining, tile_idx, tile_offset, tile_state);
         }
     }
-
+   __host__ __device__ ~AgentReduceByKey(){}
 };
 
 

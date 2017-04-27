@@ -833,6 +833,7 @@ struct AgentRle
             }
         }
     }
+    __host__ __device__ ~AgentRle(){}
 };
 
 
