@@ -71,6 +71,76 @@
 //    };
 //}
 
+
+    //---------------------------------------------------------------------
+    // Dispatch entrypoints
+    //---------------------------------------------------------------------
+
+#define Dispatch_r(d_temp_storage, temp_storage_bytes, d_keys_in, d_unique_out, d_values_in, d_aggregates_out, d_num_runs_out, equality_op, reduction_op, num_items, stream, debug_synchronous, ptx_version, init_kernel, reduce_by_key_kernel, reduce_by_key_config)\
+        hipError_t error = hipSuccess;\
+        do\
+        {\
+            int device_ordinal;\
+            if (CubDebug(error = hipGetDevice(&device_ordinal))) break;\
+            int sm_count;\
+            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;\
+            int tile_size = reduce_by_key_config.block_threads * reduce_by_key_config.items_per_thread;\
+            int num_tiles = (num_items + tile_size - 1) / tile_size;\
+            size_t  allocation_sizes[1];\
+            if (CubDebug(error = ScanTileStateT::AllocationSize(num_tiles, allocation_sizes[0]))) break;    \
+            void* allocations[1];\
+            if (CubDebug(error = AliasTemporaries(d_temp_storage, temp_storage_bytes, allocations, allocation_sizes))) break;\
+            if (d_temp_storage == NULL)\
+            {\
+                break;\
+            }\
+            ScanTileStateT tile_state;\
+            if (CubDebug(error = tile_state.Init(num_tiles, allocations[0], allocation_sizes[0]))) break;\
+            int init_grid_size = CUB_MAX(1, (num_tiles + INIT_KERNEL_THREADS - 1) / INIT_KERNEL_THREADS);\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(init_kernel), dim3(%d), dim3(%d), 0, %lld, )\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);\
+            hipLaunchKernel(HIP_KERNEL_NAME(init_kernel),\
+                            dim3(init_grid_size),\
+                            dim3(INIT_KERNEL_THREADS),\
+                            0,\
+                            stream,\
+                            tile_state,\
+                            num_tiles,\
+                            d_num_runs_out);\
+            if (CubDebug(error = hipPeekAtLastError())) break;\
+            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
+            if (num_items == 0)\
+                break;\
+            int reduce_by_key_sm_occupancy;\
+            if (CubDebug(error = MaxSmOccupancy(reduce_by_key_sm_occupancy, (const void *)reduce_by_key_kernel, reduce_by_key_config.block_threads))) break;\
+            int max_dim_x;\
+            if (CubDebug(error = hipDeviceGetAttribute(&max_dim_x, hipDeviceAttributeMaxGridDimX, device_ordinal))) break;;\
+            int scan_grid_size = CUB_MIN(num_tiles, max_dim_x);\
+            for (int start_tile = 0; start_tile < num_tiles; start_tile += scan_grid_size)\
+            {\
+                if (debug_synchronous) _CubLog("Invoking %d hipLaunchKernel(HIP_KERNEL_NAME(reduce_by_key_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
+                    start_tile, scan_grid_size, reduce_by_key_config.block_threads, (long long) stream, reduce_by_key_config.items_per_thread, reduce_by_key_sm_occupancy);\
+                hipLaunchKernel(HIP_KERNEL_NAME(reduce_by_key_kernel),\
+                                dim3(scan_grid_size),\
+                                dim3(reduce_by_key_config.block_threads),\
+                                0,\
+                                stream,\
+                                d_keys_in,\
+                                d_unique_out,\
+                                d_values_in,\
+                                d_aggregates_out,\
+                                d_num_runs_out,\
+                                tile_state,\
+                                start_tile,\
+                                equality_op,\
+                                reduction_op,\
+                                num_items);\
+                if (CubDebug(error = hipPeekAtLastError())) break;\
+                if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
+            }\
+        }\
+        while (0);\
+        return error;
+
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
 
@@ -101,10 +171,10 @@ __attribute__((used))
 inline
 void DeviceReduceByKeyKernel(
     hipLaunchParm                      lp,
-    Wrapper<KeysInputIteratorT>        d_keys_in,                      ///< Pointer to the input sequence of keys
-    Wrapper<UniqueOutputIteratorT>     d_unique_out,                   ///< Pointer to the output sequence of unique keys (one key per run)
-    Wrapper<ValuesInputIteratorT>      d_values_in,                    ///< Pointer to the input sequence of corresponding values
-    Wrapper<AggregatesOutputIteratorT> d_aggregates_out,               ///< Pointer to the output sequence of value aggregates (one aggregate per run)
+    KeysInputIteratorT        d_keys_in,                      ///< Pointer to the input sequence of keys
+    UniqueOutputIteratorT     d_unique_out,                   ///< Pointer to the output sequence of unique keys (one key per run)
+    ValuesInputIteratorT      d_values_in,                    ///< Pointer to the input sequence of corresponding values
+    AggregatesOutputIteratorT d_aggregates_out,               ///< Pointer to the output sequence of value aggregates (one aggregate per run)
     NumRunsOutputIteratorT             d_num_runs_out,                 ///< Pointer to total number of runs encountered (i.e., the length of d_unique_out)
     ScanTileStateT                     tile_state,                     ///< Tile status interface
     int                                start_tile,                     ///< The starting tile for the current grid
@@ -375,164 +445,6 @@ struct DispatchReduceByKey
     };
 
 
-    //---------------------------------------------------------------------
-    // Dispatch entrypoints
-    //---------------------------------------------------------------------
-
-    /**
-     * Internal dispatch routine for computing a device-wide reduce-by-key using the
-     * specified kernel functions.
-     */
-    template <
-        typename                    ScanInitKernelT,         ///< Function type of cub::DeviceScanInitKernel
-        typename                    ReduceByKeyKernelT>      ///< Function type of cub::DeviceReduceByKeyKernelT
-    CUB_RUNTIME_FUNCTION __forceinline__
-    static hipError_t Dispatch(
-        void*                       d_temp_storage,             ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
-        size_t&                     temp_storage_bytes,         ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
-        KeysInputIteratorT          d_keys_in,                  ///< [in] Pointer to the input sequence of keys
-        UniqueOutputIteratorT       d_unique_out,               ///< [out] Pointer to the output sequence of unique keys (one key per run)
-        ValuesInputIteratorT        d_values_in,                ///< [in] Pointer to the input sequence of corresponding values
-        AggregatesOutputIteratorT   d_aggregates_out,           ///< [out] Pointer to the output sequence of value aggregates (one aggregate per run)
-        NumRunsOutputIteratorT      d_num_runs_out,             ///< [out] Pointer to total number of runs encountered (i.e., the length of d_unique_out)
-        EqualityOpT                 equality_op,                ///< [in] KeyT equality operator
-        ReductionOpT                reduction_op,               ///< [in] ValueT reduction operator
-        OffsetT                     num_items,                  ///< [in] Total number of items to select from
-        hipStream_t                stream,                     ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
-        bool                        debug_synchronous,          ///< [in] Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
-        int                         /*ptx_version*/,            ///< [in] PTX version of dispatch kernels
-        ScanInitKernelT            	init_kernel,                ///< [in] Kernel function pointer to parameterization of cub::DeviceScanInitKernel
-        ReduceByKeyKernelT         	reduce_by_key_kernel,       ///< [in] Kernel function pointer to parameterization of cub::DeviceReduceByKeyKernel
-        KernelConfig                reduce_by_key_config)       ///< [in] Dispatch parameters that match the policy that \p reduce_by_key_kernel was compiled for
-    {
-
-#ifndef CUB_RUNTIME_ENABLED
-      (void)d_temp_storage;
-      (void)temp_storage_bytes;
-      (void)d_keys_in;
-      (void)d_unique_out;
-      (void)d_values_in;
-      (void)d_aggregates_out;
-      (void)d_num_runs_out;
-      (void)equality_op;
-      (void)reduction_op;
-      (void)num_items;
-      (void)stream;
-      (void)debug_synchronous;
-      (void)init_kernel;
-      (void)reduce_by_key_kernel;
-      (void)reduce_by_key_config;
-
-        // Kernel launch not supported from this device
-        return CubDebug(hipErrorUnknown);
-
-#else
-
-        hipError_t error = hipSuccess;
-        do
-        {
-            // Get device ordinal
-            int device_ordinal;
-            if (CubDebug(error = hipGetDevice(&device_ordinal))) break;
-
-            // Get SM count
-            int sm_count;
-            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;
-
-            // Number of input tiles
-            int tile_size = reduce_by_key_config.block_threads * reduce_by_key_config.items_per_thread;
-            int num_tiles = (num_items + tile_size - 1) / tile_size;
-
-            // Specify temporary storage allocation requirements
-            size_t  allocation_sizes[1];
-            if (CubDebug(error = ScanTileStateT::AllocationSize(num_tiles, allocation_sizes[0]))) break;    // bytes needed for tile status descriptors
-
-            // Compute allocation pointers into the single storage blob (or compute the necessary size of the blob)
-            void* allocations[1];
-            if (CubDebug(error = AliasTemporaries(d_temp_storage, temp_storage_bytes, allocations, allocation_sizes))) break;
-            if (d_temp_storage == NULL)
-            {
-                // Return if the caller is simply requesting the size of the storage allocation
-                break;
-            }
-
-            // Construct the tile status interface
-            ScanTileStateT tile_state;
-            if (CubDebug(error = tile_state.Init(num_tiles, allocations[0], allocation_sizes[0]))) break;
-
-            // Log init_kernel configuration
-            int init_grid_size = CUB_MAX(1, (num_tiles + INIT_KERNEL_THREADS - 1) / INIT_KERNEL_THREADS);
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(init_kernel), dim3(%d), dim3(%d), 0, %lld, )\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
-
-            // Invoke init_kernel to initialize tile descriptors
-            hipLaunchKernel(HIP_KERNEL_NAME(init_kernel),
-                            dim3(init_grid_size),
-                            dim3(INIT_KERNEL_THREADS),
-                            0,
-                            stream,
-                            tile_state,
-                            num_tiles,
-                            d_num_runs_out);
-
-            // Check for failure to launch
-            if (CubDebug(error = hipPeekAtLastError())) break;
-
-            // Sync the stream if specified to flush runtime errors
-            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
-
-            // Return if empty problem
-            if (num_items == 0)
-                break;
-
-            // Get SM occupancy for reduce_by_key_kernel
-            int reduce_by_key_sm_occupancy;
-//            if (CubDebug(error = MaxSmOccupancy(
-//                reduce_by_key_sm_occupancy,            // out
-//                (const void *)reduce_by_key_kernel,
-//                reduce_by_key_config.block_threads))) break;
-
-            // Get max x-dimension of grid
-            int max_dim_x;
-            if (CubDebug(error = hipDeviceGetAttribute(&max_dim_x, hipDeviceAttributeMaxGridDimX, device_ordinal))) break;;
-
-            // Run grids in epochs (in case number of tiles exceeds max x-dimension
-            int scan_grid_size = CUB_MIN(num_tiles, max_dim_x);
-            for (int start_tile = 0; start_tile < num_tiles; start_tile += scan_grid_size)
-            {
-                // Log reduce_by_key_kernel configuration
-                if (debug_synchronous) _CubLog("Invoking %d hipLaunchKernel(HIP_KERNEL_NAME(reduce_by_key_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",
-                    start_tile, scan_grid_size, reduce_by_key_config.block_threads, (long long) stream, reduce_by_key_config.items_per_thread, reduce_by_key_sm_occupancy);
-
-                // Invoke reduce_by_key_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(reduce_by_key_kernel),
-                                dim3(scan_grid_size),
-                                dim3(reduce_by_key_config.block_threads),
-                                0,
-                                stream,
-                                d_keys_in,
-                                d_unique_out,
-                                d_values_in,
-                                d_aggregates_out,
-                                d_num_runs_out,
-                                tile_state,
-                                start_tile,
-                                equality_op,
-                                reduction_op,
-                                num_items);
-
-                // Check for failure to launch
-                if (CubDebug(error = hipPeekAtLastError())) break;
-
-                // Sync the stream if specified to flush runtime errors
-                if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
-            }
-        }
-        while (0);
-
-        return error;
-
-#endif  // CUB_RUNTIME_ENABLED
-    }
 
 
     /**
@@ -569,7 +481,7 @@ struct DispatchReduceByKey
             InitConfigs(ptx_version, reduce_by_key_config);
 
             // Dispatch
-            if (CubDebug(error = Dispatch(
+            /*if (CubDebug(error = Dispatch(
                 d_temp_storage,
                 temp_storage_bytes,
                 d_keys_in,
@@ -594,7 +506,33 @@ struct DispatchReduceByKey
                                         EqualityOpT,
                                         ReductionOpT,
                                         OffsetT>,
-                reduce_by_key_config))) break;
+                reduce_by_key_config))) break;*/
+            Dispatch_r(
+                d_temp_storage,
+                temp_storage_bytes,
+                d_keys_in,
+                d_unique_out,
+                d_values_in,
+                d_aggregates_out,
+                d_num_runs_out,
+                equality_op,
+                reduction_op,
+                num_items,
+                stream,
+                debug_synchronous,
+                ptx_version,
+                (DeviceCompactInitKernel<ScanTileStateT, NumRunsOutputIteratorT>),
+                (DeviceReduceByKeyKernel<PtxReduceByKeyPolicy,
+                                        KeysInputIteratorT,
+                                        UniqueOutputIteratorT,
+                                        ValuesInputIteratorT,
+                                        AggregatesOutputIteratorT,
+                                        NumRunsOutputIteratorT,
+                                        ScanTileStateT,
+                                        EqualityOpT,
+                                        ReductionOpT,
+                                        OffsetT>),
+                reduce_by_key_config);
         }
         while (0);
 

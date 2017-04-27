@@ -48,6 +48,156 @@
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
 
+
+
+
+
+
+#define InvokeSingleTile(single_tile_kernel)\
+        hipError_t error = hipSuccess;\
+        do\
+        {\
+            if (d_temp_storage == NULL)\
+            {\
+                temp_storage_bytes = 1;\
+                break;\
+            }\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(DeviceReduceSingleTileKernel), dim3(1), dim3(%d), 0, %lld, ), %d items per thread\n",\
+                ActivePolicyT::SingleTilePolicy::BLOCK_THREADS,\
+                (long long) stream,\
+                ActivePolicyT::SingleTilePolicy::ITEMS_PER_THREAD);\
+            hipLaunchKernel(HIP_KERNEL_NAME(single_tile_kernel), dim3(1), dim3(ActivePolicyT::SingleTilePolicy::BLOCK_THREADS), 0, stream,\
+                d_in,\
+                d_out,\
+                num_items,\
+                reduction_op,\
+                init);\
+            if (CubDebug(error = hipPeekAtLastError())) break;\
+            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
+        }\
+        while (0);\
+        return error;
+
+
+    //------------------------------------------------------------------------------
+    // Normal problem size invocation (two-pass)
+    //------------------------------------------------------------------------------
+
+
+#define InvokePasses(reduce_kernel, single_tile_kernel, prepare_drain_kernel)\
+        hipError_t error = hipSuccess;\
+        do\
+        {\
+            int device_ordinal;\
+            if (CubDebug(error = hipGetDevice(&device_ordinal))) break;\
+            int sm_count;\
+            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;\
+            KernelConfig reduce_config;\
+            if (CubDebug(error = reduce_config.Init<typename ActivePolicyT::ReducePolicy>(reduce_kernel))) break;\
+            int reduce_device_occupancy = reduce_config.sm_occupancy * sm_count;\
+            int max_blocks = reduce_device_occupancy * CUB_SUBSCRIPTION_FACTOR(ptx_version);\
+            GridEvenShare<OffsetT> even_share(num_items, max_blocks, reduce_config.tile_size);\
+            void* allocations[2];\
+            size_t allocation_sizes[2] =\
+            {\
+                max_blocks * sizeof(OutputT),           \
+                GridQueue<OffsetT>::AllocationSize()   \
+            };\
+            if (CubDebug(error = AliasTemporaries(d_temp_storage, temp_storage_bytes, allocations, allocation_sizes))) break;\
+            if (d_temp_storage == NULL)\
+            {\
+                return hipSuccess;\
+            }\
+            OutputT *d_block_reductions = (OutputT*) allocations[0];\
+            GridQueue<OffsetT> queue(allocations[1]);\
+            int reduce_grid_size;\
+            if (ActivePolicyT::ReducePolicy::GRID_MAPPING == GRID_MAPPING_EVEN_SHARE)\
+            {\
+                reduce_grid_size = even_share.grid_size;\
+            }\
+            else if (ActivePolicyT::ReducePolicy::GRID_MAPPING == GRID_MAPPING_DYNAMIC)\
+            {\
+                int num_tiles       = (num_items + reduce_config.tile_size - 1) / reduce_config.tile_size;\
+                reduce_grid_size    = (num_tiles < reduce_device_occupancy) ?\
+                                        num_tiles :                \
+                                        reduce_device_occupancy;  \
+                if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(prepare_drain_kernel), dim3(1), dim3(1), 0, %lld, )\n", (long long) stream);\
+                hipLaunchKernel(HIP_KERNEL_NAME(prepare_drain_kernel), dim3(1), dim3(1), 0, stream, queue, num_items);\
+                if (CubDebug(error = hipPeekAtLastError())) break;\
+                if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
+            }\
+            else\
+            {\
+                error = CubDebug(hipErrorUnknown ); break;\
+            }\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(DeviceReduceKernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
+                reduce_grid_size,\
+                ActivePolicyT::ReducePolicy::BLOCK_THREADS,\
+                (long long) stream,\
+                ActivePolicyT::ReducePolicy::ITEMS_PER_THREAD,\
+                reduce_config.sm_occupancy);\
+            hipLaunchKernel(HIP_KERNEL_NAME(reduce_kernel), dim3(reduce_grid_size), dim3(ActivePolicyT::ReducePolicy::BLOCK_THREADS), 0, stream,\
+                d_in,\
+                d_block_reductions,\
+                num_items,\
+                even_share,\
+                queue,\
+                reduction_op);\
+            if (CubDebug(error = hipPeekAtLastError())) break;\
+            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(DeviceReduceSingleTileKernel), dim3(1), dim3(%d), 0, %lld, ), %d items per thread\n",\
+                ActivePolicyT::SingleTilePolicy::BLOCK_THREADS,\
+                (long long) stream,\
+                ActivePolicyT::SingleTilePolicy::ITEMS_PER_THREAD);\
+            hipLaunchKernel(HIP_KERNEL_NAME(single_tile_kernel), dim3(1), dim3(ActivePolicyT::SingleTilePolicy::BLOCK_THREADS), 0, stream,\
+                d_block_reductions,\
+                d_out,\
+                reduce_grid_size,\
+                reduction_op,\
+                init);\
+            if (CubDebug(error = hipPeekAtLastError())) break;\
+            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
+        }\
+        while (0);\
+        return error;
+
+
+    //------------------------------------------------------------------------------
+    // Chained policy invocation
+    //------------------------------------------------------------------------------
+
+#define InvokePasses_seg(segmented_reduce_kernel)\
+        hipError_t error = hipSuccess;\
+        do\
+        {\
+            if (d_temp_storage == NULL)\
+            {\
+                temp_storage_bytes = 1;\
+                return hipSuccess;\
+            }\
+            KernelConfig segmented_reduce_config;\
+            if (CubDebug(error = segmented_reduce_config.Init<typename ActivePolicyT::SegmentedReducePolicy>(segmented_reduce_kernel))) break;\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(SegmentedDeviceReduceKernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
+                num_segments,\
+                ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS,\
+                (long long) stream,\
+                ActivePolicyT::SegmentedReducePolicy::ITEMS_PER_THREAD,\
+                segmented_reduce_config.sm_occupancy);\
+            hipLaunchKernel(HIP_KERNEL_NAME(segmented_reduce_kernel), dim3(num_segments), dim3(ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS), 0, stream,\
+                d_in,\
+                d_out,\
+                d_begin_offsets,\
+                d_end_offsets,\
+                num_segments,\
+                reduction_op,\
+                init);\
+            if (CubDebug(error = hipPeekAtLastError())) break;\
+            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
+        }\
+        while (0);\
+        return error;
+
+
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
 
@@ -238,7 +388,7 @@ void DeviceSegmentedReduceKernel(
     NormalizeReductionOutput(block_aggregate, segment_begin, d_in);
 
     if (hipThreadIdx_x == 0)
-        d_out[hipBlockIdx_x] = reduction_op(init, block_aggregate);;
+        d_out[hipBlockIdx_x] = reduction_op(init, block_aggregate);
 }
 
 
@@ -440,212 +590,6 @@ struct DispatchReduce :
     {}
 
 
-    //------------------------------------------------------------------------------
-    // Small-problem (single tile) invocation
-    //------------------------------------------------------------------------------
-
-    /// Invoke a single block block to reduce in-core
-    template <
-        typename                ActivePolicyT,          ///< Umbrella policy active for the target device
-        typename                SingleTileKernelT>      ///< Function type of cub::DeviceReduceSingleTileKernel
-    CUB_RUNTIME_FUNCTION __forceinline__
-    hipError_t InvokeSingleTile(
-        SingleTileKernelT       single_tile_kernel)     ///< [in] Kernel function pointer to parameterization of cub::DeviceReduceSingleTileKernel
-    {
-#ifndef CUB_RUNTIME_ENABLED
-        (void)single_tile_kernel;
-
-        // Kernel launch not supported from this device
-        return CubDebug(hipErrorUnknown );
-#else
-        hipError_t error = hipSuccess;
-        do
-        {
-            // Return if the caller is simply requesting the size of the storage allocation
-            if (d_temp_storage == NULL)
-            {
-                temp_storage_bytes = 1;
-                break;
-            }
-
-            // Log single_reduce_sweep_kernel configuration
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(DeviceReduceSingleTileKernel), dim3(1), dim3(%d), 0, %lld, ), %d items per thread\n",
-                ActivePolicyT::SingleTilePolicy::BLOCK_THREADS,
-                (long long) stream,
-                ActivePolicyT::SingleTilePolicy::ITEMS_PER_THREAD);
-
-            // Invoke single_reduce_sweep_kernel
-            hipLaunchKernel(HIP_KERNEL_NAME(single_tile_kernel), dim3(1), dim3(ActivePolicyT::SingleTilePolicy::BLOCK_THREADS), 0, stream,
-                d_in,
-                d_out,
-                num_items,
-                reduction_op,
-                init);
-
-            // Check for failure to launch
-            if (CubDebug(error = hipPeekAtLastError())) break;
-
-            // Sync the stream if specified to flush runtime errors
-            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
-        }
-        while (0);
-
-        return error;
-
-#endif // CUB_RUNTIME_ENABLED
-    }
-
-
-    //------------------------------------------------------------------------------
-    // Normal problem size invocation (two-pass)
-    //------------------------------------------------------------------------------
-
-    /// Invoke two-passes to reduce
-    template <
-        typename                ActivePolicyT,              ///< Umbrella policy active for the target device
-        typename                ReduceKernelT,              ///< Function type of cub::DeviceReduceKernel
-        typename                SingleTileKernelT,          ///< Function type of cub::DeviceReduceSingleTileKernel
-        typename                FillAndResetDrainKernelT>   ///< Function type of cub::FillAndResetDrainKernel
-    CUB_RUNTIME_FUNCTION __forceinline__
-    hipError_t InvokePasses(
-        ReduceKernelT               reduce_kernel,          ///< [in] Kernel function pointer to parameterization of cub::DeviceReduceKernel
-        SingleTileKernelT           single_tile_kernel,     ///< [in] Kernel function pointer to parameterization of cub::DeviceReduceSingleTileKernel
-        FillAndResetDrainKernelT    prepare_drain_kernel)   ///< [in] Kernel function pointer to parameterization of cub::FillAndResetDrainKernel
-    {
-#ifndef CUB_RUNTIME_ENABLED
-        (void)               reduce_kernel;
-        (void)           single_tile_kernel;
-        (void)    prepare_drain_kernel;
-
-        // Kernel launch not supported from this device
-        return CubDebug(hipErrorUnknown );
-#else
-
-        hipError_t error = hipSuccess;
-        do
-        {
-            // Get device ordinal
-            int device_ordinal;
-            if (CubDebug(error = hipGetDevice(&device_ordinal))) break;
-
-            // Get SM count
-            int sm_count;
-            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;
-
-            // Init regular kernel configuration
-            KernelConfig reduce_config;
-            if (CubDebug(error = reduce_config.Init<typename ActivePolicyT::ReducePolicy>(reduce_kernel))) break;
-            int reduce_device_occupancy = reduce_config.sm_occupancy * sm_count;
-
-            // Even-share work distribution
-            int max_blocks = reduce_device_occupancy * CUB_SUBSCRIPTION_FACTOR(ptx_version);
-            GridEvenShare<OffsetT> even_share(num_items, max_blocks, reduce_config.tile_size);
-
-            // Temporary storage allocation requirements
-            void* allocations[2];
-            size_t allocation_sizes[2] =
-            {
-                max_blocks * sizeof(OutputT),           // bytes needed for privatized block reductions
-                GridQueue<OffsetT>::AllocationSize()    // bytes needed for grid queue descriptor
-            };
-
-            // Alias the temporary allocations from the single storage blob (or compute the necessary size of the blob)
-            if (CubDebug(error = AliasTemporaries(d_temp_storage, temp_storage_bytes, allocations, allocation_sizes))) break;
-            if (d_temp_storage == NULL)
-            {
-                // Return if the caller is simply requesting the size of the storage allocation
-                return hipSuccess;
-            }
-
-            // Alias the allocation for the privatized per-block reductions
-            OutputT *d_block_reductions = (OutputT*) allocations[0];
-
-            // Alias the allocation for the grid queue descriptor
-            GridQueue<OffsetT> queue(allocations[1]);
-
-            // Get grid size for device_reduce_sweep_kernel
-            int reduce_grid_size;
-            if (ActivePolicyT::ReducePolicy::GRID_MAPPING == GRID_MAPPING_EVEN_SHARE)
-            {
-                // Work is distributed evenly
-                reduce_grid_size = even_share.grid_size;
-            }
-            else if (ActivePolicyT::ReducePolicy::GRID_MAPPING == GRID_MAPPING_DYNAMIC)
-            {
-                // Work is distributed dynamically
-                int num_tiles       = (num_items + reduce_config.tile_size - 1) / reduce_config.tile_size;
-                reduce_grid_size    = (num_tiles < reduce_device_occupancy) ?
-                                        num_tiles :                 // Not enough to fill the device with threadblocks
-                                        reduce_device_occupancy;    // Fill the device with threadblocks
-
-                // Prepare the dynamic queue descriptor if necessary
-                if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(prepare_drain_kernel), dim3(1), dim3(1), 0, %lld, )\n", (long long) stream);
-
-                // Invoke prepare_drain_kernel
-                //TODO:(mcw) No kernel definition is found
-                //hipLaunchKernel(HIP_KERNEL_NAME(prepare_drain_kernel), dim3(1), dim3(1), 0, stream, queue, num_items);
-
-                // Check for failure to launch
-                if (CubDebug(error = hipPeekAtLastError())) break;
-
-                // Sync the stream if specified to flush runtime errors
-                if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
-            }
-            else
-            {
-                error = CubDebug(hipErrorUnknown ); break;
-            }
-
-            // Log device_reduce_sweep_kernel configuration
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(DeviceReduceKernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",
-                reduce_grid_size,
-                ActivePolicyT::ReducePolicy::BLOCK_THREADS,
-                (long long) stream,
-                ActivePolicyT::ReducePolicy::ITEMS_PER_THREAD,
-                reduce_config.sm_occupancy);
-
-            // Invoke DeviceReduceKernel
-            hipLaunchKernel(HIP_KERNEL_NAME(reduce_kernel), dim3(reduce_grid_size), dim3(ActivePolicyT::ReducePolicy::BLOCK_THREADS), 0, stream,
-                d_in,
-                d_block_reductions,
-                num_items,
-                even_share,
-                queue,
-                reduction_op);
-
-            // Check for failure to launch
-            if (CubDebug(error = hipPeekAtLastError())) break;
-
-            // Sync the stream if specified to flush runtime errors
-            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
-
-            // Log single_reduce_sweep_kernel configuration
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(DeviceReduceSingleTileKernel), dim3(1), dim3(%d), 0, %lld, ), %d items per thread\n",
-                ActivePolicyT::SingleTilePolicy::BLOCK_THREADS,
-                (long long) stream,
-                ActivePolicyT::SingleTilePolicy::ITEMS_PER_THREAD);
-
-            // Invoke DeviceReduceSingleTileKernel
-            hipLaunchKernel(HIP_KERNEL_NAME(single_tile_kernel), dim3(1), dim3(ActivePolicyT::SingleTilePolicy::BLOCK_THREADS), 0, stream,
-                d_block_reductions,
-                d_out,
-                reduce_grid_size,
-                reduction_op,
-                init);
-
-            // Check for failure to launch
-            if (CubDebug(error = hipPeekAtLastError())) break;
-
-            // Sync the stream if specified to flush runtime errors
-            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
-        }
-        while (0);
-
-        return error;
-
-#endif // CUB_RUNTIME_ENABLED
-
-    }
 
 
     //------------------------------------------------------------------------------
@@ -664,16 +608,18 @@ struct DispatchReduce :
         if (num_items <= (SingleTilePolicyT::BLOCK_THREADS * SingleTilePolicyT::ITEMS_PER_THREAD))
         {
             // Small, single tile size
-            return InvokeSingleTile<ActivePolicyT>(
-                DeviceReduceSingleTileKernel<MaxPolicyT, InputIteratorT, OutputIteratorT, OffsetT, ReductionOpT, OutputT>);
+            InvokeSingleTile(
+                (DeviceReduceSingleTileKernel<MaxPolicyT, InputIteratorT, OutputIteratorT, OffsetT, ReductionOpT, OutputT>));
+            return hipSuccess;
         }
         else
         {
             // Regular size
-            return InvokePasses<ActivePolicyT>(
-                DeviceReduceKernel<typename DispatchReduce::MaxPolicy, InputIteratorT, OutputT*, OffsetT, ReductionOpT>,
-                DeviceReduceSingleTileKernel<MaxPolicyT, OutputT*, OutputIteratorT, OffsetT, ReductionOpT, OutputT>,
+            InvokePasses(
+                (DeviceReduceKernel<typename DispatchReduce::MaxPolicy, InputIteratorT, OutputT*, OffsetT, ReductionOpT>),
+                (DeviceReduceSingleTileKernel<MaxPolicyT, OutputT*, OutputIteratorT, OffsetT, ReductionOpT, OutputT>),
                 FillAndResetDrainKernel<OffsetT>);
+           return hipSuccess;
         }
     }
 
@@ -804,70 +750,6 @@ struct DispatchSegmentedReduce :
 
 
 
-    //------------------------------------------------------------------------------
-    // Chained policy invocation
-    //------------------------------------------------------------------------------
-
-    /// Invocation
-    template <
-        typename                        ActivePolicyT,                  ///< Umbrella policy active for the target device
-        typename                        DeviceSegmentedReduceKernelT>   ///< Function type of cub::DeviceSegmentedReduceKernel
-    CUB_RUNTIME_FUNCTION __forceinline__
-    hipError_t InvokePasses(
-        DeviceSegmentedReduceKernelT    segmented_reduce_kernel)        ///< [in] Kernel function pointer to parameterization of cub::DeviceSegmentedReduceKernel
-    {
-#ifndef CUB_RUNTIME_ENABLED
-        (void)segmented_reduce_kernel;
-        // Kernel launch not supported from this device
-        return CubDebug(hipErrorUnknown );
-#else
-        hipError_t error = hipSuccess;
-        do
-        {
-            // Return if the caller is simply requesting the size of the storage allocation
-            if (d_temp_storage == NULL)
-            {
-                temp_storage_bytes = 1;
-                return hipSuccess;
-            }
-
-            // Init kernel configuration
-            KernelConfig segmented_reduce_config;
-            if (CubDebug(error = segmented_reduce_config.Init<typename ActivePolicyT::SegmentedReducePolicy>(segmented_reduce_kernel))) break;
-
-            // Log device_reduce_sweep_kernel configuration
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(SegmentedDeviceReduceKernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",
-                num_segments,
-                ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS,
-                (long long) stream,
-                ActivePolicyT::SegmentedReducePolicy::ITEMS_PER_THREAD,
-                segmented_reduce_config.sm_occupancy);
-
-            // Invoke DeviceReduceKernel
-            hipLaunchKernel(HIP_KERNEL_NAME(segmented_reduce_kernel), dim3(num_segments), dim3(ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS), 0, stream,
-                d_in,
-                d_out,
-                d_begin_offsets,
-                d_end_offsets,
-                num_segments,
-                reduction_op,
-                init);
-
-            // Check for failure to launch
-            if (CubDebug(error = hipPeekAtLastError())) break;
-
-            // Sync the stream if specified to flush runtime errors
-            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
-        }
-        while (0);
-
-        return error;
-
-#endif // CUB_RUNTIME_ENABLED
-
-    }
-
-
     /// Invocation
     template <typename ActivePolicyT>
     CUB_RUNTIME_FUNCTION __forceinline__
@@ -876,8 +758,9 @@ struct DispatchSegmentedReduce :
         typedef typename DispatchSegmentedReduce::MaxPolicy MaxPolicyT;
 
         // Force kernel code-generation in all compiler passes
-        return InvokePasses<ActivePolicyT>(
-            DeviceSegmentedReduceKernel<MaxPolicyT, InputIteratorT, OutputIteratorT, OffsetT, ReductionOpT, OutputT>);
+        InvokePasses_seg(
+            (DeviceSegmentedReduceKernel<MaxPolicyT, InputIteratorT, OutputIteratorT, OffsetT, ReductionOpT, OutputT>));
+        return hipSuccess; 
     }
 
 
