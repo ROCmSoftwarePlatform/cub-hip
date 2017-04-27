@@ -76,6 +76,7 @@ struct WrapperFunctor
 
         return op(a, b);
     }
+    __host__ __device__ ~WrapperFunctor(){}
 
 };
 
@@ -741,8 +742,8 @@ void Test(
         TestReduce<WARPS, LOGICAL_WARP_THREADS, T>(gen_mode, reduction_op, valid_warp_threads);
 
         // With wrapper to ensure no ops called on OOB lanes
-        //WrapperFunctor<ReductionOp, LOGICAL_WARP_THREADS> wrapped_op(reduction_op, valid_warp_threads);
-        //TestReduce<WARPS, LOGICAL_WARP_THREADS, T>(gen_mode, wrapped_op, valid_warp_threads);
+        WrapperFunctor<ReductionOp, LOGICAL_WARP_THREADS> wrapped_op(reduction_op, valid_warp_threads);
+        TestReduce<WARPS, LOGICAL_WARP_THREADS, T>(gen_mode, wrapped_op, valid_warp_threads);
     }
 
     // Full tile
@@ -887,8 +888,9 @@ int main(int argc, char** argv)
 	#ifdef __HIP_PLATFORM_HCC__
         Test<64>();
         Test<32>();
-        Test<17>();
-        Test<13>();
+        Test<16>();
+        Test<9>();
+	Test<7>();
         #endif
     }
 

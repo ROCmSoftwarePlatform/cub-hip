@@ -85,22 +85,37 @@ struct WarpReduceShfl
     template <int WARP, int WARPS>
     struct LastLaneMask
     {
+	#ifdef __HIP_PLATFORM_NVCC__
         enum {
             BASE_MASK   = 1 << (LOGICAL_WARP_THREADS - 1),
             MASK        = (LastLaneMask<WARP + 1, WARPS>::MASK << LOGICAL_WARP_THREADS) | BASE_MASK,
         };
+	#endif
+
+	#ifdef __HIP_PLATFORM_HCC__
+        enum uint_64t{
+            BASE_MASK   = (long long)1 << (LOGICAL_WARP_THREADS - 1),
+            MASK        = ((long long)LastLaneMask<WARP + 1, WARPS>::MASK << LOGICAL_WARP_THREADS) | BASE_MASK,
+        };
+	#endif
     };
 
     // Creates a mask where the last thread in each logical warp is set
     template <int WARP>
     struct LastLaneMask<WARP, WARP>
     {
+	#ifdef __HIP_PLATFORM_NVCC__
         enum {
             MASK        = 1 << (LOGICAL_WARP_THREADS - 1),
         };
+	#endif
+
+	#ifdef __HIP_PLATFORM_HCC__
+        enum uint64_t{
+            MASK        = (long long)1 << (LOGICAL_WARP_THREADS - 1),
+        };
+	#endif
     };
-
-
 
     /// Shared memory storage layout type
     typedef NullType TempStorage;
@@ -150,7 +165,15 @@ struct WarpReduceShfl
             "}"
             : "=r"(output) : "r"(input), "r"(offset), "r"(last_lane), "r"(input));
 #elif defined(__HIP_PLATFORM_HCC__)
-        output = input + __shfl_down((int)input, (unsigned int)offset, last_lane);
+	register unsigned int r0;
+	register int lane_id;
+	register bool pred = false;
+	r0 = __shfl_down((int)input, offset);
+	lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize);
+	if (offset + lane_id <= last_lane)
+            output = r0 + input;
+        else
+            output = input;
 #endif
         return output;
     }
@@ -177,7 +200,16 @@ struct WarpReduceShfl
             "}"
             : "=f"(output) : "f"(input), "r"(offset), "r"(last_lane), "f"(input));
 #elif defined(__HIP_PLATFORM_HCC__)
-        output = input + __shfl_down(input, (unsigned int) offset, last_lane);
+
+	register float r0;
+        register int lane_id;
+        register bool pred = false;
+        r0 = __shfl_down(input, offset);
+	lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize);
+        if (offset + lane_id <= last_lane)
+            output = r0 + input;
+        else
+            output = input;
 #endif
         return output;
     }
@@ -205,13 +237,18 @@ struct WarpReduceShfl
             "}"
             : "=l"(output) : "l"(input), "r"(offset), "r"(last_lane));
 #elif defined(__HIP_PLATFORM_HCC__)
-        unsigned long hi, lo;
-        lo = 0xFFFFFFFF & input;
-        hi = 0xFFFFFFFF & (input >> 32);
-        lo = (unsigned long)__shfl_down((int)lo, (unsigned int)offset, last_lane);
-        hi = (unsigned long)__shfl_down((int)hi, (unsigned int)offset, last_lane);
-        unsigned long long out = (unsigned long long)lo | ((unsigned long long)hi << 32);
-        output = input + out;
+	register unsigned int hi , lo;
+	int lane_id;
+	lo = 0xFFFFFFFF & input;
+	hi = 0xFFFFFFFF & (input >> 32);
+	lo = __shfl_down((int)lo, offset);
+	hi = __shfl_down((int)hi, offset);
+	output = ((unsigned long long)hi << 32) | lo;
+	lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) ;
+	if (offset + lane_id <= last_lane)
+		output = output + input;
+	else
+		output = input;
 #endif
         return output;
     }
@@ -240,13 +277,18 @@ struct WarpReduceShfl
             "}"
             : "=l"(output) : "l"(input), "r"(offset), "r"(last_lane));
 #elif defined(__HIP_PLATFORM_HCC__)
-        unsigned long long hi, lo;
+	register unsigned int hi , lo;
+        int lane_id;
         lo = 0xFFFFFFFF & input;
         hi = 0xFFFFFFFF & (input >> 32);
-        lo = (unsigned long long)__shfl_down((int)lo, (unsigned int)offset, last_lane);
-        hi = (unsigned long long)__shfl_down((int)hi, (unsigned int)offset, last_lane);
-        long long out = (unsigned long long)lo | ((unsigned long long)hi << 32);
-        output = input + out;
+        lo = __shfl_down((int)lo, offset);
+        hi = __shfl_down((int)hi, offset);
+        output = ((long long)hi << 32) | lo;
+        lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) ;
+        if (offset + lane_id <= last_lane)
+                output = output + input;
+        else
+                output = input;
 #endif
         return output;
     }
@@ -278,13 +320,30 @@ struct WarpReduceShfl
             "}"
             : "=d"(output) : "d"(input), "r"(offset), "r"(last_lane));
 #elif defined(__HIP_PLATFORM_HCC__)
-        unsigned long hi, lo;
-        lo = 0xFFFFFFFF & (long)input;
-        hi = 0xFFFFFFFF & ((long)input >> 32);
-        lo = (unsigned long)__shfl_down((int)lo, (unsigned int)offset, last_lane);
-        hi = (unsigned long)__shfl_down((int)hi, (unsigned int)offset, last_lane);
-        double out = (double)(lo | (hi << 32));
-        output = input + out;
+
+	union ld
+	{
+		long long l;
+		double d;
+	}s;
+	s.d = input;
+        register unsigned int hi, lo;
+	int lane_id;
+        lo = 0xFFFFFFFF & s.l;
+        hi = 0xFFFFFFFF & (s.l >> 32);
+        lo = __shfl_down((int)lo,offset);
+        hi = __shfl_down((int)hi,offset);
+	register long long r0 = 0x0000;
+	output = input ;
+	r0 = ((r0 | hi)<<32) | lo;
+	lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) ;
+	if (offset + lane_id <= last_lane)
+	{
+		s.l = r0;
+		output = output + s.d;
+	}
+	else
+		output = input;
 #endif
         return output;
     }
@@ -353,7 +412,6 @@ struct WarpReduceShfl
         // Perform reduction op if valid
         if (offset + lane_id <= last_lane)
             output = reduction_op(input, temp);
-
         return output;
     }
 
@@ -458,6 +516,26 @@ struct WarpReduceShfl
         return output;
     }
 
+__device__ int __hip_clzll(unsigned long long x)
+
+{
+
+    int count = 0;
+
+    unsigned long long input = x;
+
+        for (int i = 0; i < 64; i++)
+
+    {
+
+        if ((input & ((unsigned long long)1 << i)) == 0) count++;
+
+        else count = 0;
+    }
+
+    return count;
+
+}
 
     /// Segmented reduction
     template <
@@ -470,7 +548,14 @@ struct WarpReduceShfl
         ReductionOp     reduction_op)       ///< [in] Binary reduction operator
     {
         // Get the start flags for each thread in the warp.
-        int warp_flags = __ballot(flag);
+
+	#ifdef __HIP_PLATFORM_NVCC__
+	int warp_flags = __ballot(flag);
+	#endif
+
+	#ifdef __HIP_PLATFORM_HCC__
+	long long warp_flags = __ballot(flag);
+	#endif
 
         if (HEAD_SEGMENTED)
             warp_flags >>= 1;
@@ -481,8 +566,16 @@ struct WarpReduceShfl
         // Mask out the bits below the current thread
         warp_flags &= LaneMaskGe();
 
+	//warp_flags = __brev(warp_flags);
         // Find the next set flag
+
+	#ifdef __HIP_PLATFORM_NVCC__
         int last_lane = __clz(__brev(warp_flags));
+	#endif
+
+	#ifdef __HIP_PLATFORM_HCC__
+	int last_lane = __hip_clzll(__brevll(warp_flags));
+	#endif
 
         T output = input;
 /*
