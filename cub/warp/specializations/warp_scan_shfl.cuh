@@ -339,13 +339,29 @@ struct WarpScanShfl
             "}"
             : "=d"(output) : "d"(input), "r"(offset), "r"(shfl_c));
 #elif defined(__HIP_PLATFORM_HCC__)
-        unsigned int hi, lo;
-        lo = (unsigned int)(0xFFFFFFFF & (long)input);
-        hi = (unsigned int)(0xFFFFFFFF & (long)input >> 32);
-        lo = (unsigned int)__shfl_up((int)lo, (unsigned int)offset, shfl_c);
-        hi = (unsigned int)__shfl_up((int)hi, (unsigned int)offset, shfl_c);
-        double out = (double)((long)lo | ((long)hi << 32));
-        output = input + out;
+	union ld
+        {
+                long long l;
+                double d;
+        }s;
+        s.d = input;
+        register unsigned int hi, lo;
+        int lane_id;
+        register bool pred = false;
+        lo = 0xFFFFFFFF & s.l;
+        hi = 0xFFFFFFFF & (s.l >> 32);
+        lo = __shfl_up((int)lo, offset,shfl_c );
+        hi = __shfl_up((int)hi, offset, shfl_c);
+        register long long r0 = 0x0000;
+        output = input ;
+        r0 = ((r0 | hi) << 32) | lo;
+        lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
+        if (lane_id >= 0 )
+          pred = true;
+        if (pred == true){
+          s.l = r0;
+          output = output + s.d;
+        }
 #endif
         return output;
     }

@@ -621,6 +621,7 @@ int main(int argc, char** argv)
     for (int i = 0; i <= g_repeat; ++i)
     {
         // Test logical warp sizes
+	Test<64>();
         Test<32>();
         Test<16>();
         Test<9>();
