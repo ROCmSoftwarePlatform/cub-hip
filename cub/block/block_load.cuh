@@ -1253,7 +1253,7 @@ public:
         int             valid_items,                ///< [in] Number of valid items to load
         DefaultT        oob_default)                ///< [in] Default value to assign out-of-bound items
     {
-        InternalLoad(temp_storage, linear_tid).Load(block_itr, items, valid_items, oob_default);
+        InternalLoad(*reinterpret_cast<_TempStorage*>(temp_storage), linear_tid).Load(block_itr, items, valid_items, oob_default);
     }
 
 

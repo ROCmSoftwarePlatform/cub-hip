@@ -69,7 +69,12 @@ public:
      * Constructor
      */
     __host__ __device__
+    #ifdef __HIP_PLATFORM_NVCC__
     GridBarrier() : d_sync(NULL) {}
+    #endif
+    #ifdef __HIP_PLATFORM_HCC__
+    GridBarrier() : d_sync(0) {}
+    #endif
     __host__ __device__
     GridBarrier(const GridBarrier& x) : d_sync(x.d_sync) {}
 
@@ -178,7 +183,12 @@ public:
         if (d_sync)
         {
             CubDebug(retval = hipFree(reinterpret_cast<void*>(d_sync)));
+	    #ifdef __HIP_PLATFORM_NVCC__
             d_sync = NULL;
+	    #endif
+	    #ifdef __HIP_PLATFORM_HCC__
+	    d_sync = 0;
+	    #endif
         }
         sync_bytes = 0;
         return retval;

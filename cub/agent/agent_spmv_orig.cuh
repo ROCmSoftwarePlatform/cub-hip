@@ -467,8 +467,8 @@ struct AgentSpmv
 
 */
 
-        OffsetT*    s_tile_row_end_offsets  = &temp_storage.merge_items[0].row_end_offset;
-        ValueT*     s_tile_nonzeros         = &temp_storage.merge_items[tile_num_rows + ITEMS_PER_THREAD].nonzero;
+        OffsetT*    s_tile_row_end_offsets  = &reinterpret_cast<_TempStorage*>(temp_storage)->merge_items[0].row_end_offset;
+        ValueT*     s_tile_nonzeros         = &reinterpret_cast<_TempStorage*>(temp_storage)->merge_items[tile_num_rows + ITEMS_PER_THREAD].nonzero;
 
         // Gather the nonzeros for the merge tile into shared memory
         #pragma unroll

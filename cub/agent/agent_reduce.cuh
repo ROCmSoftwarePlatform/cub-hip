@@ -469,7 +469,7 @@ struct AgentReduce
             ConsumeTiles(num_items, queue, Int2Type<true && ATTEMPT_VECTORIZATION>()) :
             ConsumeTiles(num_items, queue, Int2Type<false && ATTEMPT_VECTORIZATION>());
     }
-
+    __host__ __device__ ~AgentReduce(){}
 };
 
 

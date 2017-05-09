@@ -254,6 +254,7 @@ public:
     {
         return os;
     }
+    __host__ __device__ ~ArgIndexInputIterator(){}
 };
 
 

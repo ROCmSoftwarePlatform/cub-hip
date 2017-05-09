@@ -307,6 +307,7 @@ struct ReduceByKeyOp
 
         return retval;
     }
+   __host__ __device__ ~ReduceByKeyOp(){}
 };
 
 

@@ -482,7 +482,12 @@ public:
         int     begin_bit   = 0,                    ///< [in] <b>[optional]</b> The beginning (least-significant) bit index needed for key comparison
         int     end_bit     = sizeof(KeyT) * 8)      ///< [in] <b>[optional]</b> The past-the-end (most-significant) bit index needed for key comparison
     {
+	#ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
+ 	#elif defined(__HIP_PLATFORM_HCC__)
+	typedef struct S { NullType n; } __attribute__((aligned(4))) ALIGNED_NULLTYPE;
+ 	ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
+ 	#endif
         SortBlocked(keys, values, begin_bit, end_bit, Int2Type<false>(), Int2Type<KEYS_ONLY>());
     }
 
@@ -582,7 +587,12 @@ public:
         int     begin_bit   = 0,                    ///< [in] <b>[optional]</b> The beginning (least-significant) bit index needed for key comparison
         int     end_bit     = sizeof(KeyT) * 8)      ///< [in] <b>[optional]</b> The past-the-end (most-significant) bit index needed for key comparison
     {
+	#ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
+        #elif defined(__HIP_PLATFORM_HCC__)
+        typedef struct S { NullType n; } __attribute__((aligned(4))) ALIGNED_NULLTYPE;
+        ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
+        #endif
         SortBlocked(keys, values, begin_bit, end_bit, Int2Type<true>(), Int2Type<KEYS_ONLY>());
     }
 
@@ -691,7 +701,12 @@ public:
         int     begin_bit   = 0,                    ///< [in] <b>[optional]</b> The beginning (least-significant) bit index needed for key comparison
         int     end_bit     = sizeof(KeyT) * 8)      ///< [in] <b>[optional]</b> The past-the-end (most-significant) bit index needed for key comparison
     {
+	#ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
+        #elif defined(__HIP_PLATFORM_HCC__)
+        typedef struct S { NullType n; } __attribute__((aligned(4))) ALIGNED_NULLTYPE;
+        ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
+        #endif
         SortBlockedToStriped(keys, values, begin_bit, end_bit, Int2Type<false>(), Int2Type<KEYS_ONLY>());
     }
 
@@ -793,7 +808,12 @@ public:
         int     begin_bit   = 0,                    ///< [in] <b>[optional]</b> The beginning (least-significant) bit index needed for key comparison
         int     end_bit     = sizeof(KeyT) * 8)      ///< [in] <b>[optional]</b> The past-the-end (most-significant) bit index needed for key comparison
     {
+	#ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
+        #elif defined(__HIP_PLATFORM_HCC__)
+        typedef struct S { NullType n; } __attribute__((aligned(4))) ALIGNED_NULLTYPE;
+        ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
+        #endif
         SortBlockedToStriped(keys, values, begin_bit, end_bit, Int2Type<true>(), Int2Type<KEYS_ONLY>());
     }
 

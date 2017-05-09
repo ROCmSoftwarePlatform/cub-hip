@@ -329,7 +329,7 @@ struct ChainedPolicy
    static
    hipError_t Invoke(int ptx_version, FunctorT &op)
    {
-       return hipError_t{};
+       //return hipError_t{};
        if (ptx_version < PTX_VERSION) {
            return PrevPolicyT::Invoke(ptx_version, op);
        }

@@ -143,9 +143,16 @@ int main(int argc, char** argv)
     // Check that that we have 1 live blocks on the initial GPU (that we allocated a new one because d_999B_stream0_b is only available for stream 0 until it becomes idle)
     AssertEquals(allocator.live_blocks.size(), 1);
 
+    #ifdef __HIP_PLATFORM_NVCC__
     // Check that that we have one cached block on the initial GPU
     AssertEquals(allocator.cached_blocks.size(), 1);
+    #endif
 
+    #ifdef __HIP_PLATFORM_HCC__
+    // Check that that we have no cached block on the initial GPU 
+    // AMD makes use of cached block if available, irrespective of the stream allocation.
+    AssertEquals(allocator.cached_blocks.size(), 0);
+    #endif
     // Run some big kernel in other_stream
     hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel<void>),
                     dim3(32000),
