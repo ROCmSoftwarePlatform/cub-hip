@@ -615,7 +615,7 @@ int main(int argc, char** argv)
     if (num_items < 0) num_items = 32000000;
 
     printf("-- Iterator ----------------------------\n");
-    TestIterator<CUB, int>(        num_items,                                 entropy_reduction, maxseg);
+    TestIterator<CUB, int>(num_items);
 
     printf("----------------------------\n");
     TestPointer<CUB, char>(        num_items * ((sm_version <= 130) ? 1 : 4), entropy_reduction, maxseg);

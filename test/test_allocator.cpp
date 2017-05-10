@@ -32,17 +32,12 @@
 // Ensure printing of CUDA runtime errors to console
 #define CUB_STDERR
 
-#include "test_util.h"
-
 #include <cub/util_allocator.cuh>
 
 #include "hip/hip_runtime.h"
 
 #include <stdio.h>
 
-template
-__global__
-void cub::EmptyKernel<void>(hipLaunchParm lp, int x);
 
 using namespace cub;
 
@@ -53,6 +48,7 @@ using namespace cub;
 /**
  * Main
  */
+
 int main(int argc, char** argv)
 {
     // Initialize command line

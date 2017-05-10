@@ -124,19 +124,14 @@ CUB_RUNTIME_FUNCTION __forceinline__ hipError_t PtxVersion(int &ptx_version)
 {
     struct Dummy
     {
-        //TODO:(mcw) Use EmptyKernel function pointer to get ptxVersion
-        //      Once hipFuncGetAttributes() API is supported
-
         /// Type definition of the EmptyKernel kernel entry point
-        //typedef void (*EmptyKernelPtr)();
+        typedef void (*EmptyKernelPtr)(hipLaunchParm, int);
 
         /// Force EmptyKernel<void> to be generated if this class is used
-        //HUB_RUNTIME_FUNCTION __forceinline__
-        //EmptyKernelPtr Empty()
         CUB_RUNTIME_FUNCTION __forceinline__
-        void Empty()
+        EmptyKernelPtr Empty()
         {
-            //return EmptyKernel<void>;
+            return EmptyKernel<void>;
         }
     };
 
@@ -162,7 +157,11 @@ CUB_RUNTIME_FUNCTION __forceinline__ hipError_t PtxVersion(int &ptx_version)
     hipDeviceProp_t deviceProp;
     error = hipGetDeviceProperties(&deviceProp, 0);
     if(error == hipSuccess)
-      ptx_version = 520;//deviceProp.major * 10;
+      #ifdef __HIP_PLATFORM_HCC__
+      ptx_version = 520;
+      #elif defined(__HIP_PLATFORM_NVCC__)
+      ptx_version = deviceProp.major * 100 + deviceProp.minor * 10;
+      #endif
     return error;
 
 #endif
