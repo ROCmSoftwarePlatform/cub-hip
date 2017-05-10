@@ -45,12 +45,6 @@ HIP_INC=${HIP_PATH}/include/
 
 include ../common.mk 
 
-#HIP PATH
-ifndef HIP_PATH
-        HIP_PATH=/opt/rocm/hip
-endif
-
- 
 #-------------------------------------------------------------------------------
 # Commandline Options
 #-------------------------------------------------------------------------------
@@ -78,15 +72,21 @@ endif
 #-------------------------------------------------------------------------------
 # Compiler and compilation platform
 #-------------------------------------------------------------------------------
-
-# Includes
-INC += -I$(CUB_DIR) -I$(CUB_DIR)test -I$(CUB_DIR)external/bolt/include -I$(CUB_DIR)external/boost -I${HIP_INC} 
-
-# Suffix to append to each binary
-SUFFIX = $(BIN_SUFFIX)_$(TEST_SUFFIX)
-
-# Define test arch
-DEFINES += -DTEST_ARCH=$(TEST_ARCH) -DGENERIC_GRID_LAUNCH=1
+ifeq ($(HIP_PLATFORM), hcc)
+	# Includes
+	INC += -I$(CUB_DIR) -I$(CUB_DIR)test -I$(CUB_DIR)external/bolt/include -I$(CUB_DIR)external/boost -I${HIP_INC}
+	# Suffix to append to each binary
+	SUFFIX = $(BIN_SUFFIX)_$(TEST_SUFFIX)
+	# Define test arch
+	DEFINES += -DTEST_ARCH=$(TEST_ARCH) -DGENERIC_GRID_LAUNCH=1
+else
+	# Includes
+	INC += -I$(CUB_DIR) -I$(CUB_DIR)test -I${HIP_INC}
+	# Suffix to append to each binary
+	SUFFIX = $(BIN_SUFFIX)_$(TEST_SUFFIX)
+	# Define test arch
+	DEFINES += -DTEST_ARCH=$(TEST_ARCH)
+endif
 
 
 #-------------------------------------------------------------------------------
@@ -175,7 +175,6 @@ run_block_scan :
 
 run_block_radix_sort : 
 	for i in $(BLOCK_RADIX_SORT); do $(MEMCHECK) ./bin/$${i}_$(SUFFIX) --device=$(device) || exit 1; done
-
 
 
 #-------------------------------------------------------------------------------
