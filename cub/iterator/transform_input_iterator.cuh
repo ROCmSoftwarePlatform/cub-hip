@@ -163,7 +163,7 @@ public:
     {}
     __host__ __device__ __forceinline__
     TransformInputIterator(const TransformInputIterator& x)
-        : conversion_op{x.conversion_op}, input_itr{x.input_itr}
+        : conversion_op(x.conversion_op), input_itr(x.input_itr)
     {}
 
     /// Postfix increment

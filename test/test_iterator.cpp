@@ -216,7 +216,8 @@ void TestConstant(T base)
     T h_reference[8] = {base, base, base, base, base, base, base, base};
     ConstantInputIterator<T> d_itr(base);
     Test(d_itr, h_reference);
-
+    //TODO: Temporarily bolt disabled in HCC platform
+#ifdef __HIP_PLATFORM_NVCC__
     #if (THRUST_VERSION >= 100700) || defined(__HIP_PLATFORM_HCC__) // Thrust 1.7 or newer, or Bolt.
         //
         // Test with thrust::copy_if()
@@ -247,6 +248,7 @@ void TestConstant(T base)
         if (d_copy) CubDebugExit(g_allocator.DeviceFree(d_copy));
 
     #endif // THRUST_VERSION */
+#endif
 }
 
 
@@ -275,7 +277,7 @@ void TestCounting(T base)
 
     CountingInputIterator<T> d_itr(base);
     Test(d_itr, h_reference);
-
+#ifdef __HIP_PLATFORM_NVCC__
 #if (THRUST_VERSION >= 100700) || defined(__HIP_PLATFORM_HCC__) // Thrust 1.7 or newer
 
     //
@@ -307,6 +309,7 @@ void TestCounting(T base)
     if (d_copy) CubDebugExit(g_allocator.DeviceFree(d_copy));
 
 #endif // THRUST_VERSION
+#endif
 }
 
 
@@ -353,7 +356,7 @@ void TestModified()
     Test(CacheModifiedInputIterator<LOAD_CV, T>((CastT*) d_data), h_reference);
     Test(CacheModifiedInputIterator<LOAD_LDG, T>((CastT*) d_data), h_reference);
     Test(CacheModifiedInputIterator<LOAD_VOLATILE, T>((CastT*) d_data), h_reference);
-
+#ifdef __HIP_PLATFORM_NVCC__
 #if (THRUST_VERSION >= 100700) || defined(__HIP_PLATFORM_HCC__) // Thrust 1.7 or newer
 
     //
@@ -381,7 +384,7 @@ void TestModified()
     if (d_copy) CubDebugExit(g_allocator.DeviceFree(d_copy));
 
 #endif // THRUST_VERSION
-
+#endif
     if (h_data) delete[] h_data;
     if (d_data) CubDebugExit(g_allocator.DeviceFree(d_data));
 }
@@ -427,7 +430,7 @@ void TestTransform()
 
     TransformInputIterator<T, TransformOp<T>, CastT*> d_itr((CastT*) d_data, op);
     Test(d_itr, h_reference);
-
+#ifdef __HIP_PLATFORM_NVCC__
 #if (THRUST_VERSION >= 100700) || defined(__HIP_PLATFORM_HCC__) // Thrust 1.7 or newer
 
     //
@@ -458,7 +461,7 @@ void TestTransform()
     if (d_copy) CubDebugExit(g_allocator.DeviceFree(d_copy));
 
 #endif // THRUST_VERSION
-
+#endif
     if (h_data) delete[] h_data;
     if (d_data) CubDebugExit(g_allocator.DeviceFree(d_data));
 }
@@ -547,7 +550,6 @@ void TestTexObj()
 }
 
 
-#if CUDA_VERSION >= 5050
 
 /**
  * Test tex-ref texture iterator
@@ -720,9 +722,6 @@ void TestTexTransform()
     if (d_data) CubDebugExit(g_allocator.DeviceFree(d_data));
 }
 
-#endif  // CUDA_VERSION
-
-
 
 
 /**
@@ -739,11 +738,10 @@ void Test(Int2Type<false> is_integer)
     TestTexObj<T, CastT>(type_string);
 #endif  // CUB_CDP
 
-#if CUDA_VERSION >= 5050
     // Test tex-ref iterators for CUDA 5.5
-    TestTexRef<T, CastT>();
-    TestTexTransform<T, CastT>();
-#endif  // CUDA_VERSION
+    //TODO:temporarily disabled as HIP doesn't support Texture
+    //TestTexRef<T, CastT>();
+    //TestTexTransform<T, CastT>();
 }
 
 /**
@@ -807,8 +805,10 @@ int main(int argc, char** argv)
     CubDebugExit(PtxVersion(ptx_version));
 
     // Evaluate different data types
+#ifdef __HIP_PLATFORM_NVCC__
     Test<char>();
     Test<short>();
+#endif
     Test<int>();
     Test<long>();
     Test<long long>();

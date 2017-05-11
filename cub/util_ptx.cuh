@@ -368,10 +368,7 @@ int RowMajorTid(int block_dim_x, int block_dim_y, int block_dim_z)
 /**
  * \brief Returns the warp lane ID of the calling thread
  */
-__device__ __forceinline__
-static
-inline
-unsigned int LaneId()
+__device__ __forceinline__ unsigned int LaneId()
 {
     unsigned int ret;
 #ifdef __HIP_PLATFORM_NVCC__
@@ -387,10 +384,7 @@ unsigned int LaneId()
 /**
  * \brief Returns the warp ID of the calling thread.  Warp ID is guaranteed to be unique among warps, but may not correspond to a zero-based ranking within the thread block.
  */
-__device__ __forceinline__
-static
-inline
-unsigned int WarpId()
+__device__ __forceinline__ unsigned int WarpId()
 {
     unsigned int ret;
 #ifdef __HIP_PLATFORM_NVCC__

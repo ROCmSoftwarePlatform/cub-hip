@@ -507,7 +507,6 @@ enum GenMode
  */
 template <typename T>
 __host__ __device__ __forceinline__
-inline
 void InitValue(GenMode gen_mode, T &value, int index = 0)
 {
     switch (gen_mode)
@@ -1080,7 +1079,6 @@ std::ostream& operator<<(std::ostream& os, const TestFoo& val)
  * TestFoo test initialization
  */
 __host__ __device__ __forceinline__
-inline
 void InitValue(GenMode gen_mode, TestFoo &value, int index = 0)
 {
     InitValue(gen_mode, value.x, index);
@@ -1203,7 +1201,6 @@ std::ostream& operator<<(std::ostream& os, const TestBar& val)
  * TestBar test initialization
  */
 __host__ __device__ __forceinline__
-inline
 void InitValue(GenMode gen_mode, TestBar &value, int index = 0)
 {
     InitValue(gen_mode, value.x, index);

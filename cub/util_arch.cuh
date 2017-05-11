@@ -60,9 +60,7 @@ namespace cub {
 
 /// Whether or not the source targeted by the active compiler pass is allowed to  invoke device kernels or methods from the CUDA runtime API.
 #ifndef CUB_RUNTIME_FUNCTION
-    #if (__HIP_DEVICE_COMPILE__ == 0) || \
-        (__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__ || \
-        __HIP_ARCH_HAS_DYNAMIC_PARALLEL__)
+    #if (__HIP_DEVICE_COMPILE__ == 0)
         #define CUB_RUNTIME_ENABLED
         #define CUB_RUNTIME_FUNCTION __host__ __device__
     #else
