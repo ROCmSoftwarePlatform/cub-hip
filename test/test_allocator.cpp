@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -32,12 +33,9 @@
 // Ensure printing of CUDA runtime errors to console
 #define CUB_STDERR
 
-#include <cub/util_allocator.cuh>
-
-#include "hip/hip_runtime.h"
-
 #include <stdio.h>
-
+#include <cub/util_allocator.cuh>
+#include "test_util.h"
 
 using namespace cub;
 
