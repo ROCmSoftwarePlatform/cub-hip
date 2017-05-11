@@ -238,7 +238,7 @@ struct WarpScanShfl
             "  .reg .pred p;"
             "  mov.b64 {lo, hi}, %1;"
             "  shfl.up.b32 lo|p, lo, %2, %3;"
-            "  shfl.up.b32 hi|p, hi, %2, %3;"1
+            "  shfl.up.b32 hi|p, hi, %2, %3;"
             "  mov.b64 r0, {lo, hi};"
             "  @p add.u64 r0, r0, %4;"
             "  mov.u64 %0, r0;"

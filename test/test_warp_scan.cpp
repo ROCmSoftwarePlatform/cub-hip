@@ -621,7 +621,9 @@ int main(int argc, char** argv)
     for (int i = 0; i <= g_repeat; ++i)
     {
         // Test logical warp sizes
+    #ifdef __HIP_PLATFORM_HCC__
 	Test<64>();
+    #endif
         Test<32>();
         Test<16>();
         Test<9>();
