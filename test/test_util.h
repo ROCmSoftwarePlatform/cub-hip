@@ -1249,10 +1249,12 @@ int CompareResults(T* computed, S* reference, OffsetT len, bool verbose = true)
     for (OffsetT i = 0; i < len; i++)
     {
         if (computed[i] != reference[i])
-        {   // TODO: temporarily disabled.
-//            if (verbose) std::cout << "INCORRECT: [" << i << "]: "
-//                << CoutCast(computed[i]) << " != "
-//                << CoutCast(reference[i]);
+        {   // TODO: temporarily disabled for AMD stack.
+        #ifdef __HIP_PLATFORM_NVCC__
+            if (verbose) std::cout << "INCORRECT: [" << i << "]: "
+                << CoutCast(computed[i]) << " != "
+                << CoutCast(reference[i]);
+        #endif
             return 1;
         }
     }
