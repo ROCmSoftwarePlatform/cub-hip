@@ -833,8 +833,10 @@ int main(int argc, char** argv)
     for (int i = 0; i <= g_repeat; ++i)
     {
         // primitives
+    #ifdef __HIP_PLATFORM_NVCC__
         Test<char>();
         Test<short>();
+    #endif
         Test<int>();
         Test<long long>();
         if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted

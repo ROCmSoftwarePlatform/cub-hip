@@ -33,8 +33,6 @@
 
 #pragma once
 
-#include "../../../hip_helpers/serialising_wrapper.hpp"
-
 #include "../../warp/warp_reduce.cuh"
 #include "../../util_ptx.cuh"
 #include "../../util_arch.cuh"
@@ -149,7 +147,7 @@ struct BlockReduceWarpReductions
         typename            ReductionOp>
     __device__ __forceinline__
     T ApplyWarpAggregates(ReductionOp reduction_op,   ///< [in] Binary scan operator
-                          Wrapper<T>  warp_aggregate, ///< [in] <b>[<em>lane</em><sub>0</sub> only]</b> Warp-wide aggregate reduction of input items
+                          T           warp_aggregate, ///< [in] <b>[<em>lane</em><sub>0</sub> only]</b> Warp-wide aggregate reduction of input items
                           int         num_valid)      ///< [in] Number of valid elements (may be less than BLOCK_THREADS)
     {
         // Share lane aggregates
@@ -179,7 +177,7 @@ struct BlockReduceWarpReductions
         T                   input,          ///< [in] Calling thread's input partial reductions
         int                 num_valid)      ///< [in] Number of valid elements (may be less than BLOCK_THREADS)
     {
-        cub::Sum        reduction_op;
+        //cub::Sum        reduction_op;
         unsigned int    warp_offset = warp_id * LOGICAL_WARP_SIZE;
         unsigned int    warp_num_valid = (FULL_TILE && EVEN_WARP_MULTIPLE) ?
                             LOGICAL_WARP_SIZE :
@@ -194,7 +192,7 @@ struct BlockReduceWarpReductions
             cub::Sum());
 
         // Update outputs and block_aggregate with warp-wide aggregates from lane-0s
-        return ApplyWarpAggregates<FULL_TILE>(reduction_op, warp_aggregate, num_valid);
+        return ApplyWarpAggregates<FULL_TILE>(/*reduction_op*/cub::Sum(), warp_aggregate, num_valid);
     }
 
 

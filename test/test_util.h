@@ -1456,7 +1456,7 @@ void DisplayResults(
     // Display data
     for (int i = 0; i < int(num_items); i++)
     {   // TODO: temporarily disabled.
-    //    std::cout << CoutCast(h_data[i]) << ", ";
+        std::cout << CoutCast(h_data[i]) << ", ";
     }
     printf("\n");
 }

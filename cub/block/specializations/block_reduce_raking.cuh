@@ -210,9 +210,9 @@ struct BlockReduceRaking
         T                   partial,            ///< [in] Calling thread's input partial reductions
         int                 num_valid)          ///< [in] Number of valid elements (may be less than BLOCK_THREADS)
     {
-        cub::Sum reduction_op;
+        //cub::Sum reduction_op;
 
-        return Reduce<IS_FULL_TILE>(partial, num_valid, reduction_op);
+        return Reduce<IS_FULL_TILE>(partial, num_valid, /*reduction_op*/cub::Sum());
     }
 
 
