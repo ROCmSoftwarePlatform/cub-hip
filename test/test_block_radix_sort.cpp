@@ -481,7 +481,11 @@ void TestDriver(
 
     // Set shared memory config
     //TODO:(mcw) revert once hipDeviceSetCacheConfig is supported in HIP
-    cudaDeviceSetSharedMemConfig(SMEM_CONFIG);
+    #ifdef __HIP_PLATFORM_HCC__
+      hipDeviceSetSharedMemConfig(SMEM_CONFIG);
+    #elif defined(__HIP_PLATFORM_NVCC__)
+      cudaDeviceSetSharedMemConfig(SMEM_CONFIG);
+    #endif
 
     // Run kernel
     hipLaunchKernel(HIP_KERNEL_NAME(Kernel<BLOCK_THREADS,
