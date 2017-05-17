@@ -74,9 +74,7 @@ template <
     BlockHistogramAlgorithm ALGORITHM,
     typename                T,
     typename                HistoCounter>
-__global__
-inline
-void BlockHistogramKernel(hipLaunchParm lp,
+__global__ void BlockHistogramKernel(hipLaunchParm lp,
                           T             *d_samples,
                           HistoCounter  *d_histogram)
 {

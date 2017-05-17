@@ -67,6 +67,7 @@ struct BlockHistogramSort
     };
 
     // Parameterize BlockRadixSort type for our thread block
+  #ifdef __HIP_PLATFORM_HCC__
     typedef BlockRadixSort<
             T,
             BLOCK_DIM_X,
@@ -80,7 +81,21 @@ struct BlockHistogramSort
             BLOCK_DIM_Z,
             PTX_ARCH>
         BlockRadixSortT;
-
+  #elif defined(__HIP_PLATFORM_NVCC__)
+    typedef BlockRadixSort<
+            T,
+            BLOCK_DIM_X,
+            ITEMS_PER_THREAD,
+            NullType,
+            4,
+            (PTX_ARCH >= 350) ? true : false,
+            BLOCK_SCAN_WARP_SCANS,
+            cudaSharedMemBankSizeFourByte,
+            BLOCK_DIM_Y,
+            BLOCK_DIM_Z,
+            PTX_ARCH>
+        BlockRadixSortT;
+  #endif
     // Parameterize BlockDiscontinuity type for our thread block
     typedef BlockDiscontinuity<
             T,
@@ -138,8 +153,8 @@ struct BlockHistogramSort
 
         // Constructor
         __device__ __forceinline__
-        DiscontinuityOp(_TempStorage &temp_storage)
-            : temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage)}// temp_storage(temp_storage)
+        DiscontinuityOp(std::uintptr_t temp_storage)
+            : temp_storage(temp_storage)
         {}
 
         // Discontinuity predicate
@@ -196,8 +211,9 @@ struct BlockHistogramSort
         int flags[ITEMS_PER_THREAD];    // unused
 
         // Compute head flags to demarcate contiguous runs of the same bin in the sorted tile
-        DiscontinuityOp flag_op(temp_storage);
+        DiscontinuityOp flag_op(reinterpret_cast<std::uintptr_t>(temp_storage));
         BlockDiscontinuityT(reinterpret_cast<_TempStorage*>(temp_storage)->flag).FlagHeads(flags, items, flag_op);
+
 
         // Update begin for first item
         if (linear_tid == 0) reinterpret_cast<_TempStorage*>(temp_storage)->run_begin[items[0]] = 0;

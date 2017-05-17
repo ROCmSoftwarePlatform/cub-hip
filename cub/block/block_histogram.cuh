@@ -196,11 +196,8 @@ private:
      ******************************************************************************/
 
     /// Shared storage reference
-    #if defined(__HIP_PLATFORM_HCC__)
         std::uintptr_t temp_storage;
-    #else
-        _TempStorage &temp_storage;
-    #endif
+        //_TempStorage &temp_storage;
 
     /// Linear thread-id
     unsigned int linear_tid;
@@ -246,11 +243,8 @@ public:
     __device__ __forceinline__ BlockHistogram(
         TempStorage &temp_storage)             ///< [in] Reference to memory allocation having layout type TempStorage
     :
-    #if defined(__HIPCC__)
         temp_storage(reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())),
-    #else
-        temp_storage(temp_storage.Alias()),
-    #endif
+        //temp_storage(temp_storage.Alias()),
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
     {}
 
@@ -365,11 +359,8 @@ public:
         __syncthreads();
 
         // Composite the histogram
-        #if defined(__HIP_PLATFORM_HCC__)
             InternalBlockHistogram{*reinterpret_cast<_TempStorage*>(temp_storage)}.Composite(items, histogram);
-        #else
-            InternalBlockHistogram(temp_storage).Composite(items, histogram);
-        #endif
+            //InternalBlockHistogram(temp_storage).Composite(items, histogram);
     }
 
 
