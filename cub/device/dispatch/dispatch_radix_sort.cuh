@@ -70,9 +70,7 @@ template <
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltUpsweepPolicy::BLOCK_THREADS :
     ChainedPolicyT::ActivePolicy::UpsweepPolicy::BLOCK_THREADS), 1)
-__global__
-inline
-void DeviceRadixSortUpsweepKernel(
+__global__ void DeviceRadixSortUpsweepKernel(
     hipLaunchParm           lp,
     const KeyT              *d_keys,                        ///< [in] Input keys buffer
     OffsetT                 *d_spine,                       ///< [out] Privatized (per block) digit histograms (striped, i.e., 0s counts from each block, then 1s counts from each block, etc.)
@@ -121,9 +119,7 @@ template <
     typename                ChainedPolicyT,                 ///< Chained tuning policy
     typename                OffsetT>                        ///< Signed integer type for global offsets
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ScanPolicy::BLOCK_THREADS), 1)
-__global__
-inline
-void RadixSortScanBinsKernel(
+__global__ void RadixSortScanBinsKernel(
     hipLaunchParm           lp,
     OffsetT                 *d_spine,                       ///< [in,out] Privatized (per block) digit histograms (striped, i.e., 0s counts from each block, then 1s counts from each block, etc.)
     int                     num_counts)                     ///< [in] Total number of bin-counts
@@ -168,9 +164,7 @@ template <
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltDownsweepPolicy::BLOCK_THREADS :
     ChainedPolicyT::ActivePolicy::DownsweepPolicy::BLOCK_THREADS), 1)
-__global__
-inline
-void DeviceRadixSortDownsweepKernel(
+__global__ void DeviceRadixSortDownsweepKernel(
     hipLaunchParm           lp,
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
     KeyT                    *d_keys_out,                    ///< [in] Output keys buffer
@@ -216,9 +210,7 @@ template <
     typename                ValueT,                         ///< Value type
     typename                OffsetT>                        ///< Signed integer type for global offsets
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::SingleTilePolicy::BLOCK_THREADS), 1)
-__global__
-inline
-void DeviceRadixSortSingleTileKernel(
+__global__ void DeviceRadixSortSingleTileKernel(
     hipLaunchParm           lp,
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
     KeyT                    *d_keys_out,                    ///< [in] Output keys buffer
@@ -331,9 +323,7 @@ template <
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltSegmentedPolicy::BLOCK_THREADS :
     ChainedPolicyT::ActivePolicy::SegmentedPolicy::BLOCK_THREADS), 1)
-__global__
-inline
-void DeviceSegmentedRadixSortKernel(
+__global__ void DeviceSegmentedRadixSortKernel(
     hipLaunchParm           lp,
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
     KeyT                    *d_keys_out,                    ///< [in] Output keys buffer

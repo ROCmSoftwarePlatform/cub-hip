@@ -134,7 +134,6 @@ template <
 __launch_bounds__ (int(AgentSelectIfPolicyT::BLOCK_THREADS), 1)
 __global__
 __attribute__((used))
-inline
 void DeviceSelectSweepKernel(
     hipLaunchParm           lp,
     InputIteratorT          d_in,                   ///< [in] Pointer to the input sequence of data items

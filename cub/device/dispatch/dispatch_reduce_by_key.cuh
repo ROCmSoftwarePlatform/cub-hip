@@ -168,7 +168,6 @@ template <
 __launch_bounds__ (int(AgentReduceByKeyPolicyT::BLOCK_THREADS), 1)
 __global__
 __attribute__((used))
-inline
 void DeviceReduceByKeyKernel(
     hipLaunchParm                      lp,
     KeysInputIteratorT        d_keys_in,                      ///< Pointer to the input sequence of keys

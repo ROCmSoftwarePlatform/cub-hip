@@ -201,9 +201,7 @@ public:
  * Reset grid queue (call with 1 block of 1 thread)
  */
 template <typename OffsetT>
-__global__
-inline
-void FillAndResetDrainKernel(
+__global__ void FillAndResetDrainKernel(
     hipLaunchParm        lp,
     GridQueue<OffsetT>   grid_queue,
     OffsetT              num_items)

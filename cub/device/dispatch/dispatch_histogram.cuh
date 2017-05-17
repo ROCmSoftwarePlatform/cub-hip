@@ -65,9 +65,7 @@ template <
     int                                             NUM_ACTIVE_CHANNELS,            ///< Number of channels actively being histogrammed
     typename                                        CounterT,                       ///< Integer type for counting sample occurrences per histogram bin
     typename                                        OffsetT>                        ///< Signed integer type for global offsets
-__global__
-inline
-void DeviceHistogramInitKernel(
+__global__ void DeviceHistogramInitKernel(
     hipLaunchParm                                   lp,
     ArrayWrapper<int, NUM_ACTIVE_CHANNELS>          num_output_bins_wrapper,        ///< Number of output histogram bins per channel
     ArrayWrapper<CounterT*, NUM_ACTIVE_CHANNELS>    d_output_histograms_wrapper,    ///< Histogram counter data having logical dimensions <tt>CounterT[NUM_ACTIVE_CHANNELS][num_bins.array[CHANNEL]]</tt>
@@ -101,9 +99,7 @@ template <
     typename                                            OutputDecodeOpT,                ///< The transform operator type for determining output bin-ids from privatized counter indices, one for each channel
     typename                                            OffsetT>                        ///< Signed integer type for global offsets
 __launch_bounds__ (int(AgentHistogramPolicyT::BLOCK_THREADS), 1)
-__global__
-inline
-void DeviceHistogramSweepKernel(
+__global__ void DeviceHistogramSweepKernel(
     hipLaunchParm                                           lp,
     SampleIteratorT                                         d_samples,                          ///< Input data to reduce
     ArrayWrapper<int, NUM_ACTIVE_CHANNELS>                  num_output_bins_wrapper,            ///< The number bins per final output histogram

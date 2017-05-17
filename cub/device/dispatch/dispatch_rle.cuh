@@ -142,7 +142,6 @@ template <
 __launch_bounds__ (int(AgentRlePolicyT::BLOCK_THREADS), 1)
 __global__
 __attribute__((used))
-inline
 void DeviceRleSweepKernel(
     hipLaunchParm               lp,
     Wrapper<InputIteratorT>     d_in,               ///< [in] Pointer to input sequence of data items

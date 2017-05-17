@@ -117,7 +117,6 @@ template <
     typename            ScanTileStateT>     ///< Tile status interface type
 __global__
 __attribute__((used))
-inline
 void DeviceScanInitKernel(
     hipLaunchParm       lp,
     ScanTileStateT      tile_state,         ///< [in] Tile status interface
@@ -135,7 +134,6 @@ template <
     typename                NumSelectedIteratorT>   ///< Output iterator type for recording the number of items selected
 __global__
 __attribute__((used))
-inline
 void DeviceCompactInitKernel(
     hipLaunchParm           lp,
     ScanTileStateT          tile_state,             ///< [in] Tile status interface
@@ -165,7 +163,6 @@ template <
 __launch_bounds__ (int(ScanPolicyT::BLOCK_THREADS), 1)
 __global__
 __attribute__((used))
-inline
 void DeviceScanKernel(
     hipLaunchParm       lp,
     InputIteratorT      d_in,               ///< Input data

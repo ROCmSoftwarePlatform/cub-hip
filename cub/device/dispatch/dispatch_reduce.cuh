@@ -218,9 +218,7 @@ template <
     typename                OffsetT,                    ///< Signed integer type for global offsets
     typename                ReductionOpT>               ///< Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS), 1)
-__global__
-inline
-void DeviceReduceKernel(
+__global__ void DeviceReduceKernel(
     hipLaunchParm           lp,
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
@@ -270,9 +268,7 @@ template <
     typename                ReductionOpT,               ///< Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
     typename                OuputT>                     ///< Data element type that is convertible to the \p value type of \p OutputIteratorT
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::SingleTilePolicy::BLOCK_THREADS), 1)
-__global__
-inline
-void DeviceReduceSingleTileKernel(
+__global__ void DeviceReduceSingleTileKernel(
     hipLaunchParm           lp,
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
@@ -344,9 +340,7 @@ template <
     typename                ReductionOpT,               ///< Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
     typename                OutputT>                    ///< Data element type that is convertible to the \p value type of \p OutputIteratorT
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS), 1)
-__global__
-inline
-void DeviceSegmentedReduceKernel(
+__global__ void DeviceSegmentedReduceKernel(
     hipLaunchParm           lp,
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
@@ -607,7 +601,7 @@ struct DispatchReduce :
         {
             // Small, single tile size
             InvokeSingleTile(
-                (DeviceReduceSingleTileKernel<MaxPolicyT, InputIteratorT, OutputIteratorT, OffsetT, ReductionOpT, OutputT>));
+                (DeviceReduceSingleTileKernel<MaxPolicyT, InputIteratorT, OutputIteratorT, OffsetT, ReductionOpT, OutputT>))
             return hipSuccess;
         }
         else

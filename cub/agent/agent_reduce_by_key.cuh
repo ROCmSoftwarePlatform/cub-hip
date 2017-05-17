@@ -306,7 +306,6 @@ struct AgentReduceByKey
      * Directly scatter flagged items to output offsets
      */
     __device__ __forceinline__
-    inline
     void ScatterDirect(
         KeyValuePairT   (&scatter_items)[ITEMS_PER_THREAD],
         OffsetT         (&segment_flags)[ITEMS_PER_THREAD],
@@ -366,7 +365,6 @@ struct AgentReduceByKey
      * Scatter flagged items
      */
     __device__ __forceinline__
-    inline
     void Scatter(
         KeyValuePairT   (&scatter_items)[ITEMS_PER_THREAD],
         OffsetT         (&segment_flags)[ITEMS_PER_THREAD],
