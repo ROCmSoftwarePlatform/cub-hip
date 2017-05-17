@@ -145,17 +145,18 @@ void TestBlockSort(
 }
 
 
-
+//TODO: hipSharedMemConfig hasn't supported yet NV 
 /**
  * BlockRadixSort kernel
  */
+#ifdef __HIP_PLATFORM_HCC__
 template <
     int                 BLOCK_THREADS,
     int                 ITEMS_PER_THREAD,
     int                 RADIX_BITS,
     bool                MEMOIZE_OUTER_SCAN,
     BlockScanAlgorithm  INNER_SCAN_ALGORITHM,
-    hipSharedMemConfig SMEM_CONFIG,
+    hipSharedMemConfig  SMEM_CONFIG,
     int                 DESCENDING,
     int                 BLOCKED_OUTPUT,
     typename            Key,
@@ -211,7 +212,70 @@ void Kernel(
     if (hipThreadIdx_x == 0)
         *d_elapsed = (start > stop) ? start - stop : stop - start;
 }
+#elif defined(__HIP_PLATFORM_NVCC__)
+template <
+    int                 BLOCK_THREADS,
+    int                 ITEMS_PER_THREAD,
+    int                 RADIX_BITS,
+    bool                MEMOIZE_OUTER_SCAN,
+    BlockScanAlgorithm  INNER_SCAN_ALGORITHM,
+    cudaSharedMemConfig SMEM_CONFIG,
+    int                 DESCENDING,
+    int                 BLOCKED_OUTPUT,
+    typename            Key,
+    typename            Value>
+__launch_bounds__ (BLOCK_THREADS, 1)
+__global__
+void Kernel(
+    hipLaunchParm               lp,
+    Key                         *d_keys,
+    Value                       *d_values,
+    int                         begin_bit,
+    int                         end_bit,
+    clock_t                     *d_elapsed)
+{
+    // Threadblock load/store abstraction types
+    typedef BlockRadixSort<
+            Key,
+            BLOCK_THREADS,
+            ITEMS_PER_THREAD,
+            Value,
+            RADIX_BITS,
+            MEMOIZE_OUTER_SCAN,
+            INNER_SCAN_ALGORITHM,
+            SMEM_CONFIG>
+        BlockRadixSortT;
 
+    // Allocate temp storage in shared memory
+    __shared__ typename BlockRadixSortT::TempStorage temp_storage;
+
+    // Items per thread
+    Key     keys[ITEMS_PER_THREAD];
+    Value   values[ITEMS_PER_THREAD];
+
+    LoadDirectBlocked(hipThreadIdx_x, d_keys, keys);
+    LoadDirectBlocked(hipThreadIdx_x, d_values, values);
+
+    // Start cycle timer
+    clock_t stop;
+    clock_t start = clock();
+
+    TestBlockSort<BLOCK_THREADS, BlockRadixSortT>(temp_storage,
+                                                  keys,
+                                                  values,
+                                                  d_keys,
+                                                  d_values,
+                                                  begin_bit,
+                                                  end_bit,
+                                                  stop,
+                                                  Int2Type<DESCENDING>(),
+                                                  Int2Type<BLOCKED_OUTPUT>());
+
+    // Store time
+    if (hipThreadIdx_x == 0)
+        *d_elapsed = (start > stop) ? start - stop : stop - start;
+}
+#endif
 
 
 //---------------------------------------------------------------------
@@ -323,6 +387,7 @@ void Initialize(
 /**
  * Test BlockRadixSort kernel
  */
+#ifdef __HIP_PLATFORM_HCC__
 template <
     int                     BLOCK_THREADS,
     int                     ITEMS_PER_THREAD,
@@ -334,6 +399,19 @@ template <
     bool                    BLOCKED_OUTPUT,
     typename                Key,
     typename                Value>
+#elif defined(__HIP_PLATFORM_NVCC__)
+template <
+    int                     BLOCK_THREADS,
+    int                     ITEMS_PER_THREAD,
+    int                     RADIX_BITS,
+    bool                    MEMOIZE_OUTER_SCAN,
+    BlockScanAlgorithm      INNER_SCAN_ALGORITHM,
+    cudaSharedMemConfig     SMEM_CONFIG,
+    bool                    DESCENDING,
+    bool                    BLOCKED_OUTPUT,
+    typename                Key,
+    typename                Value>
+#endif
 void TestDriver(
     GenMode                 gen_mode,
     int                     entropy_reduction,
@@ -403,7 +481,7 @@ void TestDriver(
 
     // Set shared memory config
     //TODO:(mcw) revert once hipDeviceSetCacheConfig is supported in HIP
-    hipDeviceSetSharedMemConfig(SMEM_CONFIG);
+    cudaDeviceSetSharedMemConfig(SMEM_CONFIG);
 
     // Run kernel
     hipLaunchKernel(HIP_KERNEL_NAME(Kernel<BLOCK_THREADS,
@@ -464,6 +542,7 @@ void TestDriver(
 /**
  * Test driver (valid tile size <= MAX_SMEM_BYTES)
  */
+#ifdef __HIP_PLATFORM_HCC__
 template <
     int                     BLOCK_THREADS,
     int                     ITEMS_PER_THREAD,
@@ -475,6 +554,19 @@ template <
     bool                    BLOCKED_OUTPUT,
     typename                Key,
     typename                Value>
+#elif defined(__HIP_PLATFORM_NVCC__)
+template <
+    int                     BLOCK_THREADS,
+    int                     ITEMS_PER_THREAD,
+    int                     RADIX_BITS,
+    bool                    MEMOIZE_OUTER_SCAN,
+    BlockScanAlgorithm      INNER_SCAN_ALGORITHM,
+    cudaSharedMemConfig     SMEM_CONFIG,
+    bool                    DESCENDING,
+    bool                    BLOCKED_OUTPUT,
+    typename                Key,
+    typename                Value>
+#endif
 void TestValid(Int2Type<true> fits_smem_capacity)
 {
     // Iterate begin_bit
@@ -505,6 +597,7 @@ void TestValid(Int2Type<true> fits_smem_capacity)
 /**
  * Test driver (invalid tile size)
  */
+#ifdef __HIP_PLATFORM_HCC__
 template <
     int                     BLOCK_THREADS,
     int                     ITEMS_PER_THREAD,
@@ -516,6 +609,19 @@ template <
     bool                    BLOCKED_OUTPUT,
     typename                Key,
     typename                Value>
+#elif defined(__HIP_PLATFORM_NVCC__)
+template <
+    int                     BLOCK_THREADS,
+    int                     ITEMS_PER_THREAD,
+    int                     RADIX_BITS,
+    bool                    MEMOIZE_OUTER_SCAN,
+    BlockScanAlgorithm      INNER_SCAN_ALGORITHM,
+    cudaSharedMemConfig     SMEM_CONFIG,
+    bool                    DESCENDING,
+    bool                    BLOCKED_OUTPUT,
+    typename                Key,
+    typename                Value>
+#endif
 void TestValid(Int2Type<false> fits_smem_capacity)
 {}
 
@@ -523,6 +629,7 @@ void TestValid(Int2Type<false> fits_smem_capacity)
 /**
  * Test ascending/descending and to-blocked/to-striped
  */
+#ifdef __HIP_PLATFORM_HCC__
 template <
     int                     BLOCK_THREADS,
     int                     ITEMS_PER_THREAD,
@@ -532,6 +639,17 @@ template <
     hipSharedMemConfig     SMEM_CONFIG,
     typename                Key,
     typename                Value>
+#elif defined(__HIP_PLATFORM_NVCC__)
+template <
+    int                     BLOCK_THREADS,
+    int                     ITEMS_PER_THREAD,
+    int                     RADIX_BITS,
+    bool                    MEMOIZE_OUTER_SCAN,
+    BlockScanAlgorithm      INNER_SCAN_ALGORITHM,
+    cudaSharedMemConfig     SMEM_CONFIG,
+    typename                Key,
+    typename                Value>
+#endif
 void Test()
 {
     // Check size of smem storage for the target arch to make sure it will fit
@@ -567,11 +685,19 @@ template <
     typename                Key>
 void TestKeys()
 {
+  #ifdef __HIP_PLATFORM_HCC__
     // Test keys-only sorting with both smem configs
     Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, NullType>();    // Keys-only (4-byte smem bank config)
 #if !defined(SM100) && !defined(SM110) && !defined(SM130) && !defined(SM200)
     Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeEightByte, Key, NullType>();   // Keys-only (8-byte smem bank config)
 #endif
+  #elif defined(__HIP_PLATFORM_NVCC__)
+    // Test keys-only sorting with both smem configs
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeFourByte, Key, NullType>();    // Keys-only (4-byte smem bank config)
+#if !defined(SM100) && !defined(SM110) && !defined(SM130) && !defined(SM200)
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeEightByte, Key, NullType>();   // Keys-only (8-byte smem bank config)
+#endif
+  #endif
 }
 
 
@@ -588,8 +714,13 @@ template <
 void TestKeysAndPairs()
 {
     // Test pairs sorting with only 4-byte configs
+ #ifdef __HIP_PLATFORM_HCC__
     Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, char>();        // With small-values
     Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, Key>();         // With same-values
+ #elif defined(__HIP_PLATFORM_NVCC__)
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeFourByte, Key, char>();        // With small-values
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeFourByte, Key, Key>();         // With same-values
+ #endif
     // TODO: these are temporarily disabled due to compiler breakage.
     //Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, TestFoo>();     // With large values
 }

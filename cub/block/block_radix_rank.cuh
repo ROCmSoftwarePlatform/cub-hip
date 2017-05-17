@@ -83,16 +83,29 @@ namespace cub {
  *
  *      \endcode
  */
+#ifdef __HIP_PLATFORM_HCC__
 template <
     int                     BLOCK_DIM_X,
     int                     RADIX_BITS,
     bool                    DESCENDING,
     bool                    MEMOIZE_OUTER_SCAN      = (CUB_PTX_ARCH >= 350) ? true : false,
     BlockScanAlgorithm      INNER_SCAN_ALGORITHM    = BLOCK_SCAN_WARP_SCANS,
-    hipSharedMemConfig     SMEM_CONFIG             = hipSharedMemBankSizeFourByte,
+    hipSharedMemConfig     SMEM_CONFIG             = hipSharedMemBankSizeFourByte, 
     int                     BLOCK_DIM_Y             = 1,
     int                     BLOCK_DIM_Z             = 1,
     int                     PTX_ARCH                = CUB_PTX_ARCH>
+#elif defined(__HIP_PLATFORM_NVCC__)
+template <
+    int                     BLOCK_DIM_X,
+    int                     RADIX_BITS,
+    bool                    DESCENDING,
+    bool                    MEMOIZE_OUTER_SCAN      = (CUB_PTX_ARCH >= 350) ? true : false,
+    BlockScanAlgorithm      INNER_SCAN_ALGORITHM    = BLOCK_SCAN_WARP_SCANS,
+    cudaSharedMemConfig     SMEM_CONFIG             = cudaSharedMemBankSizeFourByte, 
+    int                     BLOCK_DIM_Y             = 1,
+    int                     BLOCK_DIM_Z             = 1,
+    int                     PTX_ARCH                = CUB_PTX_ARCH>
+#endif
 class BlockRadixRank
 {
 private:
@@ -103,11 +116,17 @@ private:
 
     // Integer type for digit counters (to be packed into words of type PackedCounters)
     typedef unsigned short DigitCounter;
-
+#ifdef __HIP_PLATFORM_HCC__
     // Integer type for packing DigitCounters into columns of shared memory banks
     typedef typename If<(SMEM_CONFIG == hipSharedMemBankSizeEightByte),
         unsigned long long,
         unsigned int>::Type PackedCounter;
+#elif defined(__HIP_PLATFORM_NVCC__)
+   // Integer type for packing DigitCounters into columns of shared memory banks
+    typedef typename If<(SMEM_CONFIG == cudaSharedMemBankSizeEightByte),
+        unsigned long long,
+        unsigned int>::Type PackedCounter;
+#endif
 
     enum
     {
