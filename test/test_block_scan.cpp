@@ -633,9 +633,7 @@ template <
     typename            T,
     typename            ScanOpT>
 __launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
-__global__
-inline
-void BlockScanKernel(
+__global__ void BlockScanKernel(
     hipLaunchParm       lp,
     T                   *d_in,
     T                   *d_out,
@@ -1100,8 +1098,10 @@ void Test()
     Test<BLOCK_THREADS, ITEMS_PER_THREAD>(Sum(), (float) 0, (float) 99);
 
     // primitive (alternative scan op)
+#ifdef __HIP_PLATFORM_NVCC__
     Test<BLOCK_THREADS, ITEMS_PER_THREAD>(Max(), std::numeric_limits<char>::min(), (char) 99);
     Test<BLOCK_THREADS, ITEMS_PER_THREAD>(Max(), std::numeric_limits<short>::min(), (short) 99);
+#endif
     Test<BLOCK_THREADS, ITEMS_PER_THREAD>(Max(), std::numeric_limits<int>::min(), (int) 99);
     Test<BLOCK_THREADS, ITEMS_PER_THREAD>(Max(), std::numeric_limits<long long>::min(), (long long) 99);
 

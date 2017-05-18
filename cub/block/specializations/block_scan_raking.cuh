@@ -453,6 +453,7 @@ struct BlockScanRaking
             T block_prefix = block_prefix_callback_op(block_aggregate);
             block_prefix = warp_scan.Broadcast(block_prefix, 0);
 
+            __syncthreads();
             output = scan_op(block_prefix, output);
             if (linear_tid == 0)
                 output = block_prefix;
@@ -616,6 +617,7 @@ struct BlockScanRaking
             T block_prefix = block_prefix_callback_op(block_aggregate);
             block_prefix = warp_scan.Broadcast(block_prefix, 0);
 
+            __syncthreads();
             // Update prefix with exclusive warpscan partial
             output = scan_op(block_prefix, output);
         }

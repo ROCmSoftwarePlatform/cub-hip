@@ -149,7 +149,7 @@ ALL = 				link \
 #-------------------------------------------------------------------------------
 
 clean :
-	rm -f bin/*$(CPU_ARCH_SUFFIX)* 
+	rm -f bin/*$(CPU_ARCH_SUFFIX)* bin/*.obj
 	rm -f *.i* *.cubin *.cu.c *.cudafe* *.fatbin.c *.ptx *.hash *.cu.cpp *.o
 
 

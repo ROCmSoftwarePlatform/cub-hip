@@ -1479,14 +1479,14 @@ public:
         else
         {
             // Reduce consecutive thread items in registers
-            Sum scan_op;
-            T thread_prefix = ThreadReduce(input, scan_op);
+            //Sum scan_op;
+            T thread_prefix = ThreadReduce(input, /*scan_op*/Sum());
 
             // Exclusive threadblock-scan
             ExclusiveSum(thread_prefix, thread_prefix);
 
             // Inclusive scan in registers with prefix as seed
-            ThreadScanInclusive(input, output, scan_op, thread_prefix, (linear_tid != 0));
+            ThreadScanInclusive(input, output, /*scan_op*/Sum(), thread_prefix, (linear_tid != 0));
         }
     }
 
@@ -1547,14 +1547,14 @@ public:
         else
         {
             // Reduce consecutive thread items in registers
-            Sum scan_op;
-            T thread_prefix = ThreadReduce(input, scan_op);
+            //Sum scan_op;
+            T thread_prefix = ThreadReduce(input, /*scan_op*/Sum());
 
             // Exclusive threadblock-scan
             ExclusiveSum(thread_prefix, thread_prefix, block_aggregate);
 
             // Inclusive scan in registers with prefix as seed
-            ThreadScanInclusive(input, output, scan_op, thread_prefix, (linear_tid != 0));
+            ThreadScanInclusive(input, output, /*scan_op*/Sum(), thread_prefix, (linear_tid != 0));
         }
     }
 
@@ -1659,14 +1659,14 @@ public:
         else
         {
             // Reduce consecutive thread items in registers
-            Sum scan_op;
-            T thread_prefix = ThreadReduce(input, scan_op);
+            //Sum scan_op;
+            T thread_prefix = ThreadReduce(input, /*scan_op*/Sum());
 
             // Exclusive threadblock-scan
             ExclusiveSum(thread_prefix, thread_prefix, block_prefix_callback_op);
 
             // Inclusive scan in registers with prefix as seed
-            ThreadScanInclusive(input, output, scan_op, thread_prefix);
+            ThreadScanInclusive(input, output, /*scan_op*/Sum(), thread_prefix);
         }
     }
 

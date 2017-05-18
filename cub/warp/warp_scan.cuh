@@ -557,7 +557,7 @@ public:
         T               &exclusive_output,  ///< [out] Calling thread's output item.  May be aliased with \p input.
         ScanOp          scan_op)            ///< [in] Binary scan operator
     {
-        InternalWarpScan internal(temp_storage);
+        InternalWarpScan internal(*reinterpret_cast<_TempStorage*>(temp_storage));
 
         T inclusive_output;
         internal.InclusiveScan(input, inclusive_output, scan_op);
