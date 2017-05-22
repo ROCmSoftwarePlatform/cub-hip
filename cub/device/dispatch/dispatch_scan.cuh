@@ -96,7 +96,8 @@
                     num_items);\
                 if (CubDebug(error = hipPeekAtLastError())) break;\
                 if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
-            }
+            }\
+            return error
 
 
 /// Optional outer namespace(s)
@@ -494,8 +495,7 @@ struct DispatchScan
                 scan_kernel_config);
         }
         while (0);
-
-        return error;
+       return error;
     }
 };
 

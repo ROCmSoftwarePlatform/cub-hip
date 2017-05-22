@@ -602,7 +602,6 @@ struct DispatchReduce :
             // Small, single tile size
             InvokeSingleTile(
                 (DeviceReduceSingleTileKernel<MaxPolicyT, InputIteratorT, OutputIteratorT, OffsetT, ReductionOpT, OutputT>))
-            return hipSuccess;
         }
         else
         {
@@ -611,7 +610,6 @@ struct DispatchReduce :
                 (DeviceReduceKernel<typename DispatchReduce::MaxPolicy, InputIteratorT, OutputT*, OffsetT, ReductionOpT>),
                 (DeviceReduceSingleTileKernel<MaxPolicyT, OutputT*, OutputIteratorT, OffsetT, ReductionOpT, OutputT>),
                 FillAndResetDrainKernel<OffsetT>);
-           return hipSuccess;
         }
     }
 
@@ -752,7 +750,6 @@ struct DispatchSegmentedReduce :
         // Force kernel code-generation in all compiler passes
         InvokePasses_seg(
             (DeviceSegmentedReduceKernel<MaxPolicyT, InputIteratorT, OutputIteratorT, OffsetT, ReductionOpT, OutputT>));
-        return hipSuccess; 
     }
 
 

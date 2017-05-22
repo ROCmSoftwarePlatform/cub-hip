@@ -173,11 +173,8 @@ struct ScanTileState<T, true>
     __host__ __device__ __forceinline__
     ScanTileState()
     :
-#if defined(__HIP_PLATFORM_NVCC__)
-        d_tile_status(NULL)
-#elif defined(__HIP_PLATFORM_HCC__)
+      // d_tile_status(NULL)
        d_tile_status(0)
-#endif
     {}
     __host__ __device__ __forceinline__
     ScanTileState(const ScanTileState& x) : d_tile_status{x.d_tile_status} {}

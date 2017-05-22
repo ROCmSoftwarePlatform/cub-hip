@@ -469,9 +469,7 @@ hipError_t Dispatch(
  * Simple wrapper kernel to invoke DeviceScan
  */
 template <typename IsPrimitiveT, typename InputIteratorT, typename OutputIteratorT, typename ScanOpT, typename InitialValueT, typename OffsetT>
-__global__
-inline
-void CnpDispatchKernel(
+__global__ void CnpDispatchKernel(
     hipLaunchParm lp,
     IsPrimitiveT        is_primitive,
     int                 timing_timing_iterations,

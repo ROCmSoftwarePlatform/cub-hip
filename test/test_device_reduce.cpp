@@ -645,9 +645,7 @@ template <
     typename            InputIteratorT,
     typename            OutputIteratorT,
     typename            ReductionOpT>
-__global__
-inline
-void CnpDispatchKernel(
+__global__ void CnpDispatchKernel(
     hipLaunchParm lp,
     int                 timing_timing_iterations,
     size_t              *d_temp_storage_bytes,
@@ -1338,8 +1336,8 @@ int main(int argc, char** argv)
         //TestType<ulonglong2, ulonglong2>(max_items, max_segments);
         //TestType<ulonglong4, ulonglong4>(max_items, max_segments);
 
-        TestType<TestFoo, TestFoo>(max_items, max_segments);
-        TestType<TestBar, TestBar>(max_items, max_segments);
+        //TestType<TestFoo, TestFoo>(max_items, max_segments);
+        //TestType<TestBar, TestBar>(max_items, max_segments);
     }
 
 #endif
