@@ -673,7 +673,7 @@ struct AgentHistogram
         typename            _OffsetT>
     __device__ __forceinline__ SampleT* NativePointer(CacheModifiedInputIterator<_MODIFIER, _ValueT, _OffsetT> itr)
     {
-        return itr.ptr;
+        return reinterpret_cast<SampleT*>(itr.ptr);
     }
 
     // Return a native pixel pointer (specialized for other types)
@@ -703,7 +703,8 @@ struct AgentHistogram
         OutputDecodeOpT     (&output_decode_op)[NUM_ACTIVE_CHANNELS],           ///< The transform operator for determining output bin-ids from privatized counter indices, one for each channel
         PrivatizedDecodeOpT (&privatized_decode_op)[NUM_ACTIVE_CHANNELS])       ///< The transform operator for determining privatized counter indices from samples, one for each channel
     :
-        temp_storage(temp_storage.Alias()),
+        //temp_storage(temp_storage.Alias()),
+        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
         d_wrapped_samples(d_samples),
         num_output_bins(num_output_bins),
         num_privatized_bins(num_privatized_bins),
