@@ -210,7 +210,7 @@ hipError_t Dispatch(
         for (int i = 0; i < timing_timing_iterations; ++i)
         {
             d_out_ends =
-            #if defined(__HIPCC__)
+            #if defined(__HIP_PLATFORM_HCC__)
                 bolt::amp::reduce_by_key(
             #else
                 thrust::reduce_by_key(
@@ -248,9 +248,7 @@ template <
     typename                    EqualityOpT,
     typename                    ReductionOpT,
     typename                    OffsetT>
-__global__
-inline
-void CnpDispatchKernel(
+__global__ void CnpDispatchKernel(
     hipLaunchParm lp,
     int                         timing_timing_iterations,
     size_t                      *d_temp_storage_bytes,

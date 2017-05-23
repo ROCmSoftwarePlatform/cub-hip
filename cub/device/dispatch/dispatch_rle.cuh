@@ -51,8 +51,6 @@
      ******************************************************************************/
 #define Dispatch_rle(d_temp_storage, temp_storage_bytes, d_in, d_offsets_out, d_lengths_out, d_num_runs_out, equality_op, num_items, stream, debug_synchronous, ptx_version, device_scan_init_kernel, device_rle_sweep_kernel, device_rle_config)\
         hipError_t error = hipSuccess;\
-        do\
-        {\
             int device_ordinal;\
             if (CubDebug(error = hipGetDevice(&device_ordinal))) break;\
             int sm_count;\
@@ -107,9 +105,7 @@
                 num_tiles);\
             if (CubDebug(error = hipPeekAtLastError())) break;\
             if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
-        }\
-        while (0);\
-        return error;
+        return error
 
 
 /// Optional outer namespace(s)
@@ -144,10 +140,10 @@ __global__
 __attribute__((used))
 void DeviceRleSweepKernel(
     hipLaunchParm               lp,
-    Wrapper<InputIteratorT>     d_in,               ///< [in] Pointer to input sequence of data items
-    Wrapper<OffsetsOutputIteratorT>      d_offsets_out,      ///< [out] Pointer to output sequence of run-offsets
-    Wrapper<LengthsOutputIteratorT>      d_lengths_out,      ///< [out] Pointer to output sequence of run-lengths
-    Wrapper<NumRunsOutputIteratorT>      d_num_runs_out,     ///< [out] Pointer to total number of runs (i.e., length of \p d_offsets_out)
+    InputIteratorT     d_in,               ///< [in] Pointer to input sequence of data items
+    OffsetsOutputIteratorT      d_offsets_out,      ///< [out] Pointer to output sequence of run-offsets
+    LengthsOutputIteratorT      d_lengths_out,      ///< [out] Pointer to output sequence of run-lengths
+    NumRunsOutputIteratorT      d_num_runs_out,     ///< [out] Pointer to total number of runs (i.e., length of \p d_offsets_out)
     ScanTileStateT              tile_status,        ///< [in] Tile status interface
     EqualityOpT                 equality_op,        ///< [in] Equality operator for input items
     OffsetT                     num_items,          ///< [in] Total number of input items (i.e., length of \p d_in)
@@ -476,7 +472,7 @@ struct DeviceRleDispatch
                 ptx_version,
                 (DeviceCompactInitKernel<ScanTileStateT, NumRunsOutputIteratorT>),
                 (DeviceRleSweepKernel<PtxRleSweepPolicy, InputIteratorT, OffsetsOutputIteratorT, LengthsOutputIteratorT, NumRunsOutputIteratorT, ScanTileStateT, EqualityOpT, OffsetT>),
-                device_rle_config)
+                device_rle_config);
         }
         while (0);
 

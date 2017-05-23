@@ -578,9 +578,7 @@ hipError_t Dispatch(
  * Simple wrapper kernel to invoke DeviceSelect
  */
 template <typename InputIteratorT, typename FlagIteratorT, typename SelectOpT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT, typename IsFlaggedTag, typename IsPartitionTag>
-__global__
-inline
-void CnpDispatchKernel(
+__global__ void CnpDispatchKernel(
     hipLaunchParm lp,
     IsFlaggedTag                is_flagged,
     IsPartitionTag              is_partition,

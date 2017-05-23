@@ -186,9 +186,7 @@ hipError_t Dispatch(
  * Simple wrapper kernel to invoke DeviceSelect
  */
 template <typename InputIteratorT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
-__global__
-inline
-void CnpDispatchKernel(
+__global__ void CnpDispatchKernel(
     hipLaunchParm lp,
     int                         timing_timing_iterations,
     size_t                      *d_temp_storage_bytes,

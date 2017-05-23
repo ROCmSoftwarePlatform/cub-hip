@@ -124,16 +124,16 @@ hipError_t Dispatch(
     hipError_t error = hipSuccess;
     for (int i = 0; i < timing_timing_iterations; ++i)
     {
-//        error = DeviceRunLengthEncode::Encode(
-//            d_temp_storage,
-//            temp_storage_bytes,
-//            d_in,
-//            d_unique_out,
-//            d_lengths_out,
-//            d_num_runs,
-//            num_items,
-//            stream,
-//            debug_synchronous);
+        error = DeviceRunLengthEncode::Encode(
+            d_temp_storage,
+            temp_storage_bytes,
+            d_in,
+            d_unique_out,
+            d_lengths_out,
+            d_num_runs,
+            num_items,
+            stream,
+            debug_synchronous);
     }
     return error;
 }
@@ -304,9 +304,7 @@ template <
     typename                    NumRunsIterator,
     typename                    EqualityOp,
     typename                    OffsetT>
-__global__
-inline
-void CnpDispatchKernel(
+__global__ void CnpDispatchKernel(
     hipLaunchParm lp,
     Int2Type<RLE_METHOD>            method,
     int                         timing_timing_iterations,
@@ -593,22 +591,22 @@ void Test(
     CubDebugExit(hipMemset(d_num_runs,     0, sizeof(int)));
 
     // Run warmup/correctness iteration
-//    CubDebugExit(Dispatch(Int2Type<RLE_METHOD>(),
-//                          Int2Type<BACKEND>(),
-//                          1,
-//                          d_temp_storage_bytes,
-//                          d_cdp_error,
-//                          d_temp_storage,
-//                          temp_storage_bytes,
-//                          d_in,
-//                          d_unique_out,
-//                          d_offsets_out,
-//                          d_lengths_out,
-//                          d_num_runs,
-//                          equality_op,
-//                          num_items,
-//                          0,
-//                          true));
+    CubDebugExit(Dispatch(Int2Type<RLE_METHOD>(),
+                          Int2Type<BACKEND>(),
+                          1,
+                          d_temp_storage_bytes,
+                          d_cdp_error,
+                          d_temp_storage,
+                          temp_storage_bytes,
+                          d_in,
+                          d_unique_out,
+                          d_offsets_out,
+                          d_lengths_out,
+                          d_num_runs,
+                          equality_op,
+                          num_items,
+                          0,
+                          true));
 
     // Check for correctness (and display results, if specified)
     int compare0 = 0;
@@ -644,22 +642,22 @@ void Test(
     // Performance
     GpuTimer gpu_timer;
     gpu_timer.Start();
-//    CubDebugExit(Dispatch(Int2Type<RLE_METHOD>(),
-//                          Int2Type<BACKEND>(),
-//                          g_timing_iterations,
-//                          d_temp_storage_bytes,
-//                          d_cdp_error,
-//                          d_temp_storage,
-//                          temp_storage_bytes,
-//                          d_in,
-//                          d_unique_out,
-//                          d_offsets_out,
-//                          d_lengths_out,
-//                          d_num_runs,
-//                          equality_op,
-//                          num_items,
-//                          0,
-//                          false));
+    CubDebugExit(Dispatch(Int2Type<RLE_METHOD>(),
+                          Int2Type<BACKEND>(),
+                          g_timing_iterations,
+                          d_temp_storage_bytes,
+                          d_cdp_error,
+                          d_temp_storage,
+                          temp_storage_bytes,
+                          d_in,
+                          d_unique_out,
+                          d_offsets_out,
+                          d_lengths_out,
+                          d_num_runs,
+                          equality_op,
+                          num_items,
+                          0,
+                          false));
     gpu_timer.Stop();
     float elapsed_millis = gpu_timer.ElapsedMillis();
 

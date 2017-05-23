@@ -78,8 +78,6 @@
 
 #define Dispatch_r(d_temp_storage, temp_storage_bytes, d_keys_in, d_unique_out, d_values_in, d_aggregates_out, d_num_runs_out, equality_op, reduction_op, num_items, stream, debug_synchronous, ptx_version, init_kernel, reduce_by_key_kernel, reduce_by_key_config)\
         hipError_t error = hipSuccess;\
-        do\
-        {\
             int device_ordinal;\
             if (CubDebug(error = hipGetDevice(&device_ordinal))) break;\
             int sm_count;\
@@ -137,9 +135,7 @@
                 if (CubDebug(error = hipPeekAtLastError())) break;\
                 if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
             }\
-        }\
-        while (0);\
-        return error;
+        return error
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX

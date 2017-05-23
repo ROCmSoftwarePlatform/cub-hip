@@ -49,8 +49,6 @@
 
 #define Dispatch_if(d_temp_storage, temp_storage_bytes, d_in, d_flags, d_selected_out, d_num_selected_out, select_op, equality_op, num_items, stream, debug_synchronous, ptx_version, scan_init_kernel, select_if_kernel, select_if_config)\
         hipError_t error = hipSuccess;\
-        do\
-        {\
             int device_ordinal;\
             if (CubDebug(error = hipGetDevice(&device_ordinal))) break;\
             int sm_count;\
@@ -99,9 +97,7 @@
                 num_tiles);\
             if (CubDebug(error = hipPeekAtLastError())) break;\
             if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
-        }\
-        while (0);\
-        return error;
+        return error
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
