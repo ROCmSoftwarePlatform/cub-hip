@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -49,19 +49,19 @@ template <int BINS>
 struct BlockHistogramAtomic
 {
     /// Shared memory storage layout type
-    struct _TempStorage {};
+    struct TempStorage {};
 
 
     /// Constructor
     __device__ __forceinline__ BlockHistogramAtomic(
-        _TempStorage &temp_storage)
+        TempStorage &temp_storage)
     {}
 
 
     /// Composite data onto an existing histogram
     template <
         typename            T,
-        typename            CounterT,
+        typename            CounterT,     
         int                 ITEMS_PER_THREAD>
     __device__ __forceinline__ void Composite(
         T                   (&items)[ITEMS_PER_THREAD],     ///< [in] Calling thread's input values to histogram

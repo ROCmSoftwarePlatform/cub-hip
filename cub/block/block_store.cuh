@@ -2,7 +2,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -647,8 +647,7 @@ private:
         struct TempStorage : Uninitialized<_TempStorage> {};
 
         /// Thread reference to shared storage
-        //_TempStorage &temp_storage;
-        std::uintptr_t temp_storage;
+        _TempStorage &temp_storage;
 
         /// Linear thread-id
         int linear_tid;
@@ -658,8 +657,7 @@ private:
             TempStorage &temp_storage,
             int linear_tid)
         :
-            //temp_storage(temp_storage.Alias()),
-            temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
+            temp_storage(temp_storage.Alias()),
             linear_tid(linear_tid)
         {}
 
@@ -669,7 +667,7 @@ private:
             OutputIteratorT     block_itr,                  ///< [in] The thread block's base output iterator for storing to
             T                   (&items)[ITEMS_PER_THREAD]) ///< [in] Data to store
         {
-            BlockExchange(*reinterpret_cast<_TempStorage*>(temp_storage)).BlockedToStriped(items);
+            BlockExchange(temp_storage).BlockedToStriped(items);
             StoreDirectStriped<BLOCK_THREADS>(linear_tid, block_itr, items);
         }
 
@@ -680,9 +678,9 @@ private:
             T                   (&items)[ITEMS_PER_THREAD], ///< [in] Data to store
             int                 valid_items)                ///< [in] Number of valid items to write
         {
-            BlockExchange(*reinterpret_cast<_TempStorage*>(temp_storage)).BlockedToStriped(items);
-            reinterpret_cast<_TempStorage*>(temp_storage)->valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
-            StoreDirectStriped<BLOCK_THREADS>(linear_tid, block_itr, items, reinterpret_cast<_TempStorage*>(temp_storage)->valid_items);
+            BlockExchange(temp_storage).BlockedToStriped(items);
+            temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            StoreDirectStriped<BLOCK_THREADS>(linear_tid, block_itr, items, temp_storage.valid_items);
         }
     };
 
@@ -715,8 +713,7 @@ private:
         struct TempStorage : Uninitialized<_TempStorage> {};
 
         /// Thread reference to shared storage
-        //_TempStorage &temp_storage;
-        std::uintptr_t temp_storage;
+        _TempStorage &temp_storage;
 
         /// Linear thread-id
         int linear_tid;
@@ -726,8 +723,7 @@ private:
             TempStorage &temp_storage,
             int linear_tid)
         :
-            //temp_storage(temp_storage.Alias()),
-            temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
+            temp_storage(temp_storage.Alias()),
             linear_tid(linear_tid)
         {}
 
@@ -737,7 +733,7 @@ private:
             OutputIteratorT   block_itr,                    ///< [in] The thread block's base output iterator for storing to
             T                 (&items)[ITEMS_PER_THREAD])   ///< [in] Data to store
         {
-            BlockExchange(*reinterpret_cast<_TempStorage*>(temp_storage)).BlockedToWarpStriped(items);
+            BlockExchange(temp_storage).BlockedToWarpStriped(items);
             StoreDirectWarpStriped(linear_tid, block_itr, items);
         }
 
@@ -748,9 +744,9 @@ private:
             T                 (&items)[ITEMS_PER_THREAD],   ///< [in] Data to store
             int               valid_items)                  ///< [in] Number of valid items to write
         {
-            BlockExchange(*reinterpret_cast<_TempStorage*>(temp_storage)).BlockedToWarpStriped(items);
-            reinterpret_cast<_TempStorage*>(temp_storage)->valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
-            StoreDirectWarpStriped(linear_tid, block_itr, items, reinterpret_cast<_TempStorage*>(temp_storage)->valid_items);
+            BlockExchange(temp_storage).BlockedToWarpStriped(items);
+            temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            StoreDirectWarpStriped(linear_tid, block_itr, items, temp_storage.valid_items);
         }
     };
 
@@ -783,8 +779,7 @@ private:
         struct TempStorage : Uninitialized<_TempStorage> {};
 
         /// Thread reference to shared storage
-        //_TempStorage &temp_storage;
-        std::uintptr_t temp_storage;
+        _TempStorage &temp_storage;
 
         /// Linear thread-id
         int linear_tid;
@@ -794,8 +789,7 @@ private:
             TempStorage &temp_storage,
             int linear_tid)
         :
-            //temp_storage(temp_storage.Alias()),
-            temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
+            temp_storage(temp_storage.Alias()),
             linear_tid(linear_tid)
         {}
 
@@ -805,7 +799,7 @@ private:
             OutputIteratorT     block_itr,                  ///< [in] The thread block's base output iterator for storing to
             T                   (&items)[ITEMS_PER_THREAD]) ///< [in] Data to store
         {
-            BlockExchange(*reinterpret_cast<_TempStorage*>(temp_storage)).BlockedToWarpStriped(items);
+            BlockExchange(temp_storage).BlockedToWarpStriped(items);
             StoreDirectWarpStriped(linear_tid, block_itr, items);
         }
 
@@ -813,12 +807,12 @@ private:
         template <typename OutputIteratorT>
         __device__ __forceinline__ void Store(
             OutputIteratorT   block_itr,                  ///< [in] The thread block's base output iterator for storing to
-            T                 (&items)[ITEMS_PER_THREAD], ///< [in] Data to store
-            int               valid_items)                ///< [in] Number of valid items to write
+            T                   (&items)[ITEMS_PER_THREAD], ///< [in] Data to store
+            int                 valid_items)                ///< [in] Number of valid items to write
         {
-            reinterpret_cast<_TempStorage*>(temp_storage)->valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
-            BlockExchange(*reinterpret_cast<_TempStorage*>(temp_storage)).BlockedToWarpStriped(items);
-            StoreDirectWarpStriped(linear_tid, block_itr, items, reinterpret_cast<_TempStorage*>(temp_storage)->valid_items);
+            temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            BlockExchange(temp_storage).BlockedToWarpStriped(items);
+            StoreDirectWarpStriped(linear_tid, block_itr, items, temp_storage.valid_items);
         }
     };
 
@@ -851,8 +845,7 @@ private:
      ******************************************************************************/
 
     /// Thread reference to shared storage
-    //_TempStorage &temp_storage;
-    std::uintptr_t temp_storage;
+    _TempStorage &temp_storage;
 
     /// Linear thread-id
     int linear_tid;
@@ -885,8 +878,7 @@ public:
     __device__ __forceinline__ BlockStore(
         TempStorage &temp_storage)             ///< [in] Reference to memory allocation having layout type TempStorage
     :
-        //temp_storage(temp_storage.Alias()),
-        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
+        temp_storage(temp_storage.Alias()),
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
     {}
 
@@ -943,7 +935,7 @@ public:
         OutputIteratorT     block_itr,                  ///< [in] The thread block's base output iterator for storing to
         T                   (&items)[ITEMS_PER_THREAD]) ///< [in] Data to store
     {
-        InternalStore(*reinterpret_cast<_TempStorage*>(temp_storage), linear_tid).Store(block_itr, items);
+        InternalStore(temp_storage, linear_tid).Store(block_itr, items);
     }
 
     /**
@@ -993,7 +985,7 @@ public:
         T                   (&items)[ITEMS_PER_THREAD], ///< [in] Data to store
         int                 valid_items)                ///< [in] Number of valid items to write
     {
-        InternalStore(*reinterpret_cast<_TempStorage*>(temp_storage), linear_tid).Store(block_itr, items, valid_items);
+        InternalStore(temp_storage, linear_tid).Store(block_itr, items, valid_items);
     }
 };
 

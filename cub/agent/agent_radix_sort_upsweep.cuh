@@ -161,8 +161,7 @@ struct AgentRadixSortUpsweep
     //---------------------------------------------------------------------
 
     // Shared storage for this CTA
-    //_TempStorage    &temp_storage;
-    std::uintptr_t temp_storage;
+    _TempStorage    &temp_storage;
 
     // Thread-local counters for periodically aggregating composite-counter lanes
     OffsetT         local_counts[LANES_PER_WARP][PACKING_RATIO];
@@ -229,7 +228,7 @@ struct AgentRadixSortUpsweep
         UnsignedBits row_offset = digit >> LOG_PACKING_RATIO;
 
         // Increment counter
-        reinterpret_cast<_TempStorage*>(temp_storage)->digit_counters[row_offset][hipThreadIdx_x][sub_counter]++;
+        temp_storage.digit_counters[row_offset][hipThreadIdx_x][sub_counter]++;
     }
 
 
@@ -241,7 +240,7 @@ struct AgentRadixSortUpsweep
         #pragma unroll
         for (int LANE = 0; LANE < COUNTER_LANES; LANE++)
         {
-            reinterpret_cast<_TempStorage*>(temp_storage)->packed_counters[LANE][hipThreadIdx_x] = 0;
+            temp_storage.packed_counters[LANE][hipThreadIdx_x] = 0;
         }
     }
 
@@ -284,7 +283,7 @@ struct AgentRadixSortUpsweep
                     #pragma unroll
                     for (int UNPACKED_COUNTER = 0; UNPACKED_COUNTER < PACKING_RATIO; UNPACKED_COUNTER++)
                     {
-                        OffsetT counter = reinterpret_cast<_TempStorage*>(temp_storage)->digit_counters[counter_lane][warp_tid + PACKED_COUNTER][UNPACKED_COUNTER];
+                        OffsetT counter = temp_storage.digit_counters[counter_lane][warp_tid + PACKED_COUNTER][UNPACKED_COUNTER];
                         local_counts[LANE][UNPACKED_COUNTER] += counter;
                     }
                 }
@@ -313,7 +312,7 @@ struct AgentRadixSortUpsweep
                 #pragma unroll
                 for (int UNPACKED_COUNTER = 0; UNPACKED_COUNTER < PACKING_RATIO; UNPACKED_COUNTER++)
                 {
-                    reinterpret_cast<_TempStorage*>(temp_storage)->digit_partials[digit_row + UNPACKED_COUNTER][warp_tid] =
+                    temp_storage.digit_partials[digit_row + UNPACKED_COUNTER][warp_tid] =
                         local_counts[LANE][UNPACKED_COUNTER];
                 }
             }
@@ -325,7 +324,7 @@ struct AgentRadixSortUpsweep
         if (hipThreadIdx_x < RADIX_DIGITS)
         {
             bin_count = ThreadReduce<WARP_THREADS>(
-                reinterpret_cast<_TempStorage*>(temp_storage)->digit_partials[hipThreadIdx_x],
+                temp_storage.digit_partials[hipThreadIdx_x],
                 Sum());
         }
     }
@@ -381,8 +380,7 @@ struct AgentRadixSortUpsweep
         int         current_bit,
         int         num_bits)
     :
-        //temp_storage(temp_storage.Alias()),
-        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
+        temp_storage(temp_storage.Alias()),
         d_keys_in(reinterpret_cast<const UnsignedBits*>(d_keys_in)),
         current_bit(current_bit),
         num_bits(num_bits)
@@ -444,8 +442,6 @@ struct AgentRadixSortUpsweep
         ReduceUnpackedCounts(bin_count);
     }
 
-    __host__ __device__
-    ~AgentRadixSortUpsweep() {}
 };
 
 

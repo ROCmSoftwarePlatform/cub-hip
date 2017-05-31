@@ -2,7 +2,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -117,7 +117,6 @@ namespace cub {
  * <tt>{ [0,1,2,3], [4,5,6,7], [8,9,10,11], ..., [508,509,510,511] }</tt>.
  *
  */
-#ifdef __HIP_PLATFORM_HCC__
 template <
     typename                KeyT,
     int                     BLOCK_DIM_X,
@@ -130,20 +129,6 @@ template <
     int                     BLOCK_DIM_Y             = 1,
     int                     BLOCK_DIM_Z             = 1,
     int                     PTX_ARCH                = CUB_PTX_ARCH>
-#elif defined(__HIP_PLATFORM_NVCC__)
-template <
-    typename                KeyT,
-    int                     BLOCK_DIM_X,
-    int                     ITEMS_PER_THREAD,
-    typename                ValueT                   = NullType,
-    int                     RADIX_BITS              = 4,
-    bool                    MEMOIZE_OUTER_SCAN      = (CUB_PTX_ARCH >= 350) ? true : false,
-    BlockScanAlgorithm      INNER_SCAN_ALGORITHM    = BLOCK_SCAN_WARP_SCANS,
-    cudaSharedMemConfig     SMEM_CONFIG             = cudaSharedMemBankSizeFourByte,
-    int                     BLOCK_DIM_Y             = 1,
-    int                     BLOCK_DIM_Z             = 1,
-    int                     PTX_ARCH                = CUB_PTX_ARCH>
-#endif
 class BlockRadixSort
 {
 private:
@@ -215,8 +200,7 @@ private:
      ******************************************************************************/
 
     /// Shared storage reference
-    //_TempStorage &temp_storage;
-    std::uintptr_t temp_storage;
+    _TempStorage &temp_storage;
 
     /// Linear thread-id
     unsigned int linear_tid;
@@ -240,7 +224,7 @@ private:
         int             pass_bits,
         Int2Type<false> /*is_descending*/)
     {
-        AscendingBlockRadixRank{reinterpret_cast<_TempStorage*>(temp_storage)->asending_ranking_storage}.RankKeys(
+        AscendingBlockRadixRank(temp_storage.asending_ranking_storage).RankKeys(
             unsigned_keys,
             ranks,
             begin_bit,
@@ -255,7 +239,7 @@ private:
         int             pass_bits,
         Int2Type<true>  /*is_descending*/)
     {
-        DescendingBlockRadixRank(reinterpret_cast<_TempStorage*>(temp_storage)->descending_ranking_storage).RankKeys(
+        DescendingBlockRadixRank(temp_storage.descending_ranking_storage).RankKeys(
             unsigned_keys,
             ranks,
             begin_bit,
@@ -272,7 +256,7 @@ private:
         __syncthreads();
 
         // Exchange values through shared memory in blocked arrangement
-        BlockExchangeValues(reinterpret_cast<_TempStorage*>(temp_storage)->exchange_values).ScatterToBlocked(values, ranks);
+        BlockExchangeValues(temp_storage.exchange_values).ScatterToBlocked(values, ranks);
     }
 
     /// ExchangeValues (specialized for key-value sort, to-striped arrangement)
@@ -285,7 +269,7 @@ private:
         __syncthreads();
 
         // Exchange values through shared memory in blocked arrangement
-        BlockExchangeValues(reinterpret_cast<_TempStorage*>(temp_storage)->exchange_values).ScatterToStriped(values, ranks);
+        BlockExchangeValues(temp_storage.exchange_values).ScatterToStriped(values, ranks);
     }
 
     /// ExchangeValues (specialized for keys-only sort)
@@ -330,7 +314,7 @@ private:
             __syncthreads();
 
             // Exchange keys through shared memory in blocked arrangement
-            BlockExchangeKeys(reinterpret_cast<_TempStorage*>(temp_storage)->exchange_keys).ScatterToBlocked(keys, ranks);
+            BlockExchangeKeys(temp_storage.exchange_keys).ScatterToBlocked(keys, ranks);
 
             // Exchange values through shared memory in blocked arrangement
             ExchangeValues(values, ranks, is_keys_only, Int2Type<true>());
@@ -389,7 +373,7 @@ public:
             if (begin_bit >= end_bit)
             {
                 // Last pass exchanges keys through shared memory in striped arrangement
-                BlockExchangeKeys(reinterpret_cast<_TempStorage*>(temp_storage)->exchange_keys).ScatterToStriped(keys, ranks);
+                BlockExchangeKeys(temp_storage.exchange_keys).ScatterToStriped(keys, ranks);
 
                 // Last pass exchanges through shared memory in striped arrangement
                 ExchangeValues(values, ranks, is_keys_only, Int2Type<false>());
@@ -399,7 +383,7 @@ public:
             }
 
             // Exchange keys through shared memory in blocked arrangement
-            BlockExchangeKeys(reinterpret_cast<_TempStorage*>(temp_storage)->exchange_keys).ScatterToBlocked(keys, ranks);
+            BlockExchangeKeys(temp_storage.exchange_keys).ScatterToBlocked(keys, ranks);
 
             // Exchange values through shared memory in blocked arrangement
             ExchangeValues(values, ranks, is_keys_only, Int2Type<true>());
@@ -431,8 +415,7 @@ public:
      */
     __device__ __forceinline__ BlockRadixSort()
     :
-        //temp_storage(PrivateStorage()),
-        temp_storage{reinterpret_cast<std::uintptr_t>(&PrivateStorage())},
+        temp_storage(PrivateStorage()),
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
     {}
 
@@ -443,8 +426,7 @@ public:
     __device__ __forceinline__ BlockRadixSort(
         TempStorage &temp_storage)             ///< [in] Reference to memory allocation having layout type TempStorage
     :
-        //temp_storage(temp_storage.Alias()),
-        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
+        temp_storage(temp_storage.Alias()),
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
     {}
 
@@ -497,7 +479,12 @@ public:
         int     begin_bit   = 0,                    ///< [in] <b>[optional]</b> The beginning (least-significant) bit index needed for key comparison
         int     end_bit     = sizeof(KeyT) * 8)      ///< [in] <b>[optional]</b> The past-the-end (most-significant) bit index needed for key comparison
     {
+#ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
+#elif defined(__HIP_PLATFORM_HCC__)
+	typedef struct S { NullType n; } __attribute__((aligned(4))) ALIGNED_NULLTYPE;
+	ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
+#endif
         SortBlocked(keys, values, begin_bit, end_bit, Int2Type<false>(), Int2Type<KEYS_ONLY>());
     }
 
@@ -597,7 +584,12 @@ public:
         int     begin_bit   = 0,                    ///< [in] <b>[optional]</b> The beginning (least-significant) bit index needed for key comparison
         int     end_bit     = sizeof(KeyT) * 8)      ///< [in] <b>[optional]</b> The past-the-end (most-significant) bit index needed for key comparison
     {
+#ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
+#elif defined(__HIP_PLATFORM_HCC__)
+	typedef struct S { NullType n; } __attribute__((aligned(4))) ALIGNED_NULLTYPE;
+	ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
+#endif
         SortBlocked(keys, values, begin_bit, end_bit, Int2Type<true>(), Int2Type<KEYS_ONLY>());
     }
 
@@ -706,7 +698,12 @@ public:
         int     begin_bit   = 0,                    ///< [in] <b>[optional]</b> The beginning (least-significant) bit index needed for key comparison
         int     end_bit     = sizeof(KeyT) * 8)      ///< [in] <b>[optional]</b> The past-the-end (most-significant) bit index needed for key comparison
     {
+#ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
+#elif defined(__HIP_PLATFORM_HCC__)
+	typedef struct S { NullType n; } __attribute__((aligned(4))) ALIGNED_NULLTYPE;
+        ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
+#endif
         SortBlockedToStriped(keys, values, begin_bit, end_bit, Int2Type<false>(), Int2Type<KEYS_ONLY>());
     }
 
@@ -808,7 +805,12 @@ public:
         int     begin_bit   = 0,                    ///< [in] <b>[optional]</b> The beginning (least-significant) bit index needed for key comparison
         int     end_bit     = sizeof(KeyT) * 8)      ///< [in] <b>[optional]</b> The past-the-end (most-significant) bit index needed for key comparison
     {
+#ifdef __HIP_PLATFORM_NVCC__
         NullType values[ITEMS_PER_THREAD];
+#elif defined(__HIP_PLATFORM_HCC__)
+	typedef struct S { NullType n; } __attribute__((aligned(4))) ALIGNED_NULLTYPE;
+	ALIGNED_NULLTYPE values[ITEMS_PER_THREAD];
+#endif
         SortBlockedToStriped(keys, values, begin_bit, end_bit, Int2Type<true>(), Int2Type<KEYS_ONLY>());
     }
 

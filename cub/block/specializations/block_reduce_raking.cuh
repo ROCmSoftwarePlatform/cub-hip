@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -114,8 +114,7 @@ struct BlockReduceRaking
 
 
     // Thread fields
-    //_TempStorage &temp_storage;
-    std::uintptr_t temp_storage;
+    _TempStorage &temp_storage;
     unsigned int linear_tid;
 
 
@@ -123,8 +122,7 @@ struct BlockReduceRaking
     __device__ __forceinline__ BlockReduceRaking(
         TempStorage &temp_storage)
     :
-        //temp_storage(temp_storage.Alias()),
-        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
+        temp_storage(temp_storage.Alias()),
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
     {}
 
@@ -171,7 +169,7 @@ struct BlockReduceRaking
         if (WARP_SYNCHRONOUS)
         {
             // Short-circuit directly to warp synchronous reduction (unguarded if active threads is a power-of-two)
-            partial = WarpReduce(reinterpret_cast<_TempStorage*>(temp_storage)->warp_storage).template Reduce<IS_FULL_TILE, SEGMENT_LENGTH>(
+            partial = WarpReduce(temp_storage.warp_storage).template Reduce<IS_FULL_TILE, SEGMENT_LENGTH>(
                 partial,
                 num_valid,
                 reduction_op);
@@ -179,7 +177,7 @@ struct BlockReduceRaking
         else
         {
             // Place partial into shared memory grid.
-            *BlockRakingLayout::PlacementPtr(reinterpret_cast<_TempStorage*>(temp_storage)->raking_grid, linear_tid) = partial;
+            *BlockRakingLayout::PlacementPtr(temp_storage.raking_grid, linear_tid) = partial;
 
             __syncthreads();
 
@@ -187,12 +185,12 @@ struct BlockReduceRaking
             if (linear_tid < RAKING_THREADS)
             {
                 // Raking reduction in grid
-                T *raking_segment = BlockRakingLayout::RakingPtr(reinterpret_cast<_TempStorage*>(temp_storage)->raking_grid, linear_tid);
+                T *raking_segment = BlockRakingLayout::RakingPtr(temp_storage.raking_grid, linear_tid);
                 partial = raking_segment[0];
 
                 partial = RakingReduction<IS_FULL_TILE>(reduction_op, raking_segment, partial, num_valid, Int2Type<1>());
 
-                partial = WarpReduce(reinterpret_cast<_TempStorage*>(temp_storage)->warp_storage).template Reduce<IS_FULL_TILE && RAKING_UNGUARDED, SEGMENT_LENGTH>(
+                partial = WarpReduce(temp_storage.warp_storage).template Reduce<IS_FULL_TILE && RAKING_UNGUARDED, SEGMENT_LENGTH>(
                     partial,
                     num_valid,
                     reduction_op);
@@ -210,9 +208,9 @@ struct BlockReduceRaking
         T                   partial,            ///< [in] Calling thread's input partial reductions
         int                 num_valid)          ///< [in] Number of valid elements (may be less than BLOCK_THREADS)
     {
-        //cub::Sum reduction_op;
+        cub::Sum reduction_op;
 
-        return Reduce<IS_FULL_TILE>(partial, num_valid, /*reduction_op*/cub::Sum());
+        return Reduce<IS_FULL_TILE>(partial, num_valid, reduction_op);
     }
 
 

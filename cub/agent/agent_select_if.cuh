@@ -221,8 +221,7 @@ struct AgentSelectIf
     // Per-thread fields
     //---------------------------------------------------------------------
 
-    //_TempStorage&                   temp_storage;       ///< Reference to temp_storage
-    std::uintptr_t                  temp_storage;
+    _TempStorage&                   temp_storage;       ///< Reference to temp_storage
     WrappedInputIteratorT           d_in;               ///< Input items
     SelectedOutputIteratorT         d_selected_out;     ///< Unique output items
     WrappedFlagsInputIteratorT      d_flags_in;         ///< Input selection flags (if applicable)
@@ -246,8 +245,7 @@ struct AgentSelectIf
         EqualityOpT                 equality_op,        ///< Equality operator
         OffsetT                     num_items)          ///< Total number of input items
     :
-        //temp_storage(temp_storage.Alias()),
-        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
+        temp_storage(temp_storage.Alias()),
         d_in(d_in),
         d_flags_in(d_flags_in),
         d_selected_out(d_selected_out),
@@ -302,11 +300,11 @@ struct AgentSelectIf
         if (IS_LAST_TILE)
         {
             // Out-of-bounds items are selection_flags
-            BlockLoadFlags(reinterpret_cast<_TempStorage*>(temp_storage)->load_flags).Load(d_flags_in + tile_offset, flags, num_tile_items, 1);
+            BlockLoadFlags(temp_storage.load_flags).Load(d_flags_in + tile_offset, flags, num_tile_items, 1);
         }
         else
         {
-            BlockLoadFlags(reinterpret_cast<_TempStorage*>(temp_storage)->load_flags).Load(d_flags_in + tile_offset, flags);
+            BlockLoadFlags(temp_storage.load_flags).Load(d_flags_in + tile_offset, flags);
         }
 
         // Convert flag type to selection_flags type
@@ -334,7 +332,7 @@ struct AgentSelectIf
             __syncthreads();
 
             // Set head selection_flags.  First tile sets the first flag for the first item
-            BlockDiscontinuityT(reinterpret_cast<_TempStorage*>(temp_storage)->discontinuity).FlagHeads(selection_flags, items, inequality_op);
+            BlockDiscontinuityT(temp_storage.discontinuity).FlagHeads(selection_flags, items, inequality_op);
         }
         else
         {
@@ -344,7 +342,7 @@ struct AgentSelectIf
 
             __syncthreads();
 
-            BlockDiscontinuityT(reinterpret_cast<_TempStorage*>(temp_storage)->discontinuity).FlagHeads(selection_flags, items, inequality_op, tile_predecessor);
+            BlockDiscontinuityT(temp_storage.discontinuity).FlagHeads(selection_flags, items, inequality_op, tile_predecessor);
         }
 
         // Set selection flags for out-of-bounds items
@@ -410,7 +408,7 @@ struct AgentSelectIf
             int local_scatter_offset = selection_indices[ITEM] - num_selections_prefix;
             if (selection_flags[ITEM])
             {
-                reinterpret_cast<_TempStorage*>(temp_storage)->raw_exchange.Alias()[local_scatter_offset] = items[ITEM];
+                temp_storage.raw_exchange.Alias()[local_scatter_offset] = items[ITEM];
             }
         }
 
@@ -418,7 +416,7 @@ struct AgentSelectIf
 
         for (int item = hipThreadIdx_x; item < num_tile_selections; item += BLOCK_THREADS)
         {
-            d_selected_out[num_selections_prefix + item] = reinterpret_cast<_TempStorage*>(temp_storage)->raw_exchange.Alias()[item];
+            d_selected_out[num_selections_prefix + item] = temp_storage.raw_exchange.Alias()[item];
         }
     }
 
@@ -452,7 +450,7 @@ struct AgentSelectIf
                                             tile_num_rejections + local_selection_idx :
                                             local_rejection_idx;
 
-            reinterpret_cast<_TempStorage*>(temp_storage)->raw_exchange.Alias()[local_scatter_offset] = items[ITEM];
+            temp_storage.raw_exchange.Alias()[local_scatter_offset] = items[ITEM];
         }
 
         __syncthreads();
@@ -468,7 +466,7 @@ struct AgentSelectIf
                                         num_items - num_rejected_prefix - rejection_idx - 1 :
                                         num_selections_prefix + selection_idx;
 
-            OutputT item = reinterpret_cast<_TempStorage*>(temp_storage)->raw_exchange.Alias()[item_idx];
+            OutputT item = temp_storage.raw_exchange.Alias()[item_idx];
 
             if (!IS_LAST_TILE || (item_idx < num_tile_items))
             {
@@ -535,9 +533,9 @@ struct AgentSelectIf
 
         // Load items
         if (IS_LAST_TILE)
-            BlockLoadT(reinterpret_cast<_TempStorage*>(temp_storage)->load_items).Load(d_in + tile_offset, items, num_tile_items);
+            BlockLoadT(temp_storage.load_items).Load(d_in + tile_offset, items, num_tile_items);
         else
-            BlockLoadT(reinterpret_cast<_TempStorage*>(temp_storage)->load_items).Load(d_in + tile_offset, items);
+            BlockLoadT(temp_storage.load_items).Load(d_in + tile_offset, items);
 
         // Initialize selection_flags
         InitializeSelections<true, IS_LAST_TILE>(
@@ -551,7 +549,7 @@ struct AgentSelectIf
 
         // Exclusive scan of selection_flags
         OffsetT num_tile_selections;
-        BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).ExclusiveSum(selection_flags, selection_indices, num_tile_selections);
+        BlockScanT(temp_storage.scan).ExclusiveSum(selection_flags, selection_indices, num_tile_selections);
 
         if (hipThreadIdx_x == 0)
         {
@@ -595,9 +593,9 @@ struct AgentSelectIf
 
         // Load items
         if (IS_LAST_TILE)
-            BlockLoadT(reinterpret_cast<_TempStorage*>(temp_storage)->load_items).Load(d_in + tile_offset, items, num_tile_items);
+            BlockLoadT(temp_storage.load_items).Load(d_in + tile_offset, items, num_tile_items);
         else
-            BlockLoadT(reinterpret_cast<_TempStorage*>(temp_storage)->load_items).Load(d_in + tile_offset, items);
+            BlockLoadT(temp_storage.load_items).Load(d_in + tile_offset, items);
 
         // Initialize selection_flags
         InitializeSelections<false, IS_LAST_TILE>(
@@ -610,8 +608,8 @@ struct AgentSelectIf
         __syncthreads();
 
         // Exclusive scan of values and selection_flags
-        TilePrefixCallbackOpT prefix_op(tile_state, reinterpret_cast<_TempStorage*>(temp_storage)->prefix, cub::Sum(), tile_idx);
-        BlockScanT(reinterpret_cast<_TempStorage*>(temp_storage)->scan).ExclusiveSum(selection_flags, selection_indices, prefix_op);
+        TilePrefixCallbackOpT prefix_op(tile_state, temp_storage.prefix, cub::Sum(), tile_idx);
+        BlockScanT(temp_storage.scan).ExclusiveSum(selection_flags, selection_indices, prefix_op);
 
         OffsetT num_tile_selections     = prefix_op.GetBlockAggregate();
         OffsetT num_selections          = prefix_op.GetInclusivePrefix();
@@ -696,7 +694,7 @@ struct AgentSelectIf
             }
         }
     }
-  __host__ __device__ ~AgentSelectIf(){}
+
 };
 
 

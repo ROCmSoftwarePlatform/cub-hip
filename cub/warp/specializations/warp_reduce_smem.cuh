@@ -99,8 +99,7 @@ struct WarpReduceSmem
      * Thread fields
      ******************************************************************************/
 
-    //_TempStorage    &temp_storage;
-    std::uintptr_t temp_storage;
+    _TempStorage    &temp_storage;
     unsigned int    lane_id;
 
 
@@ -112,8 +111,7 @@ struct WarpReduceSmem
     __device__ __forceinline__ WarpReduceSmem(
         TempStorage     &temp_storage)
     :
-//        temp_storage(temp_storage.Alias()),
-        temp_storage(reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())),
+        temp_storage(temp_storage.Alias()),
         lane_id(IS_ARCH_WARP ?
             LaneId() :
             LaneId() % LOGICAL_WARP_THREADS)
@@ -144,12 +142,12 @@ struct WarpReduceSmem
         const int OFFSET = 1 << STEP;
 
         // Share input through buffer
-        ThreadStore<STORE_VOLATILE>(&reinterpret_cast<_TempStorage*>(temp_storage)->reduce[lane_id], input);
+        ThreadStore<STORE_VOLATILE>(&temp_storage.reduce[lane_id], input);
 
         // Update input if peer_addend is in range
         if ((ALL_LANES_VALID && IS_POW_OF_TWO) || ((lane_id + OFFSET) * FOLDED_ITEMS_PER_LANE < folded_items_per_warp))
         {
-            T peer_addend = ThreadLoad<LOAD_VOLATILE>(&reinterpret_cast<_TempStorage*>(temp_storage)->reduce[lane_id + OFFSET]);
+            T peer_addend = ThreadLoad<LOAD_VOLATILE>(&temp_storage.reduce[lane_id + OFFSET]);
             input = reduction_op(input, peer_addend);
         }
 
@@ -233,12 +231,12 @@ struct WarpReduceSmem
             const int OFFSET = 1 << STEP;
 
             // Share input into buffer
-            ThreadStore<STORE_VOLATILE>(&reinterpret_cast<_TempStorage*>(temp_storage)->reduce[lane_id], input);
+            ThreadStore<STORE_VOLATILE>(&temp_storage.reduce[lane_id], input);
 
             // Update input if peer_addend is in range
             if (OFFSET + lane_id < next_flag)
             {
-                T peer_addend = ThreadLoad<LOAD_VOLATILE>(&reinterpret_cast<_TempStorage*>(temp_storage)->reduce[lane_id + OFFSET]);
+                T peer_addend = ThreadLoad<LOAD_VOLATILE>(&temp_storage.reduce[lane_id + OFFSET]);
                 input = reduction_op(input, peer_addend);
             }
         }
@@ -268,7 +266,7 @@ struct WarpReduceSmem
         };
 
         // Alias flags onto shared data storage
-        volatile SmemFlag *flag_storage = reinterpret_cast<_TempStorage*>(temp_storage)->flags;
+        volatile SmemFlag *flag_storage = temp_storage.flags;
 
         SmemFlag flag_status = (flag) ? SET : UNSET;
 
@@ -277,10 +275,10 @@ struct WarpReduceSmem
             const int OFFSET = 1 << STEP;
 
             // Share input through buffer
-            ThreadStore<STORE_VOLATILE>(&reinterpret_cast<_TempStorage*>(temp_storage)->reduce[lane_id], input);
+            ThreadStore<STORE_VOLATILE>(&temp_storage.reduce[lane_id], input);
 
             // Get peer from buffer
-            T peer_addend = ThreadLoad<LOAD_VOLATILE>(&reinterpret_cast<_TempStorage*>(temp_storage)->reduce[lane_id + OFFSET]);
+            T peer_addend = ThreadLoad<LOAD_VOLATILE>(&temp_storage.reduce[lane_id + OFFSET]);
 
             // Share flag through buffer
             flag_storage[lane_id] = flag_status;

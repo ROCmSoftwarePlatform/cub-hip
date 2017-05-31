@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -67,7 +67,6 @@ struct BlockHistogramSort
     };
 
     // Parameterize BlockRadixSort type for our thread block
-  #ifdef __HIP_PLATFORM_HCC__
     typedef BlockRadixSort<
             T,
             BLOCK_DIM_X,
@@ -81,21 +80,7 @@ struct BlockHistogramSort
             BLOCK_DIM_Z,
             PTX_ARCH>
         BlockRadixSortT;
-  #elif defined(__HIP_PLATFORM_NVCC__)
-    typedef BlockRadixSort<
-            T,
-            BLOCK_DIM_X,
-            ITEMS_PER_THREAD,
-            NullType,
-            4,
-            (PTX_ARCH >= 350) ? true : false,
-            BLOCK_SCAN_WARP_SCANS,
-            cudaSharedMemBankSizeFourByte,
-            BLOCK_DIM_Y,
-            BLOCK_DIM_Z,
-            PTX_ARCH>
-        BlockRadixSortT;
-  #endif
+
     // Parameterize BlockDiscontinuity type for our thread block
     typedef BlockDiscontinuity<
             T,
@@ -120,7 +105,6 @@ struct BlockHistogramSort
             unsigned int run_begin[BINS];
             unsigned int run_end[BINS];
         };
-        __device__ __forceinline__ _TempStorage& Alias() { return *this; }
     };
 
 
@@ -129,17 +113,15 @@ struct BlockHistogramSort
 
 
     // Thread fields
-    //_TempStorage &temp_storage;
-    std::uintptr_t temp_storage;
+    _TempStorage &temp_storage;
     unsigned int linear_tid;
 
 
     /// Constructor
     __device__ __forceinline__ BlockHistogramSort(
-        _TempStorage     &temp_storage)
+        TempStorage     &temp_storage)
     :
-        //temp_storage(temp_storage.Alias()),
-        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
+        temp_storage(temp_storage.Alias()),
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
     {}
 
@@ -148,13 +130,11 @@ struct BlockHistogramSort
     struct DiscontinuityOp
     {
         // Reference to temp_storage
-        //_TempStorage &temp_storage;
-        std::uintptr_t temp_storage;
+        _TempStorage &temp_storage;
 
         // Constructor
-        __device__ __forceinline__
-        DiscontinuityOp(std::uintptr_t temp_storage)
-            : temp_storage(temp_storage)
+        __device__ __forceinline__ DiscontinuityOp(_TempStorage &temp_storage) :
+            temp_storage(temp_storage)
         {}
 
         // Discontinuity predicate
@@ -163,8 +143,8 @@ struct BlockHistogramSort
             if (a != b)
             {
                 // Note the begin/end offsets in shared storage
-                reinterpret_cast<_TempStorage*>(temp_storage)->run_begin[b] = b_index;
-                reinterpret_cast<_TempStorage*>(temp_storage)->run_end[a] = b_index;
+                temp_storage.run_begin[b] = b_index;
+                temp_storage.run_end[a] = b_index;
 
                 return true;
             }
@@ -186,7 +166,7 @@ struct BlockHistogramSort
         enum { TILE_SIZE = BLOCK_THREADS * ITEMS_PER_THREAD };
 
         // Sort bytes in blocked arrangement
-        BlockRadixSortT{reinterpret_cast<_TempStorage*>(temp_storage)->sort}.Sort(items);
+        BlockRadixSortT(temp_storage.sort).Sort(items);
 
         __syncthreads();
 
@@ -196,14 +176,14 @@ struct BlockHistogramSort
         #pragma unroll
         for(; histo_offset + BLOCK_THREADS <= BINS; histo_offset += BLOCK_THREADS)
         {
-            reinterpret_cast<_TempStorage*>(temp_storage)->run_begin[histo_offset + linear_tid] = TILE_SIZE;
-            reinterpret_cast<_TempStorage*>(temp_storage)->run_end[histo_offset + linear_tid] = TILE_SIZE;
+            temp_storage.run_begin[histo_offset + linear_tid] = TILE_SIZE;
+            temp_storage.run_end[histo_offset + linear_tid] = TILE_SIZE;
         }
         // Finish up with guarded initialization if necessary
         if ((BINS % BLOCK_THREADS != 0) && (histo_offset + linear_tid < BINS))
         {
-            reinterpret_cast<_TempStorage*>(temp_storage)->run_begin[histo_offset + linear_tid] = TILE_SIZE;
-            reinterpret_cast<_TempStorage*>(temp_storage)->run_end[histo_offset + linear_tid] = TILE_SIZE;
+            temp_storage.run_begin[histo_offset + linear_tid] = TILE_SIZE;
+            temp_storage.run_end[histo_offset + linear_tid] = TILE_SIZE;
         }
 
         __syncthreads();
@@ -211,12 +191,11 @@ struct BlockHistogramSort
         int flags[ITEMS_PER_THREAD];    // unused
 
         // Compute head flags to demarcate contiguous runs of the same bin in the sorted tile
-        DiscontinuityOp flag_op(reinterpret_cast<std::uintptr_t>(temp_storage));
-        BlockDiscontinuityT(reinterpret_cast<_TempStorage*>(temp_storage)->flag).FlagHeads(flags, items, flag_op);
-
+        DiscontinuityOp flag_op(temp_storage);
+        BlockDiscontinuityT(temp_storage.flag).FlagHeads(flags, items, flag_op);
 
         // Update begin for first item
-        if (linear_tid == 0) reinterpret_cast<_TempStorage*>(temp_storage)->run_begin[items[0]] = 0;
+        if (linear_tid == 0) temp_storage.run_begin[items[0]] = 0;
 
         __syncthreads();
 
@@ -227,8 +206,7 @@ struct BlockHistogramSort
         for(; histo_offset + BLOCK_THREADS <= BINS; histo_offset += BLOCK_THREADS)
         {
             int thread_offset = histo_offset + linear_tid;
-            CounterT      count = reinterpret_cast<_TempStorage*>(temp_storage)->run_end[thread_offset] -
-                                  reinterpret_cast<_TempStorage*>(temp_storage)->run_begin[thread_offset];
+            CounterT      count = temp_storage.run_end[thread_offset] - temp_storage.run_begin[thread_offset];
             histogram[thread_offset] += count;
         }
 
@@ -236,8 +214,7 @@ struct BlockHistogramSort
         if ((BINS % BLOCK_THREADS != 0) && (histo_offset + linear_tid < BINS))
         {
             int thread_offset = histo_offset + linear_tid;
-            CounterT      count = reinterpret_cast<_TempStorage*>(temp_storage)->run_end[thread_offset] -
-                                  reinterpret_cast<_TempStorage*>(temp_storage)->run_begin[thread_offset];
+            CounterT      count = temp_storage.run_end[thread_offset] - temp_storage.run_begin[thread_offset];
             histogram[thread_offset] += count;
         }
     }

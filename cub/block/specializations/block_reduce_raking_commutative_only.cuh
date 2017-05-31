@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -112,8 +112,7 @@ struct BlockReduceRakingCommutativeOnly
 
 
     // Thread fields
-    //_TempStorage &temp_storage;
-    std::uintptr_t temp_storage;
+    _TempStorage &temp_storage;
     unsigned int linear_tid;
 
 
@@ -121,8 +120,7 @@ struct BlockReduceRakingCommutativeOnly
     __device__ __forceinline__ BlockReduceRakingCommutativeOnly(
         TempStorage &temp_storage)
     :
-        //temp_storage(temp_storage.Alias()),
-        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
+        temp_storage(temp_storage.Alias()),
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
     {}
 
@@ -135,13 +133,13 @@ struct BlockReduceRakingCommutativeOnly
     {
         if (USE_FALLBACK || !FULL_TILE)
         {
-            return FallBack(reinterpret_cast<_TempStorage*>(temp_storage)->fallback_storage).template Sum<FULL_TILE>(partial, num_valid);
+            return FallBack(temp_storage.fallback_storage).template Sum<FULL_TILE>(partial, num_valid);
         }
         else
         {
             // Place partial into shared memory grid
             if (linear_tid >= RAKING_THREADS)
-                *BlockRakingLayout::PlacementPtr(reinterpret_cast<_TempStorage*>(temp_storage)->raking_grid, linear_tid - RAKING_THREADS) = partial;
+                *BlockRakingLayout::PlacementPtr(temp_storage.raking_grid, linear_tid - RAKING_THREADS) = partial;
 
             __syncthreads();
 
@@ -149,11 +147,11 @@ struct BlockReduceRakingCommutativeOnly
             if (linear_tid < RAKING_THREADS)
             {
                 // Raking reduction in grid
-                T *raking_segment = BlockRakingLayout::RakingPtr(reinterpret_cast<_TempStorage*>(temp_storage)->raking_grid, linear_tid);
+                T *raking_segment = BlockRakingLayout::RakingPtr(temp_storage.raking_grid, linear_tid);
                 partial = ThreadReduce<SEGMENT_LENGTH>(raking_segment, cub::Sum(), partial);
 
                 // Warpscan
-                partial = WarpReduce(reinterpret_cast<_TempStorage*>(temp_storage)->warp_storage).Sum(partial);
+                partial = WarpReduce(temp_storage.warp_storage).Sum(partial);
             }
         }
 
@@ -172,13 +170,13 @@ struct BlockReduceRakingCommutativeOnly
     {
         if (USE_FALLBACK || !FULL_TILE)
         {
-            return FallBack(reinterpret_cast<_TempStorage*>(temp_storage)->fallback_storage).template Reduce<FULL_TILE>(partial, num_valid, reduction_op);
+            return FallBack(temp_storage.fallback_storage).template Reduce<FULL_TILE>(partial, num_valid, reduction_op);
         }
         else
         {
             // Place partial into shared memory grid
             if (linear_tid >= RAKING_THREADS)
-                *BlockRakingLayout::PlacementPtr(reinterpret_cast<_TempStorage*>(temp_storage)->raking_grid, linear_tid - RAKING_THREADS) = partial;
+                *BlockRakingLayout::PlacementPtr(temp_storage.raking_grid, linear_tid - RAKING_THREADS) = partial;
 
             __syncthreads();
 
@@ -186,11 +184,11 @@ struct BlockReduceRakingCommutativeOnly
             if (linear_tid < RAKING_THREADS)
             {
                 // Raking reduction in grid
-                T *raking_segment = BlockRakingLayout::RakingPtr(reinterpret_cast<_TempStorage*>(temp_storage)->raking_grid, linear_tid);
+                T *raking_segment = BlockRakingLayout::RakingPtr(temp_storage.raking_grid, linear_tid);
                 partial = ThreadReduce<SEGMENT_LENGTH>(raking_segment, reduction_op, partial);
 
                 // Warpscan
-                partial = WarpReduce(reinterpret_cast<_TempStorage*>(temp_storage)->warp_storage).Reduce(partial, reduction_op);
+                partial = WarpReduce(temp_storage.warp_storage).Reduce(partial, reduction_op);
             }
         }
 

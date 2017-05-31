@@ -212,8 +212,7 @@ struct AgentSpmv
     //---------------------------------------------------------------------
 
 
-    //_TempStorage&                   temp_storage;         /// Reference to temp_storage
-    std::uintptr_t                  temp_storage;
+    _TempStorage&                   temp_storage;         /// Reference to temp_storage
 
     SpmvParams<ValueT, OffsetT>&    spmv_params;
 
@@ -249,14 +248,14 @@ struct AgentSpmv
     {
         long long NAN_BITS  = 0xFFF0000000000001;
         nan_token           = reinterpret_cast<ValueT&>(NAN_BITS); // ValueT(0.0) / ValueT(0.0);
-    }
+    } 
 
 
     __device__ __forceinline__ void InitNan(float& nan_token)
     {
         int NAN_BITS        = 0xFF800001;
         nan_token           = reinterpret_cast<ValueT&>(NAN_BITS); // ValueT(0.0) / ValueT(0.0);
-    }
+    } 
 
 
     /**

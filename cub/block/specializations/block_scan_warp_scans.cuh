@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -79,7 +79,7 @@ struct BlockScanWarpScans
     typedef WarpScan<T, WARPS, PTX_ARCH> WarpAggregateScan;
 
     /// Shared memory storage layout type
-#ifdef __HIP_PLATFORM_NVCC__
+#ifdef __HIP_PLATFORM_NVCC
     struct __align__(32) _TempStorage
     {
         T                               warp_aggregates[WARPS];
@@ -90,8 +90,8 @@ struct BlockScanWarpScans
     struct __attribute__((aligned(32))) _TempStorage
     {
         T                               warp_aggregates[WARPS];
-        T                               block_prefix;               ///< Shared prefix for the entire threadblock
         typename WarpScanT::TempStorage warp_scan[WARPS];           ///< Buffer for warp-synchronous scans
+        T                               block_prefix;               ///< Shared prefix for the entire threadblock
     };
 #endif
 
@@ -105,8 +105,7 @@ struct BlockScanWarpScans
     //---------------------------------------------------------------------
 
     // Thread fields
-    //_TempStorage    &temp_storage;
-    std::uintptr_t  temp_storage;
+    _TempStorage    &temp_storage;
     unsigned int    linear_tid;
     unsigned int    warp_id;
     unsigned int    lane_id;
@@ -120,8 +119,7 @@ struct BlockScanWarpScans
     __device__ __forceinline__ BlockScanWarpScans(
         TempStorage &temp_storage)
     :
-        //temp_storage(temp_storage.Alias()),
-        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())},
+        temp_storage(temp_storage.Alias()),
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z)),
         warp_id((WARPS == 1) ? 0 : linear_tid / WARP_THREADS),
         lane_id(LaneId())
@@ -142,7 +140,7 @@ struct BlockScanWarpScans
         if (warp_id == WARP)
             warp_prefix = block_aggregate;
 
-        T addend = reinterpret_cast<_TempStorage*>(temp_storage)->warp_aggregates[WARP];
+        T addend = temp_storage.warp_aggregates[WARP];
         block_aggregate = scan_op(block_aggregate, addend);
 
         ApplyWarpAggregates(warp_prefix, scan_op, block_aggregate, Int2Type<WARP + 1>());
@@ -166,27 +164,27 @@ struct BlockScanWarpScans
     {
         // Last lane in each warp shares its warp-aggregate
         if (lane_id == WARP_THREADS - 1)
-            reinterpret_cast<_TempStorage*>(temp_storage)->warp_aggregates[warp_id] = warp_aggregate;
+            temp_storage.warp_aggregates[warp_id] = warp_aggregate;
 
         __syncthreads();
 
         // Accumulate block aggregates and save the one that is our warp's prefix
         T warp_prefix;
-        block_aggregate = reinterpret_cast<_TempStorage*>(temp_storage)->warp_aggregates[0];
+        block_aggregate = temp_storage.warp_aggregates[0];
 
-//        // Use template unrolling (since the PTX backend can't handle unrolling it for SM1x)
-//        ApplyWarpAggregates(warp_prefix, scan_op, block_aggregate, Int2Type<1>());
-
+        // Use template unrolling (since the PTX backend can't handle unrolling it for SM1x)
+        ApplyWarpAggregates(warp_prefix, scan_op, block_aggregate, Int2Type<1>());
+/*
         #pragma unroll
         for (int WARP = 1; WARP < WARPS; ++WARP)
         {
             if (warp_id == WARP)
                 warp_prefix = block_aggregate;
 
-            T addend = reinterpret_cast<_TempStorage*>(temp_storage)->warp_aggregates[WARP];
+            T addend = temp_storage.warp_aggregates[WARP];
             block_aggregate = scan_op(block_aggregate, addend);
         }
-
+*/
 
         return warp_prefix;
     }
@@ -250,7 +248,7 @@ struct BlockScanWarpScans
     {
         // Compute warp scan in each warp.  The exclusive output from each lane0 is invalid.
         T inclusive_output;
-        WarpScanT(reinterpret_cast<_TempStorage*>(temp_storage)->warp_scan[warp_id]).Scan(input, inclusive_output, exclusive_output, scan_op);
+        WarpScanT(temp_storage.warp_scan[warp_id]).Scan(input, inclusive_output, exclusive_output, scan_op);
 
         // Compute the warp-wide prefix and block-wide aggregate for each warp.  Warp prefix for warp0 is invalid.
         T warp_prefix = ComputeWarpPrefix(scan_op, inclusive_output, block_aggregate);
@@ -276,7 +274,7 @@ struct BlockScanWarpScans
     {
         // Compute warp scan in each warp.  The exclusive output from each lane0 is invalid.
         T inclusive_output;
-        WarpScanT(reinterpret_cast<_TempStorage*>(temp_storage)->warp_scan[warp_id]).Scan(input, inclusive_output, exclusive_output, scan_op);
+        WarpScanT(temp_storage.warp_scan[warp_id]).Scan(input, inclusive_output, exclusive_output, scan_op);
 
         // Compute the warp-wide prefix and block-wide aggregate for each warp
         T warp_prefix = ComputeWarpPrefix(scan_op, inclusive_output, block_aggregate, initial_value);
@@ -299,7 +297,6 @@ struct BlockScanWarpScans
         BlockPrefixCallbackOp   &block_prefix_callback_op)      ///< [in-out] <b>[<em>warp</em><sub>0</sub> only]</b> Call-back functor for specifying a threadblock-wide prefix to be applied to all inputs.
     {
         // Compute block-wide exclusive scan.  The exclusive output from tid0 is invalid.
-
         T block_aggregate;
         ExclusiveScan(input, exclusive_output, scan_op, block_aggregate);
 
@@ -310,7 +307,7 @@ struct BlockScanWarpScans
             if (lane_id == 0)
             {
                 // Share the prefix with all threads
-                reinterpret_cast<_TempStorage*>(temp_storage)->block_prefix = block_prefix;
+                temp_storage.block_prefix = block_prefix;
                 exclusive_output = block_prefix;                // The block prefix is the exclusive output for tid0
             }
         }
@@ -318,7 +315,7 @@ struct BlockScanWarpScans
         __syncthreads();
 
         // Incorporate threadblock prefix into outputs
-        T block_prefix = reinterpret_cast<_TempStorage*>(temp_storage)->block_prefix;
+        T block_prefix = temp_storage.block_prefix;
         if (linear_tid > 0)
         {
             exclusive_output = scan_op(block_prefix, exclusive_output);
@@ -350,7 +347,7 @@ struct BlockScanWarpScans
         ScanOp          scan_op,                        ///< [in] Binary scan operator
         T               &block_aggregate)               ///< [out] Threadblock-wide aggregate reduction of input items
     {
-        WarpScanT(reinterpret_cast<_TempStorage*>(temp_storage)->warp_scan[warp_id]).InclusiveScan(input, inclusive_output, scan_op);
+        WarpScanT(temp_storage.warp_scan[warp_id]).InclusiveScan(input, inclusive_output, scan_op);
 
         // Compute the warp-wide prefix and block-wide aggregate for each warp.  Warp prefix for warp0 is invalid.
         T warp_prefix = ComputeWarpPrefix(scan_op, inclusive_output, block_aggregate);
@@ -383,14 +380,14 @@ struct BlockScanWarpScans
             if (lane_id == 0)
             {
                 // Share the prefix with all threads
-                reinterpret_cast<_TempStorage*>(temp_storage)->block_prefix = block_prefix;
+                temp_storage.block_prefix = block_prefix;
             }
         }
 
         __syncthreads();
 
         // Incorporate threadblock prefix into outputs
-        T block_prefix = reinterpret_cast<_TempStorage*>(temp_storage)->block_prefix;
+        T block_prefix = temp_storage.block_prefix;
         exclusive_output = scan_op(block_prefix, exclusive_output);
     }
 
