@@ -117,6 +117,7 @@ namespace cub {
  * <tt>{ [0,1,2,3], [4,5,6,7], [8,9,10,11], ..., [508,509,510,511] }</tt>.
  *
  */
+#ifdef __HIP_PLATFORM_HCC__
 template <
     typename                KeyT,
     int                     BLOCK_DIM_X,
@@ -125,10 +126,24 @@ template <
     int                     RADIX_BITS              = 4,
     bool                    MEMOIZE_OUTER_SCAN      = (CUB_PTX_ARCH >= 350) ? true : false,
     BlockScanAlgorithm      INNER_SCAN_ALGORITHM    = BLOCK_SCAN_WARP_SCANS,
-    hipSharedMemConfig     SMEM_CONFIG             = hipSharedMemBankSizeFourByte,
+    hipSharedMemConfig      SMEM_CONFIG             = hipSharedMemBankSizeFourByte,
     int                     BLOCK_DIM_Y             = 1,
     int                     BLOCK_DIM_Z             = 1,
     int                     PTX_ARCH                = CUB_PTX_ARCH>
+#elif defined(__HIP_PLATFORM_NVCC__)
+template <
+    typename                KeyT,
+    int                     BLOCK_DIM_X,
+    int                     ITEMS_PER_THREAD,
+    typename                ValueT                   = NullType,
+    int                     RADIX_BITS              = 4,
+    bool                    MEMOIZE_OUTER_SCAN      = (CUB_PTX_ARCH >= 350) ? true : false,
+    BlockScanAlgorithm      INNER_SCAN_ALGORITHM    = BLOCK_SCAN_WARP_SCANS,
+    cudaSharedMemConfig     SMEM_CONFIG             = cudaSharedMemBankSizeFourByte,
+    int                     BLOCK_DIM_Y             = 1,
+    int                     BLOCK_DIM_Z             = 1,
+    int                     PTX_ARCH                = CUB_PTX_ARCH>
+#endif
 class BlockRadixSort
 {
 private:

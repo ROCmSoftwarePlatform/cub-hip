@@ -672,7 +672,7 @@ struct AgentHistogram
         typename            _OffsetT>
     __device__ __forceinline__ SampleT* NativePointer(CacheModifiedInputIterator<_MODIFIER, _ValueT, _OffsetT> itr)
     {
-        return itr.ptr;
+        return reinterpret_cast<SampleT*>(itr.ptr);
     }
 
     // Return a native pixel pointer (specialized for other types)
