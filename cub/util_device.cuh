@@ -273,7 +273,7 @@ hipError_t MaxSmOccupancy(
         dynamic_smem_bytes);
 #elif defined(__HIP_PLATFORM_HCC__)
     //TODO: not supported by HIP in hccbackend currently
-    printf("\nNote: Occupancy computation not supported in HIP in hccbackend.\nMaxBlocksPerMultiprocessor returned\n");
+    //printf("\nNote: Occupancy computation not supported in HIP in hccbackend.\nMaxBlocksPerMultiprocessor returned\n");
     hipDeviceProp_t props;
     if (hipGetDeviceProperties(&props, 0) != hipSuccess) return hipErrorTbd;
     max_sm_occupancy = (int)(props.maxThreadsPerMultiProcessor / block_threads);

@@ -116,6 +116,11 @@ public:
         offset(offset)
     {}
 
+    __host__ __device__ __forceinline__ DiscardOutputIterator(const OffsetT obj1, const OffsetT *obj2) {
+    for (int i=0; i<CUB_MAX(1, (16 / sizeof(OffsetT) - 1)); i++)
+       pad[i] = obj2[i];
+    offset = obj1;
+    }
     __host__ __device__ __forceinline__
     DiscardOutputIterator(const DiscardOutputIterator& x) : offset{x.offset} {}
 
