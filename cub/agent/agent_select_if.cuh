@@ -694,7 +694,7 @@ struct AgentSelectIf
             }
         }
     }
-
+    __host__ __device__ ~AgentSelectIf() {}
 };
 
 

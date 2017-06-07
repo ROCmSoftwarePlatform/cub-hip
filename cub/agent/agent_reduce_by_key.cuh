@@ -536,7 +536,7 @@ struct AgentReduceByKey
             ConsumeTile<true>(num_remaining, tile_idx, tile_offset, tile_state);
         }
     }
-
+    __host__ __device__ ~AgentReduceByKey() {}
 };
 
 
