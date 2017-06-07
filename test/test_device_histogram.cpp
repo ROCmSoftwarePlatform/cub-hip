@@ -35,7 +35,10 @@
 
 #include "test_util.h"
 
-#include <npp.h>
+//TODO: Revert once we have npp counterpart for AMD
+#ifdef __HIP_PLATFORM_NVCC__
+  #include <npp.h>
+#endif
 
 #include <cub/util_allocator.cuh>
 #include <cub/device/device_histogram.cuh>
@@ -103,9 +106,11 @@ hipError_t DispatchEven(
     hipStream_t        stream,
     bool                debug_synchronous)
 {
-    typedef unsigned char SampleT;
 
     hipError_t error = hipSuccess;
+
+#ifdef __HIP_PLATFORM_NVCC__
+    typedef unsigned char SampleT;
     NppiSize oSizeROI = {
         num_row_pixels,
         num_rows
@@ -133,7 +138,7 @@ hipError_t DispatchEven(
                 (Npp8u*) d_temp_storage);
         }
     }
-
+#endif
     return error;
 }
 
@@ -164,9 +169,10 @@ hipError_t DispatchEven(
     hipStream_t        stream,
     bool                debug_synchronous)
 {
-    typedef unsigned char SampleT;
-
     hipError_t error = hipSuccess;
+
+#ifdef __HIP_PLATFORM_NVCC__
+    typedef unsigned char SampleT;
     NppiSize oSizeROI = {
         num_row_pixels,
         num_rows
@@ -194,7 +200,7 @@ hipError_t DispatchEven(
                 (Npp8u*) d_temp_storage);
         }
     }
-
+#endif
     return error;
 }
 
