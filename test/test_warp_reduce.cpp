@@ -781,23 +781,25 @@ void Test(GenMode gen_mode)
     Test<WARPS, LOGICAL_WARP_THREADS, unsigned long long>(  gen_mode, Max());
 
     // vec-1
-//    Test<WARPS, LOGICAL_WARP_THREADS, uchar1>(              gen_mode, Sum());
-//
-//    // vec-2
-//    Test<WARPS, LOGICAL_WARP_THREADS, uchar2>(              gen_mode, Sum());
-//    Test<WARPS, LOGICAL_WARP_THREADS, ushort2>(             gen_mode, Sum());
-//    Test<WARPS, LOGICAL_WARP_THREADS, uint2>(               gen_mode, Sum());
-//    Test<WARPS, LOGICAL_WARP_THREADS, ulonglong2>(          gen_mode, Sum());
-//
-//    // vec-4
-//    Test<WARPS, LOGICAL_WARP_THREADS, uchar4>(              gen_mode, Sum());
-//    Test<WARPS, LOGICAL_WARP_THREADS, ushort4>(             gen_mode, Sum());
-//    Test<WARPS, LOGICAL_WARP_THREADS, uint4>(               gen_mode, Sum());
-//    Test<WARPS, LOGICAL_WARP_THREADS, ulonglong4>(          gen_mode, Sum());
-//
-//    // complex
-//    Test<WARPS, LOGICAL_WARP_THREADS, TestFoo>(             gen_mode, Sum());
-//    Test<WARPS, LOGICAL_WARP_THREADS, TestBar>(             gen_mode, Sum());
+    Test<WARPS, LOGICAL_WARP_THREADS, uchar1>(              gen_mode, Sum());
+
+    // vec-2
+    Test<WARPS, LOGICAL_WARP_THREADS, uchar2>(              gen_mode, Sum());
+    Test<WARPS, LOGICAL_WARP_THREADS, ushort2>(             gen_mode, Sum());
+
+    // vec-4
+    Test<WARPS, LOGICAL_WARP_THREADS, uchar4>(              gen_mode, Sum());
+    //TODO: Revert once hang issue is fixed
+#ifdef __HIP_PLATFORM_NVCC__
+    Test<WARPS, LOGICAL_WARP_THREADS, uint2>(               gen_mode, Sum());
+    Test<WARPS, LOGICAL_WARP_THREADS, ulonglong2>(          gen_mode, Sum());
+    Test<WARPS, LOGICAL_WARP_THREADS, ushort4>(             gen_mode, Sum());
+    Test<WARPS, LOGICAL_WARP_THREADS, uint4>(               gen_mode, Sum());
+    Test<WARPS, LOGICAL_WARP_THREADS, ulonglong4>(          gen_mode, Sum());
+    // complex
+    Test<WARPS, LOGICAL_WARP_THREADS, TestFoo>(             gen_mode, Sum());
+    Test<WARPS, LOGICAL_WARP_THREADS, TestBar>(             gen_mode, Sum());
+#endif
 }
 
 

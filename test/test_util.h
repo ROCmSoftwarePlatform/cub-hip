@@ -1458,10 +1458,12 @@ void DisplayResults(
     size_t num_items)
 {
     // Display data
+#ifdef __HIP_PLATFORM_NVCC__
     for (int i = 0; i < int(num_items); i++)
     {   // TODO: temporarily disabled.
         std::cout << CoutCast(h_data[i]) << ", ";
     }
+#endif
     printf("\n");
 }
 

@@ -534,36 +534,38 @@ void Test(GenMode gen_mode)
     Test<LOGICAL_WARP_THREADS>(gen_mode, Max(), (unsigned int) 99);
     Test<LOGICAL_WARP_THREADS>(gen_mode, Max(), (unsigned long long) 99);
 
+    //TODO: Revert once hang issue is fixed
+#ifdef __HIP_PLATFORM_NVCC__
     // vec-2
-//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_uchar2(17, 21));
-//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_ushort2(17, 21));
-//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_uint2(17, 21));
-//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_ulong2(17, 21));
-//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_ulonglong2(17, 21));
-//    if (gen_mode != RANDOM) {
-//        // Only test numerically stable inputs
-//        Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_float2(17, 21));
-//        if (ptx_version > 100)
-//            Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_double2(17, 21));
-//    }
-//
-//    // vec-4
-//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_char4(17, 21, 32, 85));
-//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_short4(17, 21, 32, 85));
-//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_int4(17, 21, 32, 85));
-//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_long4(17, 21, 32, 85));
-//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_longlong4(17, 21, 32, 85));
-//    if (gen_mode != RANDOM) {
-//        // Only test numerically stable inputs
-//        Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_float4(17, 21, 32, 85));
-//        if (ptx_version > 100)
-//            Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_double4(17, 21, 32, 85));
-//    }
+    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_uchar2(17, 21));
+    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_ushort2(17, 21));
+    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_uint2(17, 21));
+    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_ulong2(17, 21));
+    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_ulonglong2(17, 21));
+    if (gen_mode != RANDOM) {
+        // Only test numerically stable inputs
+        Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_float2(17, 21));
+        if (ptx_version > 100)
+            Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_double2(17, 21));
+    }
+
+    // vec-4
+    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_char4(17, 21, 32, 85));
+    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_short4(17, 21, 32, 85));
+    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_int4(17, 21, 32, 85));
+    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_long4(17, 21, 32, 85));
+    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_longlong4(17, 21, 32, 85));
+    if (gen_mode != RANDOM) {
+        // Only test numerically stable inputs
+        Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_float4(17, 21, 32, 85));
+        if (ptx_version > 100)
+            Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_double4(17, 21, 32, 85));
+    }
 
     // complex
-//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), TestFoo::MakeTestFoo(17, 21, 32, 85));
-//    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), TestBar(17, 21));
-
+    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), TestFoo::MakeTestFoo(17, 21, 32, 85));
+    Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), TestBar(17, 21));
+#endif
 }
 
 
