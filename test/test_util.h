@@ -971,30 +971,32 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
 
 /**
  * All vector overloads
-// */
-//#define CUB_VEC_OVERLOAD(COMPONENT_T, BaseT)                    \
-//    CUB_VEC_OVERLOAD_1(COMPONENT_T##1, BaseT)                   \
-//    CUB_VEC_OVERLOAD_2(COMPONENT_T##2, BaseT)                   \
-//    CUB_VEC_OVERLOAD_3(COMPONENT_T##3, BaseT)                   \
-//    CUB_VEC_OVERLOAD_4(COMPONENT_T##4, BaseT)
-//
-///**
-// * Define for types
-// */
-//CUB_VEC_OVERLOAD(char, char)
-//CUB_VEC_OVERLOAD(short, short)
-//CUB_VEC_OVERLOAD(int, int)
-//CUB_VEC_OVERLOAD(long, long)
-//CUB_VEC_OVERLOAD(longlong, long long)
-//CUB_VEC_OVERLOAD(uchar, unsigned char)
-//CUB_VEC_OVERLOAD(ushort, unsigned short)
-//CUB_VEC_OVERLOAD(uint, unsigned int)
-//CUB_VEC_OVERLOAD(ulong, unsigned long)
-//CUB_VEC_OVERLOAD(ulonglong, unsigned long long)
-//CUB_VEC_OVERLOAD(float, float)
-//CUB_VEC_OVERLOAD(double, double)
+ */
+#ifdef __HIP_PLATFORM_NVCC__
 
+#define CUB_VEC_OVERLOAD(COMPONENT_T, BaseT)                    \
+    CUB_VEC_OVERLOAD_1(COMPONENT_T##1, BaseT)                   \
+    CUB_VEC_OVERLOAD_2(COMPONENT_T##2, BaseT)                   \
+    CUB_VEC_OVERLOAD_3(COMPONENT_T##3, BaseT)                   \
+    CUB_VEC_OVERLOAD_4(COMPONENT_T##4, BaseT)
 
+/**
+ * Define for types
+ */
+CUB_VEC_OVERLOAD(char, char)
+CUB_VEC_OVERLOAD(short, short)
+CUB_VEC_OVERLOAD(int, int)
+CUB_VEC_OVERLOAD(long, long)
+CUB_VEC_OVERLOAD(longlong, long long)
+CUB_VEC_OVERLOAD(uchar, unsigned char)
+CUB_VEC_OVERLOAD(ushort, unsigned short)
+CUB_VEC_OVERLOAD(uint, unsigned int)
+CUB_VEC_OVERLOAD(ulong, unsigned long)
+CUB_VEC_OVERLOAD(ulonglong, unsigned long long)
+CUB_VEC_OVERLOAD(float, float)
+CUB_VEC_OVERLOAD(double, double)
+
+#endif
 //---------------------------------------------------------------------
 // Complex data type TestFoo
 //---------------------------------------------------------------------
