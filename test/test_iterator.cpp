@@ -805,10 +805,6 @@ int main(int argc, char** argv)
     CubDebugExit(PtxVersion(ptx_version));
 
     // Evaluate different data types
-#ifdef __HIP_PLATFORM_NVCC__
-    Test<char>();
-    Test<short>();
-#endif
     Test<int>();
     Test<long>();
     Test<long long>();
@@ -816,36 +812,39 @@ int main(int argc, char** argv)
     if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
         Test<double>();
 
-//    Test<char2>();
-//    Test<short2>();
-//    Test<int2>();
-//    Test<long2>();
-//    Test<longlong2>();
-//    Test<float2>();
-//    if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
-//        Test<double2>();
-//
-//    Test<char3>();
-//    Test<short3>();
-//    Test<int3>();
-//    Test<long3>();
-//    Test<longlong3>();
-//    Test<float3>();
-//    if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
-//        Test<double3>();
-//
-//    Test<char4>();
-//    Test<short4>();
-//    Test<int4>();
-//    Test<long4>();
-//    Test<longlong4>();
-//    Test<float4>();
-//    if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
-//        Test<double4>();
+    Test<char2>();
+    Test<short2>();
+    Test<int2>();
+    Test<long2>();
+    Test<longlong2>();
+    Test<float2>();
+    if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
+        Test<double2>();
 
-    // TODO: these are temporarily disabled due to compiler breakage.
-    //Test<TestFoo>();
-    //Test<TestBar>();
+    Test<char3>();
+    Test<short3>();
+    Test<int3>();
+    Test<long3>();
+    Test<longlong3>();
+    Test<float3>();
+    if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
+        Test<double3>();
+
+    Test<char4>();
+    Test<short4>();
+    Test<int4>();
+    Test<long4>();
+    Test<longlong4>();
+    Test<float4>();
+    if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
+        Test<double4>();
+
+#ifdef __HIP_PLATFORM_NVCC__
+    Test<char>();             //TODO: Fix hang issue
+    Test<short>();            //TODO: Fix hang issue
+    Test<TestFoo>();          //TODO: Fix llvm build error
+    Test<TestBar>();          //TODO: Fix hang issue
+#endif
 
     printf("\nTest complete\n"); fflush(stdout);
 

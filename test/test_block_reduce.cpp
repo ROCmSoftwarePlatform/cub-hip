@@ -458,8 +458,11 @@ void TestFullTile(
     ReductionOp             reduction_op)
 {
     // Check size of smem storage for the target arch to make sure it will fit
+#ifdef __HIP_PLATFORM_NVCC__
     typedef BlockReduce<T, BLOCK_DIM_X, ALGORITHM, BLOCK_DIM_Y, BLOCK_DIM_Z, TEST_ARCH> BlockReduceT;
-
+#elif defined(__HIP_PLATFORM_HCC__)
+    typedef BlockReduce<T, BLOCK_DIM_X, ALGORITHM, BLOCK_DIM_Y, BLOCK_DIM_Z, 520> BlockReduceT;
+#endif
     enum
     {
 #if defined(SM100) || defined(SM110) || defined(SM130)
@@ -657,7 +660,11 @@ void TestPartialTile(
     ReductionOp             reduction_op)
 {
     // Check size of smem storage for the target arch to make sure it will fit
+#ifdef __HIP_PLATFORM_NVCC__
     typedef BlockReduce<T, BLOCK_DIM_X, ALGORITHM, BLOCK_DIM_Y, BLOCK_DIM_Z, TEST_ARCH> BlockReduceT;
+#elif defined(__HIP_PLATFORM_HCC__)
+    typedef BlockReduce<T, BLOCK_DIM_X, ALGORITHM, BLOCK_DIM_Y, BLOCK_DIM_Z, 520> BlockReduceT;
+#endif
 
     enum
     {

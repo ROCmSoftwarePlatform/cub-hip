@@ -1365,6 +1365,7 @@ int CompareDeviceResults(
     if (display_data)
     {   // TODO: the below is temporarily disabled.
         printf("Reference:\n");
+    #ifdef __HIP_PLATFORM_NVCC__
         for (int i = 0; i < int(num_items); i++)
         {
             std::cout << CoutCast(h_reference[i]) << ", ";
@@ -1374,6 +1375,7 @@ int CompareDeviceResults(
         {
             std::cout << CoutCast(h_data[i]) << ", ";
         }
+    #endif
         printf("\n\n");
     }
 

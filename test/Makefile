@@ -65,7 +65,11 @@ endif
 ifeq ($(memcheck), 0)
 	MEMCHECK = 
 else 
+ifeq ($(HIP_PLATFORM), nvcc)
 	MEMCHECK = cuda-memcheck
+else
+	MEMCHECK =
+endif
 endif
 
 
@@ -121,7 +125,7 @@ ALL = 				link \
 				 	test_device_reduce \
 			 		test_device_histogram \
 			 		test_device_scan \
-			 		test_device_radix_sort \
+					test_device_radix_sort \
 					test_device_reduce_by_key\
 					test_device_run_length_encode\
 		 			test_device_select_unique \
