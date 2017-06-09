@@ -620,16 +620,19 @@ int main(int argc, char** argv)
     TestThreads<char>(2, 0.8f);
     TestThreads<int>(2, 0.8f);
     TestThreads<long>(2, 0.8f);
+    //TODO: Revert once hang issue is fixed
+#ifdef __HIP_PLATFORM_NVCC__
     // TODO: this is disabled because HIP's vector types are not Regular, which
     //       is a requirement.
-//    TestThreads<long2>(2, 0.8f);
+    TestThreads<long2>(2, 0.8f);
 
-    //if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
+    if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
     // TODO: this is disabled because HIP's vector types are not Regular, which
     //       is a requirement.
-    //       TestThreads<double2>(2, 0.8f);
-    //TestThreads<TestFoo>(2, 0.8f);
-    //TestThreads<TestBar>(2, 0.8f);
+           TestThreads<double2>(2, 0.8f);
+    TestThreads<TestFoo>(2, 0.8f);
+#endif
+    TestThreads<TestBar>(2, 0.8f);
 
 #endif
 
