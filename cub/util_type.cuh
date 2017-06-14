@@ -244,13 +244,10 @@ struct RemoveQualifiers<Tp, const volatile Up>
  * Marker types
  ******************************************************************************/
 
-/**
- * \brief A simple "NULL" marker type
- */
 struct NullType
 {
 #ifndef DOXYGEN_SHOULD_SKIP_THIS    // Do not document
-    #if defined(__HIP_DEVICE_COMPILE__)
+    #if defined(__HIP_PLATFORM_HCC__)
         int dummy_for_hcc_;
     #endif
     template <typename T>
