@@ -303,7 +303,11 @@ struct DispatchScan
     struct Policy130
     {
         typedef AgentScanPolicy<
+            #ifdef __HIP_PLATFORM_NVCC__
                 CUB_NOMINAL_CONFIG(96, 21, OutputT),      ///< Threads per block, items per thread
+            #elif defined(__HIP_PLATFORM_HCC__)
+                CUB_NOMINAL_CONFIG(196, 8, OutputT),      ///< Threads per block, items per thread
+            #endif
                 BLOCK_LOAD_WARP_TRANSPOSE,
                 LOAD_DEFAULT,
                 BLOCK_STORE_WARP_TRANSPOSE,
@@ -315,7 +319,11 @@ struct DispatchScan
     struct Policy100
     {
         typedef AgentScanPolicy<
+            #ifdef __HIP_PLATFORM_NVCC__
                 CUB_NOMINAL_CONFIG(64, 9, OutputT),      ///< Threads per block, items per thread
+            #elif defined(__HIP_PLATFORM_HCC__)
+                CUB_NOMINAL_CONFIG(128, 9, OutputT),      ///< Threads per block, items per thread
+            #endif
                 BLOCK_LOAD_WARP_TRANSPOSE,
                 LOAD_DEFAULT,
                 BLOCK_STORE_WARP_TRANSPOSE,
