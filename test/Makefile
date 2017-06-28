@@ -179,7 +179,6 @@ run_block_radix_sort :
 #-------------------------------------------------------------------------------
 # make link
 #-------------------------------------------------------------------------------
-ifeq ($(HIP_PLATFORM), nvcc)
 link : bin/link_$(SUFFIX)
 
 bin/link_$(SUFFIX) : link_a.cpp link_b.cpp link_main.cpp $(DEPS)
@@ -188,16 +187,6 @@ bin/link_$(SUFFIX) : link_a.cpp link_b.cpp link_main.cpp $(DEPS)
 	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_b.cpp -c -o bin/link_b.obj
 	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_main.cpp -c -o bin/link_main.obj
 	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) bin/link_main.obj bin/link_a.obj bin/link_b.obj -o bin/link_$(SUFFIX)
-else
-link : bin/link_$(SUFFIX)
-
-bin/link_$(SUFFIX) : link_a.cpp link_b.cpp link_main.cpp $(DEPS)
-	mkdir -p bin
-	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 link_a.cpp -c -o bin/link_a.obj
-	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 link_b.cpp -c -o bin/link_b.obj
-	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 link_main.cpp -c -o bin/link_main.obj
-	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 bin/link_main.obj bin/link_a.obj bin/link_b.obj -o bin/link_$(SUFFIX)
-endif
 
 #-------------------------------------------------------------------------------
 # make test_iterator 
@@ -213,20 +202,12 @@ bin/test_iterator_$(SUFFIX) : test_iterator.cpp $(DEPS)
 #-------------------------------------------------------------------------------
 # make test_allocator 
 #-------------------------------------------------------------------------------
-ifeq ($(HIP_PLATFORM), nvcc)
 
 test_allocator: bin/test_allocator_$(SUFFIX)
 
 bin/test_allocator_$(SUFFIX) : test_allocator.cpp $(DEPS)
 	mkdir -p bin
 	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_allocator_$(SUFFIX) test_allocator.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
-else
-test_allocator: bin/test_allocator_$(SUFFIX)
-
-bin/test_allocator_$(SUFFIX) : test_allocator.cpp $(DEPS)
-	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 -o bin/test_allocator_$(SUFFIX) test_allocator.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
-endif	
 	
 #-------------------------------------------------------------------------------
 # make test_grid_barrier 

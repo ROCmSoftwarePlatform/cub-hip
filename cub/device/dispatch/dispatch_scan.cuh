@@ -68,8 +68,8 @@
             ScanTileStateT tile_state;\
             if (CubDebug(error = tile_state.Init(num_tiles, allocations[0], allocation_sizes[0]))) break;\
             int init_grid_size = (num_tiles + INIT_KERNEL_THREADS - 1) / INIT_KERNEL_THREADS;\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(init_kernel), dim3(%d), dim3(%d), 0, %lld, )", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);\
-            hipLaunchKernel(HIP_KERNEL_NAME(init_kernel), dim3(init_grid_size), dim3(INIT_KERNEL_THREADS), 0, stream,\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((init_kernel), dim3(%d), dim3(%d), 0, %lld, )", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);\
+            hipLaunchKernelGGL((init_kernel), dim3(init_grid_size), dim3(INIT_KERNEL_THREADS), 0, stream,\
                 tile_state,\
                 num_tiles);\
             if (CubDebug(error = hipPeekAtLastError())) break;\
@@ -84,9 +84,9 @@
             int scan_grid_size = CUB_MIN(num_tiles, max_dim_x);\
             for (int start_tile = 0; start_tile < num_tiles; start_tile += scan_grid_size)\
             {\
-                if (debug_synchronous) _CubLog("Invoking %d hipLaunchKernel(HIP_KERNEL_NAME(scan_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
+                if (debug_synchronous) _CubLog("Invoking %d hipLaunchKernelGGL((scan_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
                     start_tile, scan_grid_size, scan_kernel_config.block_threads, (long long) stream, scan_kernel_config.items_per_thread, scan_sm_occupancy);\
-                hipLaunchKernel(HIP_KERNEL_NAME(scan_kernel), dim3(scan_grid_size), dim3(scan_kernel_config.block_threads), 0, stream,\
+                hipLaunchKernelGGL((scan_kernel), dim3(scan_grid_size), dim3(scan_kernel_config.block_threads), 0, stream,\
                     d_in,\
                     d_out,\
                     tile_state,\
@@ -119,7 +119,7 @@ template <
 __global__
 __attribute__((used))
 void DeviceScanInitKernel(
-    hipLaunchParm       lp,
+    
     ScanTileStateT      tile_state,         ///< [in] Tile status interface
     int                 num_tiles)          ///< [in] Number of tiles
 {
@@ -136,7 +136,7 @@ template <
 __global__
 __attribute__((used))
 void DeviceCompactInitKernel(
-    hipLaunchParm           lp,
+    
     ScanTileStateT          tile_state,             ///< [in] Tile status interface
     int                     num_tiles,              ///< [in] Number of tiles
     NumSelectedIteratorT    d_num_selected_out)     ///< [out] Pointer to the total number of items selected (i.e., length of \p d_selected_out)
@@ -161,11 +161,11 @@ template <
     typename            ScanOpT,            ///< Binary scan functor type having member <tt>T operator()(const T &a, const T &b)</tt>
     typename            InitValueT,         ///< Initial value to seed the exclusive scan (cub::NullType for inclusive scans)
     typename            OffsetT>            ///< Signed integer type for global offsets
-__launch_bounds__ (int(ScanPolicyT::BLOCK_THREADS), 1)
+//__launch_bounds__ (int(ScanPolicyT::BLOCK_THREADS), 1)
 __global__
 __attribute__((used))
 void DeviceScanKernel(
-    hipLaunchParm       lp,
+    
     InputIteratorT      d_in,               ///< Input data
     OutputIteratorT     d_out,              ///< Output data
     ScanTileStateT      tile_state,         ///< Tile status interface

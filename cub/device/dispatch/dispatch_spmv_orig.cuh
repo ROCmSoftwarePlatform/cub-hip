@@ -67,7 +67,7 @@ template <
     typename    ValueT,                     ///< Matrix and vector value type
     typename    OffsetT>                    ///< Signed integer type for sequence offsets
 __global__ void DeviceSpmv1ColKernel(
-    hipLaunchParm               lp,
+    
     SpmvParams<ValueT, OffsetT> spmv_params)                ///< [in] SpMV input parameter bundle
 {
     typedef CacheModifiedInputIterator<
@@ -104,7 +104,7 @@ template <
     typename    CoordinateT,                    ///< Merge path coordinate type
     typename    SpmvParamsT>                    ///< SpmvParams type
 __global__ void DeviceSpmvSearchKernel(
-    hipLaunchParm   lp,
+    
     int             num_merge_tiles,            ///< [in] Number of SpMV merge tiles (spmv grid size)
     CoordinateT*    d_tile_coordinates,         ///< [out] Pointer to the temporary array of tile starting coordinates
     SpmvParamsT     spmv_params)                ///< [in] SpMV input parameter bundle
@@ -157,9 +157,9 @@ template <
     typename        CoordinateT,                ///< Merge path coordinate type
     bool            HAS_ALPHA,                  ///< Whether the input parameter Alpha is 1
     bool            HAS_BETA>                   ///< Whether the input parameter Beta is 0
-__launch_bounds__ (int(SpmvPolicyT::BLOCK_THREADS), 1)
+//__launch_bounds__ (int(SpmvPolicyT::BLOCK_THREADS), 1)
 __global__ void DeviceSpmvKernel(
-    hipLaunchParm                   lp,
+    
     SpmvParams<ValueT, OffsetT>     spmv_params,                ///< [in] SpMV input parameter bundle
     CoordinateT*                    d_tile_coordinates,         ///< [in] Pointer to the temporary array of tile starting coordinates
     KeyValuePair<OffsetT,ValueT>*   d_tile_carry_pairs,         ///< [out] Pointer to the temporary array carry-out dot product row-ids, one per block
@@ -199,9 +199,9 @@ template <
     typename    AggregatesOutputIteratorT,      ///< Random-access output iterator type for values
     typename    OffsetT,                        ///< Signed integer type for global offsets
     typename    ScanTileStateT>                 ///< Tile status interface type
-__launch_bounds__ (int(AgentSegmentFixupPolicyT::BLOCK_THREADS), 1)
+//__launch_bounds__ (int(AgentSegmentFixupPolicyT::BLOCK_THREADS), 1)
 __global__ void DeviceSegmentFixupKernel(
-    hipLaunchParm               lp,
+    
     PairsInputIteratorT         d_pairs_in,         ///< [in] Pointer to the array carry-out dot product row-ids, one per spmv block
     AggregatesOutputIteratorT   d_aggregates_out,   ///< [in,out] Output value aggregates
     OffsetT                     num_items,          ///< [in] Total number of items to select from
@@ -581,11 +581,11 @@ struct DispatchSpmv
                 int degen_col_kernel_block_size     = INIT_KERNEL_THREADS;
                 int degen_col_kernel_grid_size      = (spmv_params.num_rows + degen_col_kernel_block_size - 1) / degen_col_kernel_block_size;
 
-                if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(spmv_1col_kernel), dim3(%d), dim3(%d), 0, %lld, )\n",
+                if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((spmv_1col_kernel), dim3(%d), dim3(%d), 0, %lld, )\n",
                     degen_col_kernel_grid_size, degen_col_kernel_block_size, (long long) stream);
 
                 // Invoke spmv_search_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(spmv_1col_kernel), dim3(degen_col_kernel_grid_size), dim3(degen_col_kernel_block_size), 0, stream, 
+                hipLaunchKernelGGL((spmv_1col_kernel), dim3(degen_col_kernel_grid_size), dim3(degen_col_kernel_block_size), 0, stream, 
                     spmv_params);
 
                 // Check for failure to launch
@@ -687,11 +687,11 @@ struct DispatchSpmv
                 // Use separate search kernel if we have enough spmv tiles to saturate the device
 
                 // Log spmv_search_kernel configuration
-                if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(spmv_search_kernel), dim3(%d), dim3(%d), 0, %lld, )\n",
+                if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((spmv_search_kernel), dim3(%d), dim3(%d), 0, %lld, )\n",
                     search_grid_size, search_block_size, (long long) stream);
 
                 // Invoke spmv_search_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(spmv_search_kernel), dim3(search_grid_size), dim3(search_block_size), 0, stream, 
+                hipLaunchKernelGGL((spmv_search_kernel), dim3(search_grid_size), dim3(search_block_size), 0, stream, 
                     num_merge_tiles,
                     d_tile_coordinates,
                     spmv_params);
@@ -704,11 +704,11 @@ struct DispatchSpmv
             }
 
             // Log spmv_kernel configuration
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(spmv_kernel), dim3({%d,%d,%d}), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((spmv_kernel), dim3({%d,%d,%d}), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",
                 spmv_grid_size.x, spmv_grid_size.y, spmv_grid_size.z, spmv_config.block_threads, (long long) stream, spmv_config.items_per_thread, spmv_sm_occupancy);
 
             // Invoke spmv_kernel
-            hipLaunchKernel(HIP_KERNEL_NAME(spmv_kernel), dim3(spmv_grid_size), dim3(spmv_config.block_threads), 0, stream, 
+            hipLaunchKernelGGL((spmv_kernel), dim3(spmv_grid_size), dim3(spmv_config.block_threads), 0, stream, 
                 spmv_params,
                 d_tile_coordinates,
                 d_tile_carry_pairs,
@@ -726,11 +726,11 @@ struct DispatchSpmv
             if (num_merge_tiles > 1)
             {
                 // Log segment_fixup_kernel configuration
-                if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(segment_fixup_kernel), dim3({%d,%d,%d}), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",
+                if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((segment_fixup_kernel), dim3({%d,%d,%d}), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",
                     segment_fixup_grid_size.x, segment_fixup_grid_size.y, segment_fixup_grid_size.z, segment_fixup_config.block_threads, (long long) stream, segment_fixup_config.items_per_thread, segment_fixup_sm_occupancy);
 
                 // Invoke segment_fixup_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(segment_fixup_kernel), dim3(segment_fixup_grid_size), dim3(segment_fixup_config.block_threads), 0, stream, 
+                hipLaunchKernelGGL((segment_fixup_kernel), dim3(segment_fixup_grid_size), dim3(segment_fixup_config.block_threads), 0, stream, 
                     d_tile_carry_pairs,
                     spmv_params.d_vector_y,
                     num_merge_tiles,

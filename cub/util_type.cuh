@@ -691,7 +691,10 @@ struct KeyValuePair
 
     /// Constructor
     __host__ __device__ __forceinline__
-    KeyValuePair(Key const& key, Value const& value) : key(key), value(value) {}
+    KeyValuePair(Key const& key, Value const& value = 0) : key(key), value(value) {}
+
+    __host__ __device__ __forceinline__
+    KeyValuePair(const KeyValuePair &obj) : key(obj.key), value(obj.value) {}
 
     /// Inequality operator
     __host__ __device__ __forceinline__ bool operator !=(const KeyValuePair &b)

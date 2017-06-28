@@ -65,10 +65,10 @@ CUB_NS_PREFIX
         hipError_t error = hipSuccess;\
             int pass_bits = CUB_MIN(pass_config.radix_bits, (end_bit - current_bit));\
             if (debug_synchronous)\
-                _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(upsweep_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy, current bit %d, bit_grain %d\n",\
+                _CubLog("Invoking hipLaunchKernelGGL((upsweep_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy, current bit %d, bit_grain %d\n",\
                 pass_config.even_share.grid_size, pass_config.upsweep_config.block_threads, (long long) stream,\
                 pass_config.upsweep_config.items_per_thread, pass_config.upsweep_config.sm_occupancy, current_bit, pass_bits);\
-            hipLaunchKernel(HIP_KERNEL_NAME(pass_config.upsweep_kernel),\
+            hipLaunchKernelGGL((pass_config.upsweep_kernel),\
                             dim3(pass_config.even_share.grid_size),\
                             dim3(pass_config.upsweep_config.block_threads),\
                             0,\
@@ -81,9 +81,9 @@ CUB_NS_PREFIX
                             pass_config.even_share);\
             if (CubDebug(error = hipPeekAtLastError())) break;\
             if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(scan_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread\n",\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((scan_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread\n",\
                 1, pass_config.scan_config.block_threads, (long long) stream, pass_config.scan_config.items_per_thread);\
-            hipLaunchKernel(HIP_KERNEL_NAME(pass_config.scan_kernel),\
+            hipLaunchKernelGGL((pass_config.scan_kernel),\
                             dim3(1),\
                             dim3(pass_config.scan_config.block_threads),\
                             0,\
@@ -92,10 +92,10 @@ CUB_NS_PREFIX
                             spine_length);\
             if (CubDebug(error = hipPeekAtLastError())) break;\
             if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(downsweep_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((downsweep_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
                 pass_config.even_share.grid_size, pass_config.downsweep_config.block_threads, (long long) stream,\
                 pass_config.downsweep_config.items_per_thread, pass_config.downsweep_config.sm_occupancy);\
-            hipLaunchKernel(HIP_KERNEL_NAME(pass_config.downsweep_kernel),\
+            hipLaunchKernelGGL((pass_config.downsweep_kernel),\
                             dim3(pass_config.even_share.grid_size),\
                             dim3(pass_config.downsweep_config.block_threads),\
                             0,\
@@ -124,10 +124,10 @@ CUB_NS_PREFIX
         hipError_t error = hipSuccess;\
             int pass_bits = CUB_MIN(pass_config.radix_bits, (end_bit - current_bit));\
             if (debug_synchronous)\
-                _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(segmented_kernels), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy, current bit %d, bit_grain %d\n",\
+                _CubLog("Invoking hipLaunchKernelGGL((segmented_kernels), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy, current bit %d, bit_grain %d\n",\
                     num_segments, pass_config.segmented_config.block_threads, (long long) stream,\
                 pass_config.segmented_config.items_per_thread, pass_config.segmented_config.sm_occupancy, current_bit, pass_bits);\
-            hipLaunchKernel(HIP_KERNEL_NAME(pass_config.segmented_kernel),\
+            hipLaunchKernelGGL((pass_config.segmented_kernel),\
                             dim3(num_segments),\
                             dim3(pass_config.segmented_config.block_threads),\
                             0,\
@@ -164,10 +164,10 @@ CUB_NS_PREFIX
             if (num_items == 0)\
                 break;\
             if (debug_synchronous)\
-                _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(single_tile_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy, current bit %d, bit_grain %d\n",\
+                _CubLog("Invoking hipLaunchKernelGGL((single_tile_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy, current bit %d, bit_grain %d\n",\
                     1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, (long long) stream,\
                     ActivePolicyT::SingleTilePolicy::ITEMS_PER_THREAD, 1, begin_bit, ActivePolicyT::SingleTilePolicy::RADIX_BITS);\
-            hipLaunchKernel(HIP_KERNEL_NAME(single_tile_kernel),\
+            hipLaunchKernelGGL((single_tile_kernel),\
                             dim3(1),\
                             dim3(ActivePolicyT::SingleTilePolicy::BLOCK_THREADS),\
                             0,\
@@ -370,11 +370,11 @@ template <
     bool                    IS_DESCENDING,                  ///< Whether or not the sorted-order is high-to-low
     typename                KeyT,                           ///< Key type
     typename                OffsetT>                        ///< Signed integer type for global offsets
-__launch_bounds__ (int((ALT_DIGIT_BITS) ?
-    ChainedPolicyT::ActivePolicy::AltUpsweepPolicy::BLOCK_THREADS :
-    ChainedPolicyT::ActivePolicy::UpsweepPolicy::BLOCK_THREADS), 1)
+//__launch_bounds__ (int((ALT_DIGIT_BITS) ?
+    //ChainedPolicyT::ActivePolicy::AltUpsweepPolicy::BLOCK_THREADS :
+    //ChainedPolicyT::ActivePolicy::UpsweepPolicy::BLOCK_THREADS), 1)
 __global__ void DeviceRadixSortUpsweepKernel(
-    hipLaunchParm           lp,
+    
     const KeyT              *d_keys,                        ///< [in] Input keys buffer
     OffsetT                 *d_spine,                       ///< [out] Privatized (per block) digit histograms (striped, i.e., 0s counts from each block, then 1s counts from each block, etc.)
     OffsetT                 /*num_items*/,                  ///< [in] Total number of input data items
@@ -421,9 +421,9 @@ __global__ void DeviceRadixSortUpsweepKernel(
 template <
     typename                ChainedPolicyT,                 ///< Chained tuning policy
     typename                OffsetT>                        ///< Signed integer type for global offsets
-__launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ScanPolicy::BLOCK_THREADS), 1)
+//__launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ScanPolicy::BLOCK_THREADS), 1)
 __global__ void RadixSortScanBinsKernel(
-    hipLaunchParm           lp,
+    
     OffsetT                 *d_spine,                       ///< [in,out] Privatized (per block) digit histograms (striped, i.e., 0s counts from each block, then 1s counts from each block, etc.)
     int                     num_counts)                     ///< [in] Total number of bin-counts
 {
@@ -464,11 +464,11 @@ template <
     typename                KeyT,                           ///< Key type
     typename                ValueT,                         ///< Value type
     typename                OffsetT>                        ///< Signed integer type for global offsets
-__launch_bounds__ (int((ALT_DIGIT_BITS) ?
-    ChainedPolicyT::ActivePolicy::AltDownsweepPolicy::BLOCK_THREADS :
-    ChainedPolicyT::ActivePolicy::DownsweepPolicy::BLOCK_THREADS), 1)
+//__launch_bounds__ (int((ALT_DIGIT_BITS) ?
+    //ChainedPolicyT::ActivePolicy::AltDownsweepPolicy::BLOCK_THREADS :
+    //ChainedPolicyT::ActivePolicy::DownsweepPolicy::BLOCK_THREADS), 1)
 __global__ void DeviceRadixSortDownsweepKernel(
-    hipLaunchParm           lp,
+    
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
     KeyT                    *d_keys_out,                    ///< [in] Output keys buffer
     const ValueT            *d_values_in,                   ///< [in] Input values buffer
@@ -512,9 +512,9 @@ template <
     typename                KeyT,                           ///< Key type
     typename                ValueT,                         ///< Value type
     typename                OffsetT>                        ///< Signed integer type for global offsets
-__launch_bounds__ (int(ChainedPolicyT::ActivePolicy::SingleTilePolicy::BLOCK_THREADS), 1)
+//__launch_bounds__ (int(ChainedPolicyT::ActivePolicy::SingleTilePolicy::BLOCK_THREADS), 1)
 __global__ void DeviceRadixSortSingleTileKernel(
-    hipLaunchParm           lp,
+    
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
     KeyT                    *d_keys_out,                    ///< [in] Output keys buffer
     const ValueT            *d_values_in,                   ///< [in] Input values buffer
@@ -560,12 +560,12 @@ __global__ void DeviceRadixSortSingleTileKernel(
     typedef typename Traits<KeyT>::UnsignedBits UnsignedBitsT;
 
     // Shared memory storage
-    __shared__ union
+    __shared__ union _dummy
     {
         typename BlockRadixSortT::TempStorage       sort;
         typename BlockLoadKeys::TempStorage         load_keys;
         typename BlockLoadValues::TempStorage       load_values;
-
+        __host__ __device__ ~_dummy() {}
     } temp_storage;
 
     // Keys and values for the block
@@ -623,11 +623,11 @@ template <
     typename                KeyT,                           ///< Key type
     typename                ValueT,                         ///< Value type
     typename                OffsetT>                        ///< Signed integer type for global offsets
-__launch_bounds__ (int((ALT_DIGIT_BITS) ?
-    ChainedPolicyT::ActivePolicy::AltSegmentedPolicy::BLOCK_THREADS :
-    ChainedPolicyT::ActivePolicy::SegmentedPolicy::BLOCK_THREADS), 1)
+//__launch_bounds__ (int((ALT_DIGIT_BITS) ?
+    //ChainedPolicyT::ActivePolicy::AltSegmentedPolicy::BLOCK_THREADS :
+    //ChainedPolicyT::ActivePolicy::SegmentedPolicy::BLOCK_THREADS), 1)
 __global__ void DeviceSegmentedRadixSortKernel(
-    hipLaunchParm           lp,
+    
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
     KeyT                    *d_keys_out,                    ///< [in] Output keys buffer
     const ValueT            *d_values_in,                   ///< [in] Input values buffer

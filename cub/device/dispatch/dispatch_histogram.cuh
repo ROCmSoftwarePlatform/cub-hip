@@ -108,18 +108,18 @@
                 num_output_bins_wrapper.array[CHANNEL] = num_output_levels[CHANNEL] - 1;\
             int histogram_init_block_threads    = 256;\
             int histogram_init_grid_dims        = (max_num_output_bins + histogram_init_block_threads - 1) / histogram_init_block_threads;\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(DeviceHistogramInitKernel), dim3(%d), dim3(%d), 0, %lld, )\n",\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((DeviceHistogramInitKernel), dim3(%d), dim3(%d), 0, %lld, )\n",\
                 histogram_init_grid_dims, histogram_init_block_threads, (long long) stream);\
-            hipLaunchKernel(HIP_KERNEL_NAME(histogram_init_kernel), dim3(histogram_init_grid_dims), dim3(histogram_init_block_threads), 0, stream, \
+            hipLaunchKernelGGL((histogram_init_kernel), dim3(histogram_init_grid_dims), dim3(histogram_init_block_threads), 0, stream, \
                 num_output_bins_wrapper,\
                 d_output_histograms_wrapper,\
                 tile_queue);\
             if ((blocks_per_row == 0) || (blocks_per_col == 0))\
                 break;\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(histogram_sweep_kernel), dim3({%d, %d, %d}), dim3(%d), 0, %lld, ), %d pixels per thread, %d SM occupancy\n",\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((histogram_sweep_kernel), dim3({%d, %d, %d}), dim3(%d), 0, %lld, ), %d pixels per thread, %d SM occupancy\n",\
                 sweep_grid_dims.x, sweep_grid_dims.y, sweep_grid_dims.z,\
                 histogram_sweep_config.block_threads, (long long) stream, histogram_sweep_config.pixels_per_thread, histogram_sweep_sm_occupancy);\
-            hipLaunchKernel(HIP_KERNEL_NAME(histogram_sweep_kernel), dim3(sweep_grid_dims), dim3(histogram_sweep_config.block_threads), 0, stream, \
+            hipLaunchKernelGGL((histogram_sweep_kernel), dim3(sweep_grid_dims), dim3(histogram_sweep_config.block_threads), 0, stream, \
                 d_samples,\
                 num_output_bins_wrapper,\
                 num_privatized_bins_wrapper,\
@@ -158,7 +158,7 @@ template <
     typename                                        CounterT,                       ///< Integer type for counting sample occurrences per histogram bin
     typename                                        OffsetT>                        ///< Signed integer type for global offsets
 __global__ void DeviceHistogramInitKernel(
-    hipLaunchParm                                   lp,
+    
     ArrayWrapper<int, NUM_ACTIVE_CHANNELS>          num_output_bins_wrapper,        ///< Number of output histogram bins per channel
     ArrayWrapper<CounterT*, NUM_ACTIVE_CHANNELS>    d_output_histograms_wrapper,    ///< Histogram counter data having logical dimensions <tt>CounterT[NUM_ACTIVE_CHANNELS][num_bins.array[CHANNEL]]</tt>
     GridQueue<int>                                  tile_queue)                     ///< Drain queue descriptor for dynamically mapping tile data onto thread blocks
@@ -190,9 +190,9 @@ template <
     typename                                            PrivatizedDecodeOpT,            ///< The transform operator type for determining privatized counter indices from samples, one for each channel
     typename                                            OutputDecodeOpT,                ///< The transform operator type for determining output bin-ids from privatized counter indices, one for each channel
     typename                                            OffsetT>                        ///< Signed integer type for global offsets
-__launch_bounds__ (int(AgentHistogramPolicyT::BLOCK_THREADS), 1)
+//__launch_bounds__ (int(AgentHistogramPolicyT::BLOCK_THREADS), 1)
 __global__ void DeviceHistogramSweepKernel(
-    hipLaunchParm                                           lp,
+    
     SampleIteratorT                                         d_samples,                          ///< Input data to reduce
     ArrayWrapper<int, NUM_ACTIVE_CHANNELS>                  num_output_bins_wrapper,            ///< The number bins per final output histogram
     ArrayWrapper<int, NUM_ACTIVE_CHANNELS>                  num_privatized_bins_wrapper,        ///< The number bins per privatized histogram

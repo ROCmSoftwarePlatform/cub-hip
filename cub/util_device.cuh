@@ -111,7 +111,7 @@ hipError_t AliasTemporaries(
 template <typename T = void>
 __global__
 __attribute__((used))
-void EmptyKernel(hipLaunchParm lp, int x) { }
+void EmptyKernel(int x) { }
 
 
 #endif  // DOXYGEN_SHOULD_SKIP_THIS
@@ -124,7 +124,7 @@ CUB_RUNTIME_FUNCTION __forceinline__ hipError_t PtxVersion(int &ptx_version)
     struct Dummy
     {
         /// Type definition of the EmptyKernel kernel entry point
-        typedef void (*EmptyKernelPtr)(hipLaunchParm, int);
+        typedef void (*EmptyKernelPtr)(int);
 
         /// Force EmptyKernel<void> to be generated if this class is used
         CUB_RUNTIME_FUNCTION __forceinline__

@@ -66,8 +66,8 @@
             ScanTileStateT tile_status;\
             if (CubDebug(error = tile_status.Init(num_tiles, allocations[0], allocation_sizes[0]))) break;\
             int init_grid_size = CUB_MAX(1, (num_tiles + INIT_KERNEL_THREADS - 1) / INIT_KERNEL_THREADS);\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(scan_init_kernel), dim3(%d), dim3(%d), 0, %lld, )\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);\
-            hipLaunchKernel(HIP_KERNEL_NAME(scan_init_kernel), dim3(init_grid_size), dim3(INIT_KERNEL_THREADS), 0, stream,\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((scan_init_kernel), dim3(%d), dim3(%d), 0, %lld, )\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);\
+            hipLaunchKernelGGL((scan_init_kernel), dim3(init_grid_size), dim3(INIT_KERNEL_THREADS), 0, stream,\
                 tile_status,\
                 num_tiles,\
                 d_num_selected_out);\
@@ -83,9 +83,9 @@
             scan_grid_size.z = 1;\
             scan_grid_size.y = ((unsigned int) num_tiles + max_dim_x - 1) / max_dim_x;\
             scan_grid_size.x = CUB_MIN(num_tiles, max_dim_x);\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(select_if_kernel), dim3({%d,%d,%d}), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((select_if_kernel), dim3({%d,%d,%d}), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
                 scan_grid_size.x, scan_grid_size.y, scan_grid_size.z, select_if_config.block_threads, (long long) stream, select_if_config.items_per_thread, range_select_sm_occupancy);\
-            hipLaunchKernel(HIP_KERNEL_NAME(select_if_kernel), dim3(scan_grid_size), dim3(select_if_config.block_threads), 0, stream,\
+            hipLaunchKernelGGL((select_if_kernel), dim3(scan_grid_size), dim3(select_if_config.block_threads), 0, stream,\
                 d_in,\
                 d_flags,\
                 d_selected_out,\
@@ -127,11 +127,11 @@ template <
     typename            EqualityOpT,                ///< Equality operator type (NullType if selection functor or selection flags is to be used for selection)
     typename            OffsetT,                    ///< Signed integer type for global offsets
     bool                KEEP_REJECTS>               ///< Whether or not we push rejected items to the back of the output
-__launch_bounds__ (int(AgentSelectIfPolicyT::BLOCK_THREADS), 1)
+//__launch_bounds__ (int(AgentSelectIfPolicyT::BLOCK_THREADS), 1)
 __global__
 __attribute__((used))
 void DeviceSelectSweepKernel(
-    hipLaunchParm           lp,
+    
     InputIteratorT          d_in,                   ///< [in] Pointer to the input sequence of data items
     FlagsInputIteratorT     d_flags,                ///< [in] Pointer to the input sequence of selection flags (if applicable)
     SelectedOutputIteratorT d_selected_out,         ///< [out] Pointer to the output sequence of selected data items

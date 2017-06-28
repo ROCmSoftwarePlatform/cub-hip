@@ -95,8 +95,8 @@
             ScanTileStateT tile_state;\
             if (CubDebug(error = tile_state.Init(num_tiles, allocations[0], allocation_sizes[0]))) break;\
             int init_grid_size = CUB_MAX(1, (num_tiles + INIT_KERNEL_THREADS - 1) / INIT_KERNEL_THREADS);\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(init_kernel), dim3(%d), dim3(%d), 0, %lld, )\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);\
-            hipLaunchKernel(HIP_KERNEL_NAME(init_kernel),\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((init_kernel), dim3(%d), dim3(%d), 0, %lld, )\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);\
+            hipLaunchKernelGGL((init_kernel),\
                             dim3(init_grid_size),\
                             dim3(INIT_KERNEL_THREADS),\
                             0,\
@@ -115,9 +115,9 @@
             int scan_grid_size = CUB_MIN(num_tiles, max_dim_x);\
             for (int start_tile = 0; start_tile < num_tiles; start_tile += scan_grid_size)\
             {\
-                if (debug_synchronous) _CubLog("Invoking %d hipLaunchKernel(HIP_KERNEL_NAME(reduce_by_key_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
+                if (debug_synchronous) _CubLog("Invoking %d hipLaunchKernelGGL((reduce_by_key_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
                     start_tile, scan_grid_size, reduce_by_key_config.block_threads, (long long) stream, reduce_by_key_config.items_per_thread, reduce_by_key_sm_occupancy);\
-                hipLaunchKernel(HIP_KERNEL_NAME(reduce_by_key_kernel),\
+                hipLaunchKernelGGL((reduce_by_key_kernel),\
                                 dim3(scan_grid_size),\
                                 dim3(reduce_by_key_config.block_threads),\
                                 0,\
@@ -161,11 +161,11 @@ template <
     typename            EqualityOpT,                            ///< KeyT equality operator type
     typename            ReductionOpT,                           ///< ValueT reduction operator type
     typename            OffsetT>                                ///< Signed integer type for global offsets
-__launch_bounds__ (int(AgentReduceByKeyPolicyT::BLOCK_THREADS), 1)
+//__launch_bounds__ (int(AgentReduceByKeyPolicyT::BLOCK_THREADS), 1)
 __global__
 __attribute__((used))
 void DeviceReduceByKeyKernel(
-    hipLaunchParm                      lp,
+    
     KeysInputIteratorT        d_keys_in,                      ///< Pointer to the input sequence of keys
     UniqueOutputIteratorT     d_unique_out,                   ///< Pointer to the output sequence of unique keys (one key per run)
     ValuesInputIteratorT      d_values_in,                    ///< Pointer to the input sequence of corresponding values

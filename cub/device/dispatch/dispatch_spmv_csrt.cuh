@@ -65,7 +65,7 @@ template <
     typename        OffsetT,                    ///< Signed integer type for sequence offsets
     bool            HAS_ALPHA,                  ///< Whether the input parameter Alpha is 1
     bool            HAS_BETA>                   ///< Whether the input parameter Beta is 0
-__launch_bounds__ (int(SpmvPolicyT::BLOCK_THREADS))
+//__launch_bounds__ (int(SpmvPolicyT::BLOCK_THREADS))
 __global__
 inline
 void DeviceSpmvKernel(
@@ -407,11 +407,11 @@ struct DispatchSpmv
             KeyValuePairT* d_tile_carry_pairs = (KeyValuePairT*) allocations[0];  // Agent carry-out pairs
 
             // Log spmv_kernel configuration
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(spmv_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((spmv_kernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",
                 spmv_grid_size, spmv_config.block_threads, (long long) stream, spmv_config.items_per_thread, spmv_sm_occupancy);
 
             // Invoke spmv_kernel
-            hipLaunchKernel(HIP_KERNEL_NAME(spmv_kernel), dim3(spmv_grid_size), dim3(spmv_config.block_threads), 0, stream, 
+            hipLaunchKernelGGL((spmv_kernel), dim3(spmv_grid_size), dim3(spmv_config.block_threads), 0, stream, 
                 spmv_params,
                 merge_items_per_block,
                 d_tile_carry_pairs);

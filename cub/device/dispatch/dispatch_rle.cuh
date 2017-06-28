@@ -68,8 +68,8 @@
             ScanTileStateT tile_status;\
             if (CubDebug(error = tile_status.Init(num_tiles, allocations[0], allocation_sizes[0]))) break;\
             int init_grid_size = CUB_MAX(1, (num_tiles + INIT_KERNEL_THREADS - 1) / INIT_KERNEL_THREADS);\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(device_scan_init_kernel), dim3(%d), dim3(%d), 0, %lld, )\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);\
-            hipLaunchKernel(HIP_KERNEL_NAME(device_scan_init_kernel),\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((device_scan_init_kernel), dim3(%d), dim3(%d), 0, %lld, )\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);\
+            hipLaunchKernelGGL((device_scan_init_kernel),\
                             dim3(init_grid_size),\
                             dim3(INIT_KERNEL_THREADS),\
                             0,\
@@ -92,9 +92,9 @@
             scan_grid_size.z = 1;\
             scan_grid_size.y = ((unsigned int) num_tiles + max_dim_x - 1) / max_dim_x;\
             scan_grid_size.x = CUB_MIN(num_tiles, max_dim_x);\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(device_rle_sweep_kernel), dim3({%d,%d,%d}), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((device_rle_sweep_kernel), dim3({%d,%d,%d}), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
                 scan_grid_size.x, scan_grid_size.y, scan_grid_size.z, device_rle_config.block_threads, (long long) stream, device_rle_config.items_per_thread, device_rle_kernel_sm_occupancy);\
-            hipLaunchKernel(HIP_KERNEL_NAME(device_rle_sweep_kernel), dim3(scan_grid_size), dim3(device_rle_config.block_threads), 0, stream,\
+            hipLaunchKernelGGL((device_rle_sweep_kernel), dim3(scan_grid_size), dim3(device_rle_config.block_threads), 0, stream,\
                 d_in,\
                 d_offsets_out,\
                 d_lengths_out,\
@@ -135,11 +135,11 @@ template <
     typename            ScanTileStateT,              ///< Tile status interface type
     typename            EqualityOpT,                 ///< T equality operator type
     typename            OffsetT>                    ///< Signed integer type for global offsets
-__launch_bounds__ (int(AgentRlePolicyT::BLOCK_THREADS), 1)
+//__launch_bounds__ (int(AgentRlePolicyT::BLOCK_THREADS), 1)
 __global__
 __attribute__((used))
 void DeviceRleSweepKernel(
-    hipLaunchParm               lp,
+    
     InputIteratorT     d_in,               ///< [in] Pointer to input sequence of data items
     OffsetsOutputIteratorT      d_offsets_out,      ///< [out] Pointer to output sequence of run-offsets
     LengthsOutputIteratorT      d_lengths_out,      ///< [out] Pointer to output sequence of run-lengths

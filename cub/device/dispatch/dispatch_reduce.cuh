@@ -62,11 +62,11 @@
                 temp_storage_bytes = 1;\
                 break;\
             }\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(DeviceReduceSingleTileKernel), dim3(1), dim3(%d), 0, %lld, ), %d items per thread\n",\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((DeviceReduceSingleTileKernel), dim3(1), dim3(%d), 0, %lld, ), %d items per thread\n",\
                 ActivePolicyT::SingleTilePolicy::BLOCK_THREADS,\
                 (long long) stream,\
                 ActivePolicyT::SingleTilePolicy::ITEMS_PER_THREAD);\
-            hipLaunchKernel(HIP_KERNEL_NAME(single_tile_kernel), dim3(1), dim3(ActivePolicyT::SingleTilePolicy::BLOCK_THREADS), 0, stream,\
+            hipLaunchKernelGGL((single_tile_kernel), dim3(1), dim3(ActivePolicyT::SingleTilePolicy::BLOCK_THREADS), 0, stream,\
                 d_in,\
                 d_out,\
                 num_items,\
@@ -121,8 +121,8 @@
                 reduce_grid_size    = (num_tiles < reduce_device_occupancy) ?\
                                         num_tiles :                \
                                         reduce_device_occupancy;  \
-                if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(prepare_drain_kernel), dim3(1), dim3(1), 0, %lld, )\n", (long long) stream);\
-                hipLaunchKernel(HIP_KERNEL_NAME(prepare_drain_kernel), dim3(1), dim3(1), 0, stream, queue, num_items);\
+                if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((prepare_drain_kernel), dim3(1), dim3(1), 0, %lld, )\n", (long long) stream);\
+                hipLaunchKernelGGL((prepare_drain_kernel), dim3(1), dim3(1), 0, stream, queue, num_items);\
                 if (CubDebug(error = hipPeekAtLastError())) break;\
                 if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
             }\
@@ -130,13 +130,13 @@
             {\
                 error = CubDebug(hipErrorUnknown ); break;\
             }\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(DeviceReduceKernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((DeviceReduceKernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
                 reduce_grid_size,\
                 ActivePolicyT::ReducePolicy::BLOCK_THREADS,\
                 (long long) stream,\
                 ActivePolicyT::ReducePolicy::ITEMS_PER_THREAD,\
                 reduce_config.sm_occupancy);\
-            hipLaunchKernel(HIP_KERNEL_NAME(reduce_kernel), dim3(reduce_grid_size), dim3(ActivePolicyT::ReducePolicy::BLOCK_THREADS), 0, stream,\
+            hipLaunchKernelGGL((reduce_kernel), dim3(reduce_grid_size), dim3(ActivePolicyT::ReducePolicy::BLOCK_THREADS), 0, stream,\
                 d_in,\
                 d_block_reductions,\
                 num_items,\
@@ -145,11 +145,11 @@
                 reduction_op);\
             if (CubDebug(error = hipPeekAtLastError())) break;\
             if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(DeviceReduceSingleTileKernel), dim3(1), dim3(%d), 0, %lld, ), %d items per thread\n",\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((DeviceReduceSingleTileKernel), dim3(1), dim3(%d), 0, %lld, ), %d items per thread\n",\
                 ActivePolicyT::SingleTilePolicy::BLOCK_THREADS,\
                 (long long) stream,\
                 ActivePolicyT::SingleTilePolicy::ITEMS_PER_THREAD);\
-            hipLaunchKernel(HIP_KERNEL_NAME(single_tile_kernel), dim3(1), dim3(ActivePolicyT::SingleTilePolicy::BLOCK_THREADS), 0, stream,\
+            hipLaunchKernelGGL((single_tile_kernel), dim3(1), dim3(ActivePolicyT::SingleTilePolicy::BLOCK_THREADS), 0, stream,\
                 d_block_reductions,\
                 d_out,\
                 reduce_grid_size,\
@@ -177,13 +177,13 @@
             }\
             KernelConfig segmented_reduce_config;\
             if (CubDebug(error = segmented_reduce_config.Init<typename ActivePolicyT::SegmentedReducePolicy>(segmented_reduce_kernel))) break;\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(SegmentedDeviceReduceKernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
+            if (debug_synchronous) _CubLog("Invoking hipLaunchKernelGGL((SegmentedDeviceReduceKernel), dim3(%d), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
                 num_segments,\
                 ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS,\
                 (long long) stream,\
                 ActivePolicyT::SegmentedReducePolicy::ITEMS_PER_THREAD,\
                 segmented_reduce_config.sm_occupancy);\
-            hipLaunchKernel(HIP_KERNEL_NAME(segmented_reduce_kernel), dim3(num_segments), dim3(ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS), 0, stream,\
+            hipLaunchKernelGGL((segmented_reduce_kernel), dim3(num_segments), dim3(ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS), 0, stream,\
                 d_in,\
                 d_out,\
                 d_begin_offsets,\
@@ -217,9 +217,9 @@ template <
     typename                OutputIteratorT,            ///< Output iterator type for recording the reduced aggregate \iterator
     typename                OffsetT,                    ///< Signed integer type for global offsets
     typename                ReductionOpT>               ///< Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
-__launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS), 1)
+//__launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS), 1)
 __global__ void DeviceReduceKernel(
-    hipLaunchParm           lp,
+    
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
     OffsetT                 num_items,                  ///< [in] Total number of input data items
@@ -267,9 +267,9 @@ template <
     typename                OffsetT,                    ///< Signed integer type for global offsets
     typename                ReductionOpT,               ///< Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
     typename                OuputT>                     ///< Data element type that is convertible to the \p value type of \p OutputIteratorT
-__launch_bounds__ (int(ChainedPolicyT::ActivePolicy::SingleTilePolicy::BLOCK_THREADS), 1)
+//__launch_bounds__ (int(ChainedPolicyT::ActivePolicy::SingleTilePolicy::BLOCK_THREADS), 1)
 __global__ void DeviceReduceSingleTileKernel(
-    hipLaunchParm           lp,
+    
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
     OffsetT                 num_items,                  ///< [in] Total number of input data items
@@ -339,9 +339,9 @@ template <
     typename                OffsetT,                    ///< Signed integer type for global offsets
     typename                ReductionOpT,               ///< Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
     typename                OutputT>                    ///< Data element type that is convertible to the \p value type of \p OutputIteratorT
-__launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS), 1)
+//__launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS), 1)
 __global__ void DeviceSegmentedReduceKernel(
-    hipLaunchParm           lp,
+    
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
     int                     *d_begin_offsets,           ///< [in] %Device-accessible pointer to the sequence of beginning offsets of length \p num_segments, such that <tt>d_begin_offsets[i]</tt> is the first element of the <em>i</em><sup>th</sup> data segment in <tt>d_keys_*</tt> and <tt>d_values_*</tt>
