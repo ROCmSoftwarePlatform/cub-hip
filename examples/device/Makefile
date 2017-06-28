@@ -104,9 +104,9 @@ run :
 
 example_device_reduce: bin/example_device_reduce_$(BIN_SUFFIX)
 
-bin/example_device_reduce_$(BIN_SUFFIX) : example_device_reduce.cu $(DEPS)
+bin/example_device_reduce_$(BIN_SUFFIX) : example_device_reduce.cpp $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_reduce_$(BIN_SUFFIX) example_device_reduce.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_reduce_$(BIN_SUFFIX) example_device_reduce.cpp $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -115,9 +115,9 @@ bin/example_device_reduce_$(BIN_SUFFIX) : example_device_reduce.cu $(DEPS)
 
 example_device_partition_flagged: bin/example_device_partition_flagged_$(BIN_SUFFIX)
 
-bin/example_device_partition_flagged_$(BIN_SUFFIX) : example_device_partition_flagged.cu $(DEPS)
+bin/example_device_partition_flagged_$(BIN_SUFFIX) : example_device_partition_flagged.cpp $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_partition_flagged_$(BIN_SUFFIX) example_device_partition_flagged.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_partition_flagged_$(BIN_SUFFIX) example_device_partition_flagged.cpp $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 #-------------------------------------------------------------------------------
 # make example_device_partition_if
@@ -125,9 +125,9 @@ bin/example_device_partition_flagged_$(BIN_SUFFIX) : example_device_partition_fl
 
 example_device_partition_if: bin/example_device_partition_if_$(BIN_SUFFIX)
 
-bin/example_device_partition_if_$(BIN_SUFFIX) : example_device_partition_if.cu $(DEPS)
+bin/example_device_partition_if_$(BIN_SUFFIX) : example_device_partition_if.cpp $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_partition_if_$(BIN_SUFFIX) example_device_partition_if.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_partition_if_$(BIN_SUFFIX) example_device_partition_if.cpp $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 #-------------------------------------------------------------------------------
 # make example_device_scan
@@ -135,9 +135,9 @@ bin/example_device_partition_if_$(BIN_SUFFIX) : example_device_partition_if.cu $
 
 example_device_scan: bin/example_device_scan_$(BIN_SUFFIX)
 
-bin/example_device_scan_$(BIN_SUFFIX) : example_device_scan.cu $(DEPS)
+bin/example_device_scan_$(BIN_SUFFIX) : example_device_scan.cpp $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_scan_$(BIN_SUFFIX) example_device_scan.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_scan_$(BIN_SUFFIX) example_device_scan.cpp $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -146,9 +146,9 @@ bin/example_device_scan_$(BIN_SUFFIX) : example_device_scan.cu $(DEPS)
 
 example_device_radix_sort: bin/example_device_radix_sort_$(BIN_SUFFIX)
 
-bin/example_device_radix_sort_$(BIN_SUFFIX) : example_device_radix_sort.cu $(DEPS)
+bin/example_device_radix_sort_$(BIN_SUFFIX) : example_device_radix_sort.cpp $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_radix_sort_$(BIN_SUFFIX) example_device_radix_sort.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_radix_sort_$(BIN_SUFFIX) example_device_radix_sort.cpp $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -157,9 +157,9 @@ bin/example_device_radix_sort_$(BIN_SUFFIX) : example_device_radix_sort.cu $(DEP
 
 example_device_select_unique: bin/example_device_select_unique_$(BIN_SUFFIX)
 
-bin/example_device_select_unique_$(BIN_SUFFIX) : example_device_select_unique.cu $(DEPS)
+bin/example_device_select_unique_$(BIN_SUFFIX) : example_device_select_unique.cpp $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_select_unique_$(BIN_SUFFIX) example_device_select_unique.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_select_unique_$(BIN_SUFFIX) example_device_select_unique.cpp $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -168,9 +168,9 @@ bin/example_device_select_unique_$(BIN_SUFFIX) : example_device_select_unique.cu
 
 example_device_select_flagged: bin/example_device_select_flagged_$(BIN_SUFFIX)
 
-bin/example_device_select_flagged_$(BIN_SUFFIX) : example_device_select_flagged.cu $(DEPS)
+bin/example_device_select_flagged_$(BIN_SUFFIX) : example_device_select_flagged.cpp $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_select_flagged_$(BIN_SUFFIX) example_device_select_flagged.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_select_flagged_$(BIN_SUFFIX) example_device_select_flagged.cpp $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 #-------------------------------------------------------------------------------
 # make example_device_select_if
@@ -178,9 +178,9 @@ bin/example_device_select_flagged_$(BIN_SUFFIX) : example_device_select_flagged.
 
 example_device_select_if: bin/example_device_select_if_$(BIN_SUFFIX)
 
-bin/example_device_select_if_$(BIN_SUFFIX) : example_device_select_if.cu $(DEPS)
+bin/example_device_select_if_$(BIN_SUFFIX) : example_device_select_if.cpp $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_select_if_$(BIN_SUFFIX) example_device_select_if.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_select_if_$(BIN_SUFFIX) example_device_select_if.cpp $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -189,9 +189,9 @@ bin/example_device_select_if_$(BIN_SUFFIX) : example_device_select_if.cu $(DEPS)
 
 example_device_sort_find_non_trivial_runs: bin/example_device_sort_find_non_trivial_runs_$(BIN_SUFFIX)
 
-bin/example_device_sort_find_non_trivial_runs_$(BIN_SUFFIX) : example_device_sort_find_non_trivial_runs.cu $(DEPS)
+bin/example_device_sort_find_non_trivial_runs_$(BIN_SUFFIX) : example_device_sort_find_non_trivial_runs.cpp $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_sort_find_non_trivial_runs_$(BIN_SUFFIX) example_device_sort_find_non_trivial_runs.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/example_device_sort_find_non_trivial_runs_$(BIN_SUFFIX) example_device_sort_find_non_trivial_runs.cpp $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 
