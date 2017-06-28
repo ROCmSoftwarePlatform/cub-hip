@@ -646,7 +646,6 @@ template <
     typename            OutputIteratorT,
     typename            ReductionOpT>
 __global__ void CnpDispatchKernel(
-    hipLaunchParm lp,
     int                 timing_timing_iterations,
     size_t              *d_temp_storage_bytes,
     hipError_t         *d_cdp_error,
@@ -706,7 +705,7 @@ hipError_t Dispatch(
     bool                debug_synchronous)
 {
     // Invoke kernel to invoke device-side dispatch
-    hipLaunchKernel(HIP_KERNEL_NAME(CnpDispatchKernel), dim3(1), dim3(1), 0, 0, timing_timing_iterations, d_temp_storage_bytes, d_cdp_error, d_temp_storage, temp_storage_bytes,
+    hipLaunchKernelGGL((CnpDispatchKernel), dim3(1), dim3(1), 0, 0, timing_timing_iterations, d_temp_storage_bytes, d_cdp_error, d_temp_storage, temp_storage_bytes,
         d_in, d_out, num_items, max_segments, d_segment_offsets, reduction_op, debug_synchronous);
 
     // Copy out temp_storage_bytes
@@ -1331,13 +1330,13 @@ int main(int argc, char** argv)
         TestType<long, long>(max_items, max_segments);
         TestType<long long, long long>(max_items, max_segments);
 
-        //TestType<uchar2, uchar2>(max_items, max_segments);
-        //TestType<uint2, uint2>(max_items, max_segments);
-        //TestType<ulonglong2, ulonglong2>(max_items, max_segments);
-        //TestType<ulonglong4, ulonglong4>(max_items, max_segments);
+        TestType<uchar2, uchar2>(max_items, max_segments);
+        TestType<uint2, uint2>(max_items, max_segments);
+        TestType<ulonglong2, ulonglong2>(max_items, max_segments);
+        TestType<ulonglong4, ulonglong4>(max_items, max_segments);
 
-        //TestType<TestFoo, TestFoo>(max_items, max_segments);
-        //TestType<TestBar, TestBar>(max_items, max_segments);
+        TestType<TestFoo, TestFoo>(max_items, max_segments);
+        TestType<TestBar, TestBar>(max_items, max_segments);
     }
 
 #endif

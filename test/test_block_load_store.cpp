@@ -73,8 +73,8 @@ template <
     BlockStoreAlgorithm STORE_ALGORITHM,
     typename            InputIteratorT,
     typename            OutputIteratorT>
-__launch_bounds__ (BLOCK_THREADS, 1)
-__global__ void Kernel(hipLaunchParm   lp,
+//__launch_bounds__ (BLOCK_THREADS, 1)
+__global__ void Kernel(
 	    InputIteratorT d_in,
 	    OutputIteratorT d_out_unguarded,
 	    OutputIteratorT d_out_guarded,
@@ -175,7 +175,7 @@ void TestKernel(
     typedef typename std::iterator_traits<InputIteratorT>::difference_type OffsetT;
     DiscardOutputIterator<OffsetT> discard_itr;
 
-    hipLaunchKernel(HIP_KERNEL_NAME(Kernel<BLOCK_THREADS,
+    hipLaunchKernelGGL((Kernel<BLOCK_THREADS,
                                            ITEMS_PER_THREAD,
                                            LOAD_ALGORITHM,
                                            STORE_ALGORITHM,
@@ -191,7 +191,7 @@ void TestKernel(
                     guarded_elements);
 
     // Test with regular output iterator
-    hipLaunchKernel(HIP_KERNEL_NAME(Kernel<BLOCK_THREADS,
+    hipLaunchKernelGGL((Kernel<BLOCK_THREADS,
                                            ITEMS_PER_THREAD,
                                            LOAD_ALGORITHM,
                                            STORE_ALGORITHM,
@@ -620,18 +620,11 @@ int main(int argc, char** argv)
     TestThreads<char>(2, 0.8f);
     TestThreads<int>(2, 0.8f);
     TestThreads<long>(2, 0.8f);
-    //TODO: Revert once hang issue is fixed
-#ifdef __HIP_PLATFORM_NVCC__
-    // TODO: this is disabled because HIP's vector types are not Regular, which
-    //       is a requirement.
     TestThreads<long2>(2, 0.8f);
 
     if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
-    // TODO: this is disabled because HIP's vector types are not Regular, which
-    //       is a requirement.
            TestThreads<double2>(2, 0.8f);
     TestThreads<TestFoo>(2, 0.8f);
-#endif
     TestThreads<TestBar>(2, 0.8f);
 
 #endif

@@ -249,7 +249,7 @@ template <
     typename                    ReductionOpT,
     typename                    OffsetT>
 __global__ void CnpDispatchKernel(
-    hipLaunchParm lp,
+    ,
     int                         timing_timing_iterations,
     size_t                      *d_temp_storage_bytes,
     hipError_t                 *d_cdp_error,
@@ -326,7 +326,7 @@ hipError_t Dispatch(
     bool                        debug_synchronous)
 {
     // Invoke kernel to invoke device-side dispatch
-    hipLaunchKernel(HIP_KERNEL_NAME(CnpDispatchKernel),
+    hipLaunchKernelGGL((CnpDispatchKernel),
                     dim3(1),
                     dim3(1),
                     0,
@@ -884,18 +884,18 @@ int main(int argc, char** argv)
         if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
             TestOp<int, double>(num_items);
 
-//        TestOp<int, uchar2>(num_items);
-//        TestOp<int, uint2>(num_items);
-//        TestOp<int, uint3>(num_items);
-//        TestOp<int, uint4>(num_items);
-//        TestOp<int, ulonglong4>(num_items);
+        TestOp<int, uchar2>(num_items);
+        TestOp<int, uint2>(num_items);
+        TestOp<int, uint3>(num_items);
+        TestOp<int, uint4>(num_items);
+        TestOp<int, ulonglong4>(num_items);
         TestOp<int, TestFoo>(num_items);
         TestOp<int, TestBar>(num_items);
 
         TestOp<char, int>(num_items);
         TestOp<long long, int>(num_items);
-        //TestOp<TestFoo, int>(num_items);
-        //TestOp<TestBar, int>(num_items);
+        TestOp<TestFoo, int>(num_items);
+        TestOp<TestBar, int>(num_items);
 
     }
 

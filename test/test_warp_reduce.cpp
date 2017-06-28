@@ -192,7 +192,6 @@ template <
     typename    T,
     typename    ReductionOp>
 __global__ void FullWarpReduceKernel(
-    hipLaunchParm   lp,
     T               *d_in,
     T               *d_out,
     ReductionOp     reduction_op,
@@ -208,11 +207,9 @@ __global__ void FullWarpReduceKernel(
     T input = d_in[hipThreadIdx_x];
 
     // Record elapsed clocks
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
     clock_t start = clock();
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
 
     // Test warp reduce
     int warp_id = hipThreadIdx_x / LOGICAL_WARP_THREADS;
@@ -221,11 +218,9 @@ __global__ void FullWarpReduceKernel(
         temp_storage[warp_id], input, reduction_op);
 
     // Record elapsed clocks
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
     clock_t stop = clock();
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
 
     *d_elapsed = stop - start;
 
@@ -244,7 +239,6 @@ template <
     typename    T,
     typename    ReductionOp>
 __global__ void PartialWarpReduceKernel(
-    hipLaunchParm lp,
     T           *d_in,
     T           *d_out,
     ReductionOp reduction_op,
@@ -261,29 +255,22 @@ __global__ void PartialWarpReduceKernel(
     T input = d_in[hipThreadIdx_x];
 
     // Record elapsed clocks
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
     clock_t start = clock();
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
 
     // Test partial-warp reduce
     int warp_id = hipThreadIdx_x / LOGICAL_WARP_THREADS;
 
     T output ;
 
-    //if (valid_warp_threads == 1)
-//	output = 2;
-  //  else
-	output =  DeviceTest<T, ReductionOp, WarpReduce>::Reduce(
-        temp_storage[warp_id], input, reduction_op, valid_warp_threads);
+    output =  DeviceTest<T, ReductionOp, WarpReduce>::Reduce(
+    temp_storage[warp_id], input, reduction_op, valid_warp_threads);
 
     // Record elapsed clocks
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
     clock_t stop = clock();
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
 
     *d_elapsed = stop - start;
 
@@ -304,7 +291,6 @@ template <
     typename    FlagT,
     typename    ReductionOp>
 __global__ void WarpHeadSegmentedReduceKernel(
-    hipLaunchParm lp,
     T           *d_in,
     FlagT       *d_head_flags,
     T           *d_out,
@@ -322,11 +308,9 @@ __global__ void WarpHeadSegmentedReduceKernel(
     FlagT   head_flag   = d_head_flags[hipThreadIdx_x];
 
     // Record elapsed clocks
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
     clock_t start = clock();
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
 
     // Test segmented warp reduce
     int warp_id = hipThreadIdx_x / LOGICAL_WARP_THREADS;
@@ -334,11 +318,9 @@ __global__ void WarpHeadSegmentedReduceKernel(
         temp_storage[warp_id], input, head_flag, reduction_op);
 
     // Record elapsed clocks
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
     clock_t stop = clock();
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
 
     *d_elapsed = stop - start;
 
@@ -359,7 +341,6 @@ template <
     typename    FlagT,
     typename    ReductionOp>
 __global__ void WarpTailSegmentedReduceKernel(
-    hipLaunchParm lp,
     T           *d_in,
     FlagT       *d_tail_flags,
     T           *d_out,
@@ -380,11 +361,9 @@ __global__ void WarpTailSegmentedReduceKernel(
                             d_tail_flags[hipThreadIdx_x - 1];
 
     // Record elapsed clocks
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
     clock_t start = clock();
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
 
     // Test segmented warp reduce
     int warp_id = hipThreadIdx_x / LOGICAL_WARP_THREADS;
@@ -392,11 +371,9 @@ __global__ void WarpTailSegmentedReduceKernel(
         temp_storage[warp_id], input, tail_flag, reduction_op);
 
     // Record elapsed clocks
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
     clock_t stop = clock();
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
 
     *d_elapsed = stop - start;
 
@@ -544,7 +521,7 @@ void TestReduce(
     if (valid_warp_threads == LOGICAL_WARP_THREADS)
     {
         // Run full-warp kernel
-        hipLaunchKernel(HIP_KERNEL_NAME(FullWarpReduceKernel<WARPS, LOGICAL_WARP_THREADS>),
+        hipLaunchKernelGGL((FullWarpReduceKernel<WARPS, LOGICAL_WARP_THREADS>),
                         dim3(1),
                         dim3(BLOCK_THREADS),
                         0,
@@ -557,7 +534,7 @@ void TestReduce(
     else
     {
         // Run partial-warp kernel
-        hipLaunchKernel(HIP_KERNEL_NAME(PartialWarpReduceKernel<WARPS, LOGICAL_WARP_THREADS>),
+        hipLaunchKernelGGL((PartialWarpReduceKernel<WARPS, LOGICAL_WARP_THREADS>),
                         dim3(1),
                         dim3(BLOCK_THREADS),
                         0,
@@ -654,7 +631,7 @@ void TestSegmentedReduce(
     fflush(stdout);
 
     // Run head-based kernel
-    hipLaunchKernel(HIP_KERNEL_NAME(WarpHeadSegmentedReduceKernel<WARPS, LOGICAL_WARP_THREADS>),
+    hipLaunchKernelGGL((WarpHeadSegmentedReduceKernel<WARPS, LOGICAL_WARP_THREADS>),
                     dim3(1),
                     dim3(BLOCK_THREADS),
                     0,
@@ -677,7 +654,7 @@ void TestSegmentedReduce(
     DisplayDeviceResults(d_elapsed, 1);
 
     // Run tail-based kernel
-    hipLaunchKernel(HIP_KERNEL_NAME(WarpTailSegmentedReduceKernel<WARPS, LOGICAL_WARP_THREADS>),
+    hipLaunchKernelGGL((WarpTailSegmentedReduceKernel<WARPS, LOGICAL_WARP_THREADS>),
                     dim3(1),
                     dim3(BLOCK_THREADS),
                     0,
@@ -789,8 +766,6 @@ void Test(GenMode gen_mode)
 
     // vec-4
     Test<WARPS, LOGICAL_WARP_THREADS, uchar4>(              gen_mode, Sum());
-    //TODO: Revert once hang issue is fixed
-#ifdef __HIP_PLATFORM_NVCC__
     Test<WARPS, LOGICAL_WARP_THREADS, uint2>(               gen_mode, Sum());
     Test<WARPS, LOGICAL_WARP_THREADS, ulonglong2>(          gen_mode, Sum());
     Test<WARPS, LOGICAL_WARP_THREADS, ushort4>(             gen_mode, Sum());
@@ -799,7 +774,6 @@ void Test(GenMode gen_mode)
     // complex
     Test<WARPS, LOGICAL_WARP_THREADS, TestFoo>(             gen_mode, Sum());
     Test<WARPS, LOGICAL_WARP_THREADS, TestBar>(             gen_mode, Sum());
-#endif
 }
 
 

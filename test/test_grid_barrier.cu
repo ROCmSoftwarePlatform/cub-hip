@@ -52,7 +52,7 @@ using namespace cub;
  */
 __global__
 inline
-void Kernel(hipLaunchParm lp, GridBarrier global_barrier, int iterations)
+void Kernel(GridBarrier global_barrier, int iterations)
 {
     for (int i = 0; i < iterations; i++)
     {
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
 //    // Time kernel
     GpuTimer gpu_timer;
     gpu_timer.Start();
-    hipLaunchKernel(HIP_KERNEL_NAME(Kernel),
+    hipLaunchKernelGGL((Kernel),
                     dim3(grid_size),
                     dim3(block_size),
                     0,

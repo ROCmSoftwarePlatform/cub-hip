@@ -187,7 +187,7 @@ hipError_t Dispatch(
  */
 template <typename InputIteratorT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
 __global__ void CnpDispatchKernel(
-    hipLaunchParm lp,
+    ,
     int                         timing_timing_iterations,
     size_t                      *d_temp_storage_bytes,
     hipError_t                 *d_cdp_error,
@@ -231,7 +231,7 @@ hipError_t Dispatch(
     bool                        debug_synchronous)
 {
     // Invoke kernel to invoke device-side dispatch
-    hipLaunchKernel(HIP_KERNEL_NAME(CnpDispatchKernel), dim3(1), dim3(1), 0, 0, timing_timing_iterations, d_temp_storage_bytes, d_cdp_error,
+    hipLaunchKernelGGL((CnpDispatchKernel), dim3(1), dim3(1), 0, 0, timing_timing_iterations, d_temp_storage_bytes, d_cdp_error,
         d_temp_storage, temp_storage_bytes, d_in, d_out, d_num_selected_out, num_items, debug_synchronous);
 
     // Copy out temp_storage_bytes
@@ -646,18 +646,18 @@ int main(int argc, char** argv)
         Test<unsigned int>(num_items);
         Test<unsigned long long>(num_items);
 
-//        Test<uchar2>(num_items);
-//        Test<ushort2>(num_items);
-//        Test<uint2>(num_items);
-//        Test<ulonglong2>(num_items);
-//
-//        Test<uchar4>(num_items);
-//        Test<ushort4>(num_items);
-//        Test<uint4>(num_items);
-//        Test<ulonglong4>(num_items);
-//
-//        Test<TestFoo>(num_items);
-//        Test<TestBar>(num_items);
+        Test<uchar2>(num_items);
+        Test<ushort2>(num_items);
+        Test<uint2>(num_items);
+        Test<ulonglong2>(num_items);
+
+        Test<uchar4>(num_items);
+        Test<ushort4>(num_items);
+        Test<uint4>(num_items);
+        Test<ulonglong4>(num_items);
+
+        Test<TestFoo>(num_items);
+        Test<TestBar>(num_items);
     }
 
 #endif

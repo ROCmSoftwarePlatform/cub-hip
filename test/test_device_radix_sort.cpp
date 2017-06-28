@@ -539,7 +539,7 @@ hipError_t Dispatch(Int2Type<IS_DESCENDING> is_descending,
  */
 template <int IS_DESCENDING, typename KeyT, typename ValueT>
 __global__
-void CnpDispatchKernel(hipLaunchParm           lp,
+void CnpDispatchKernel(
                        Int2Type<IS_DESCENDING> is_descending,
                        int                     *d_selector,
                        size_t                  *d_temp_storage_bytes,
@@ -591,7 +591,7 @@ hipError_t Dispatch(Int2Type<IS_DESCENDING> is_descending,
                     bool                    debug_synchronous)
 {
     // Invoke kernel to invoke device-side dispatch
-    hipLaunchKernel(HIP_KERNEL_NAME(CnpDispatchKernel),
+    hipLaunchKernelGGL((CnpDispatchKernel),
                     dim3(1),
                     dim3(1),
                     0,

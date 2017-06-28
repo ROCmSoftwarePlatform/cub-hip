@@ -115,7 +115,7 @@ template <
     typename T>
 __global__
 void Kernel(
-    hipLaunchParm     lp,
+    
     InputIteratorT    d_in,
     T                 *d_out,
     InputIteratorT    *d_itrs)
@@ -167,7 +167,7 @@ void Test(
     int compare;
 
     // Run unguarded kernel
-    hipLaunchKernel(HIP_KERNEL_NAME(Kernel),
+    hipLaunchKernelGGL((Kernel),
                     dim3(1),
                     dim3(1),
                     0,
@@ -839,12 +839,10 @@ int main(int argc, char** argv)
     if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
         Test<double4>();
 
-#ifdef __HIP_PLATFORM_NVCC__
-    Test<char>();             //TODO: Fix hang issue
-    Test<short>();            //TODO: Fix hang issue
-    Test<TestFoo>();          //TODO: Fix llvm build error
-    Test<TestBar>();          //TODO: Fix hang issue
-#endif
+    Test<char>();             
+    Test<short>();           
+    Test<TestFoo>();       
+    Test<TestBar>();      
 
     printf("\nTest complete\n"); fflush(stdout);
 

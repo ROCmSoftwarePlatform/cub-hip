@@ -243,7 +243,7 @@ template <
     typename    ScanOpT,
     typename    InitialValueT>
 __global__
-void WarpScanKernel(hipLaunchParm lp,
+void WarpScanKernel(
                     T             *d_in,
                     T             *d_out,
                     T             *d_aggregate,
@@ -431,7 +431,7 @@ void Test(
     fflush(stdout);
 
     // Run aggregate/prefix kernel
-    hipLaunchKernel(HIP_KERNEL_NAME(WarpScanKernel<LOGICAL_WARP_THREADS, TEST_MODE, T, ScanOpT, InitialValueT>),
+    hipLaunchKernelGGL((WarpScanKernel<LOGICAL_WARP_THREADS, TEST_MODE, T, ScanOpT, InitialValueT>),
                                     dim3(1),
                                     dim3(LOGICAL_WARP_THREADS),
                                     0,
@@ -534,8 +534,6 @@ void Test(GenMode gen_mode)
     Test<LOGICAL_WARP_THREADS>(gen_mode, Max(), (unsigned int) 99);
     Test<LOGICAL_WARP_THREADS>(gen_mode, Max(), (unsigned long long) 99);
 
-    //TODO: Revert once hang issue is fixed
-#ifdef __HIP_PLATFORM_NVCC__
     // vec-2
     Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_uchar2(17, 21));
     Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_ushort2(17, 21));
@@ -565,7 +563,6 @@ void Test(GenMode gen_mode)
     // complex
     Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), TestFoo::MakeTestFoo(17, 21, 32, 85));
     Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), TestBar(17, 21));
-#endif
 }
 
 

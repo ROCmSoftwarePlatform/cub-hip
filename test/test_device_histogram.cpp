@@ -457,7 +457,7 @@ hipError_t Dispatch(
         d_histo_wrapper.array[CHANNEL] = d_histograms[CHANNEL];
 
     // Invoke kernel to invoke device-side dispatch
-    hipLaunchKernel(HIP_KERNEL_NAME(CnpDispatchKernel<BINS, NUM_CHANNELS, NUM_ACTIVE_CHANNELS, SampleIteratorT, CounterT, ALGORITHM>), dim3(1), dim3(1), 0, 0, algorithm, timing_timing_iterations, d_temp_storage_bytes, d_cdp_error, d_temp_storage, temp_storage_bytes, d_samples, d_sample_itr, d_histo_wrapper, num_samples, debug_synchronous);
+    hipLaunchKernelGGL((CnpDispatchKernel<BINS, NUM_CHANNELS, NUM_ACTIVE_CHANNELS, SampleIteratorT, CounterT, ALGORITHM>), dim3(1), dim3(1), 0, 0, algorithm, timing_timing_iterations, d_temp_storage_bytes, d_cdp_error, d_temp_storage, temp_storage_bytes, d_samples, d_sample_itr, d_histo_wrapper, num_samples, debug_synchronous);
 
     // Copy out temp_storage_bytes
     CubDebugExit(hipMemcpy(&temp_storage_bytes, d_temp_storage_bytes, sizeof(size_t) * 1, hipMemcpyDeviceToHost));

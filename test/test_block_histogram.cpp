@@ -74,7 +74,7 @@ template <
     BlockHistogramAlgorithm ALGORITHM,
     typename                T,
     typename                HistoCounter>
-__global__ void BlockHistogramKernel(hipLaunchParm lp,
+__global__ void BlockHistogramKernel(
                           T             *d_samples,
                           HistoCounter  *d_histogram)
 {
@@ -170,7 +170,7 @@ void Test(
     CubDebugExit(hipMemset(d_histogram, 0, sizeof(int) * BINS));
 
     // Run kernel
-    hipLaunchKernel(HIP_KERNEL_NAME(BlockHistogramKernel<BINS,
+    hipLaunchKernelGGL((BlockHistogramKernel<BINS,
                                                          BLOCK_THREADS,
                                                          ITEMS_PER_THREAD,
                                                          ALGORITHM>),

@@ -161,10 +161,10 @@ template <
     int                 BLOCKED_OUTPUT,
     typename            Key,
     typename            Value>
-__launch_bounds__ (BLOCK_THREADS, 1)
+//__launch_bounds__ (BLOCK_THREADS, 1)
 __global__
 void Kernel(
-    hipLaunchParm               lp,
+    
     Key                         *d_keys,
     Value                       *d_values,
     int                         begin_bit,
@@ -224,10 +224,10 @@ template <
     int                 BLOCKED_OUTPUT,
     typename            Key,
     typename            Value>
-__launch_bounds__ (BLOCK_THREADS, 1)
+//__launch_bounds__ (BLOCK_THREADS, 1)
 __global__
 void Kernel(
-    hipLaunchParm               lp,
+    
     Key                         *d_keys,
     Value                       *d_values,
     int                         begin_bit,
@@ -394,7 +394,7 @@ template <
     int                     RADIX_BITS,
     bool                    MEMOIZE_OUTER_SCAN,
     BlockScanAlgorithm      INNER_SCAN_ALGORITHM,
-    hipSharedMemConfig     SMEM_CONFIG,
+    hipSharedMemConfig      SMEM_CONFIG,
     bool                    DESCENDING,
     bool                    BLOCKED_OUTPUT,
     typename                Key,
@@ -488,7 +488,7 @@ void TestDriver(
     #endif
 
     // Run kernel
-    hipLaunchKernel(HIP_KERNEL_NAME(Kernel<BLOCK_THREADS,
+    hipLaunchKernelGGL((Kernel<BLOCK_THREADS,
                                            ITEMS_PER_THREAD,
                                            RADIX_BITS,
                                            MEMOIZE_OUTER_SCAN,
@@ -553,7 +553,7 @@ template <
     int                     RADIX_BITS,
     bool                    MEMOIZE_OUTER_SCAN,
     BlockScanAlgorithm      INNER_SCAN_ALGORITHM,
-    hipSharedMemConfig     SMEM_CONFIG,
+    hipSharedMemConfig      SMEM_CONFIG,
     bool                    DESCENDING,
     bool                    BLOCKED_OUTPUT,
     typename                Key,
@@ -608,7 +608,7 @@ template <
     int                     RADIX_BITS,
     bool                    MEMOIZE_OUTER_SCAN,
     BlockScanAlgorithm      INNER_SCAN_ALGORITHM,
-    hipSharedMemConfig     SMEM_CONFIG,
+    hipSharedMemConfig      SMEM_CONFIG,
     bool                    DESCENDING,
     bool                    BLOCKED_OUTPUT,
     typename                Key,
@@ -640,7 +640,7 @@ template <
     int                     RADIX_BITS,
     bool                    MEMOIZE_OUTER_SCAN,
     BlockScanAlgorithm      INNER_SCAN_ALGORITHM,
-    hipSharedMemConfig     SMEM_CONFIG,
+    hipSharedMemConfig      SMEM_CONFIG,
     typename                Key,
     typename                Value>
 #elif defined(__HIP_PLATFORM_NVCC__)
@@ -725,8 +725,7 @@ void TestKeysAndPairs()
     Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeFourByte, Key, char>();        // With small-values
     Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeFourByte, Key, Key>();         // With same-values
  #endif
-    // TODO: these are temporarily disabled due to compiler breakage.
-    //Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, TestFoo>();     // With large values
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, TestFoo>();     // With large values
 }
 
 
@@ -861,13 +860,13 @@ int main(int argc, char** argv)
         typedef float T;
         TestDriver<32, 4, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(INTEGER_SEED, 0, 0, sizeof(T) * 8);
     }
-/*
+
     // Compile/run quick tests
     typedef unsigned int T;
     TestDriver<64, 17, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
     TestDriver<96, 8, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
     TestDriver<128, 2, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
-*/
+
 
 #else
 

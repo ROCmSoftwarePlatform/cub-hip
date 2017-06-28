@@ -632,9 +632,9 @@ template <
     BlockScanAlgorithm  ALGORITHM,
     typename            T,
     typename            ScanOpT>
-__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
+//__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
 __global__ void BlockScanKernel(
-    hipLaunchParm       lp,
+    
     T                   *d_in,
     T                   *d_out,
     T                   *d_aggregate,
@@ -657,11 +657,9 @@ __global__ void BlockScanKernel(
     T data[ITEMS_PER_THREAD];
     LoadDirectBlocked(linear_tid, d_in, data);
 
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();
+    __threadfence_block();
     clock_t start = clock();
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
 
     // Test scan
     T                                   block_aggregate;
@@ -679,11 +677,9 @@ __global__ void BlockScanKernel(
                Int2Type<Traits<T>::PRIMITIVE>());
 
     // Stop cycle timer
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
     clock_t stop = clock();
-    // TODO: temporarily disabled as HIP does not support it yet.
-    //__threadfence_block();      // workaround to prevent clock hoisting
+    __threadfence_block();      // workaround to prevent clock hoisting
 
     // Store output
     StoreDirectBlocked(linear_tid, d_out, data);
@@ -853,7 +849,7 @@ void Test(
 
     // Run block_aggregate/prefix kernel
     dim3 block_dims(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z);
-    hipLaunchKernel(HIP_KERNEL_NAME(BlockScanKernel<BLOCK_DIM_X,
+    hipLaunchKernelGGL((BlockScanKernel<BLOCK_DIM_X,
                                                     BLOCK_DIM_Y,
                                                     BLOCK_DIM_Z,
                                                     ITEMS_PER_THREAD,
@@ -1104,7 +1100,6 @@ void Test()
     Test<BLOCK_THREADS, ITEMS_PER_THREAD>(Sum(), make_uchar1(0), make_uchar1(17));
 
     // primitive (alternative scan op)
-#ifdef __HIP_PLATFORM_NVCC__
     Test<BLOCK_THREADS, ITEMS_PER_THREAD>(Max(), std::numeric_limits<char>::min(), (char) 99);
     Test<BLOCK_THREADS, ITEMS_PER_THREAD>(Max(), std::numeric_limits<short>::min(), (short) 99);
     Test<BLOCK_THREADS, ITEMS_PER_THREAD>(Max(), std::numeric_limits<long long>::min(), (long long) 99);
@@ -1128,7 +1123,7 @@ void Test()
     // complex
     Test<BLOCK_THREADS, ITEMS_PER_THREAD>(Sum(), TestFoo::MakeTestFoo(0, 0, 0, 0), TestFoo::MakeTestFoo(17, 21, 32, 85));
     Test<BLOCK_THREADS, ITEMS_PER_THREAD>(Sum(), TestBar(0, 0), TestBar(17, 21));
-#endif
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD>(Sum(), make_longlong4(0, 0, 0, 0), make_longlong4(17, 21, 32, 85));
 
 }
 

@@ -305,7 +305,6 @@ template <
     typename                    EqualityOp,
     typename                    OffsetT>
 __global__ void CnpDispatchKernel(
-    hipLaunchParm lp,
     Int2Type<RLE_METHOD>            method,
     int                         timing_timing_iterations,
     size_t                      *d_temp_storage_bytes,
@@ -370,7 +369,7 @@ hipError_t Dispatch(
     bool                        debug_synchronous)
 {
     // Invoke kernel to invoke device-side dispatch
-    hipLaunchKernel(HIP_KERNEL_NAME(CnpDispatchKernel),
+    hipLaunchKernelGGL((CnpDispatchKernel),
                     dim3(1),
                     dim3(1),
                     0,
@@ -966,13 +965,13 @@ int main(int argc, char** argv)
         TestSize<float,         int, int>(num_items);
         TestSize<double,        int, int>(num_items);
 
-        //TestSize<uchar2,        int, int>(num_items);
-        //TestSize<uint2,         int, int>(num_items);
-        //TestSize<uint3,         int, int>(num_items);
-        //TestSize<uint4,         int, int>(num_items);
-        //TestSize<ulonglong4,    int, int>(num_items);
-        //TestSize<TestFoo,       int, int>(num_items);
-        //TestSize<TestBar,       int, int>(num_items);
+        TestSize<uchar2,        int, int>(num_items);
+        TestSize<uint2,         int, int>(num_items);
+        TestSize<uint3,         int, int>(num_items);
+        TestSize<uint4,         int, int>(num_items);
+        TestSize<ulonglong4,    int, int>(num_items);
+        TestSize<TestFoo,       int, int>(num_items);
+        TestSize<TestBar,       int, int>(num_items);
     }
 
 #endif

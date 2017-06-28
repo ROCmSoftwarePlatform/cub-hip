@@ -142,10 +142,10 @@ template <
     int                     ITEMS_PER_THREAD,
     typename                T,
     typename                ReductionOp>
-__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
+//__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
 __global__
 void FullTileReduceKernel(
-    hipLaunchParm           lp,
+    
     T                       *d_in,
     T                       *d_out,
     ReductionOp             reduction_op,
@@ -241,10 +241,10 @@ template <
     int                     BLOCK_DIM_Z,
     typename                T,
     typename                ReductionOp>
-__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
+//__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
 __global__
 void PartialTileReduceKernel(
-    hipLaunchParm            lp,
+    
     T                       *d_in,
     T                       *d_out,
     int                     num_items,
@@ -387,7 +387,7 @@ void TestFullTile(
     fflush(stdout);
 
     dim3 block_dims(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z);
-    hipLaunchKernel(HIP_KERNEL_NAME(FullTileReduceKernel<ALGORITHM,
+    hipLaunchKernelGGL((FullTileReduceKernel<ALGORITHM,
                                                          BLOCK_DIM_X,
                                                          BLOCK_DIM_Y,
                                                          BLOCK_DIM_Z,
@@ -591,7 +591,7 @@ void TestPartialTile(
     fflush(stdout);
 
     dim3 block_dims(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z);
-    hipLaunchKernel(HIP_KERNEL_NAME(PartialTileReduceKernel<ALGORITHM,
+    hipLaunchKernelGGL((PartialTileReduceKernel<ALGORITHM,
                                                             BLOCK_DIM_X,
                                                             BLOCK_DIM_Y,
                                                             BLOCK_DIM_Z>),
@@ -846,8 +846,6 @@ int main(int argc, char** argv)
             Test<double>();
 
         Test<float>();
-    //TODO: Revert once hang issue is fixed 
-    #ifdef __HIP_PLATFORM_NVCC__
         Test<char>();
         Test<short>();
         // vector types
@@ -864,7 +862,6 @@ int main(int argc, char** argv)
         // Complex types
         Test<TestFoo>();
         Test<TestBar>();
-    #endif
     }
 
 #endif
