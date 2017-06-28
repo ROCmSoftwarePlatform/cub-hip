@@ -1,4 +1,3 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
  *
@@ -25,9 +24,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  ******************************************************************************/
+#pragma once
 
 #include <test/test_util.h>
 
+#include "hip/hip_runtime.h"
 namespace histogram_gmem_atomics
 {
     // Decode float4 pixel into bins
@@ -171,13 +172,27 @@ double run_gmem_atomics(
     GpuTimer gpu_timer;
     gpu_timer.Start();
 
-    histogram_gmem_atomics::hipLaunchKernel(HIP_KERNEL_NAME(histogram_gmem_atomics<NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>), dim3(grid), dim3(block), 0, 0,
+    hipLaunchKernel(
+        HIP_KERNEL_NAME(
+            histogram_gmem_atomics::histogram_gmem_atomics<
+                NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>),
+        dim3(grid),
+        dim3(block),
+        0,
+        0,
         d_image,
         width,
         height,
         d_part_hist);
 
-    histogram_gmem_atomics::hipLaunchKernel(HIP_KERNEL_NAME(histogram_gmem_accum<NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>), dim3(grid2), dim3(block2), 0, 0,
+    hipLaunchKernel(
+        HIP_KERNEL_NAME(
+            histogram_gmem_atomics::histogram_gmem_accum<
+                NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>),
+        dim3(grid2),
+        dim3(block2),
+        0,
+        0,
         d_part_hist,
         total_blocks,
         d_hist);

@@ -142,7 +142,9 @@ template <
     int                     ITEMS_PER_THREAD,
     typename                T,
     typename                ReductionOp>
-__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
+#if !defined(__HIP_PLATFORM_HCC__)
+    __launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
+#endif
 __global__
 void FullTileReduceKernel(
     hipLaunchParm           lp,
@@ -241,7 +243,9 @@ template <
     int                     BLOCK_DIM_Z,
     typename                T,
     typename                ReductionOp>
-__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
+#if !defined(__HIP_PLATFORM_HCC__)
+    __launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
+#endif
 __global__
 void PartialTileReduceKernel(
     hipLaunchParm            lp,
@@ -846,25 +850,23 @@ int main(int argc, char** argv)
             Test<double>();
 
         Test<float>();
-    //TODO: Revert once hang issue is fixed 
-    #ifdef __HIP_PLATFORM_NVCC__
+
         Test<char>();
         Test<short>();
         // vector types
-        Test<char2>();
-        Test<short2>();
+        //Test<char2>();
+        //Test<short2>();
         Test<int2>();
         Test<longlong2>();
 
-        Test<char4>();
-        Test<short4>();
+        //Test<char4>();
+        //Test<short4>();
         Test<int4>();
         Test<longlong4>();
 
         // Complex types
-        Test<TestFoo>();
+//        Test<TestFoo>();
         Test<TestBar>();
-    #endif
     }
 
 #endif

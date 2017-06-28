@@ -157,7 +157,9 @@ template <
     typename        CoordinateT,                ///< Merge path coordinate type
     bool            HAS_ALPHA,                  ///< Whether the input parameter Alpha is 1
     bool            HAS_BETA>                   ///< Whether the input parameter Beta is 0
-__launch_bounds__ (int(SpmvPolicyT::BLOCK_THREADS), 1)
+#if !defined(__HIP_PLATFORM_HCC__)
+    __launch_bounds__ (int(SpmvPolicyT::BLOCK_THREADS), 1)
+#endif
 __global__ void DeviceSpmvKernel(
     hipLaunchParm                   lp,
     SpmvParams<ValueT, OffsetT>     spmv_params,                ///< [in] SpMV input parameter bundle
@@ -199,7 +201,9 @@ template <
     typename    AggregatesOutputIteratorT,      ///< Random-access output iterator type for values
     typename    OffsetT,                        ///< Signed integer type for global offsets
     typename    ScanTileStateT>                 ///< Tile status interface type
-__launch_bounds__ (int(AgentSegmentFixupPolicyT::BLOCK_THREADS), 1)
+#if !defined(__HIP_PLATFORM_HCC__)
+    __launch_bounds__ (int(AgentSegmentFixupPolicyT::BLOCK_THREADS), 1)
+#endif
 __global__ void DeviceSegmentFixupKernel(
     hipLaunchParm               lp,
     PairsInputIteratorT         d_pairs_in,         ///< [in] Pointer to the array carry-out dot product row-ids, one per spmv block
@@ -292,7 +296,7 @@ struct DispatchSpmv
     };
 
     /// SM20
-    struct Policy200 
+    struct Policy200
     {
         typedef AgentSpmvPolicy<
                 96,
@@ -319,7 +323,7 @@ struct DispatchSpmv
 
 
     /// SM30
-    struct Policy300 
+    struct Policy300
     {
         typedef AgentSpmvPolicy<
                 96,
@@ -381,7 +385,7 @@ struct DispatchSpmv
                 LOAD_LDG,
                 LOAD_LDG,
                 LOAD_LDG,
-                false, 
+                false,
                 BLOCK_SCAN_WARP_SCANS>
             SpmvPolicyT;
 
@@ -585,7 +589,7 @@ struct DispatchSpmv
                     degen_col_kernel_grid_size, degen_col_kernel_block_size, (long long) stream);
 
                 // Invoke spmv_search_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(spmv_1col_kernel), dim3(degen_col_kernel_grid_size), dim3(degen_col_kernel_block_size), 0, stream, 
+                hipLaunchKernel(HIP_KERNEL_NAME(spmv_1col_kernel), dim3(degen_col_kernel_grid_size), dim3(degen_col_kernel_block_size), 0, stream,
                     spmv_params);
 
                 // Check for failure to launch
@@ -691,7 +695,7 @@ struct DispatchSpmv
                     search_grid_size, search_block_size, (long long) stream);
 
                 // Invoke spmv_search_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(spmv_search_kernel), dim3(search_grid_size), dim3(search_block_size), 0, stream, 
+                hipLaunchKernel(HIP_KERNEL_NAME(spmv_search_kernel), dim3(search_grid_size), dim3(search_block_size), 0, stream,
                     num_merge_tiles,
                     d_tile_coordinates,
                     spmv_params);
@@ -708,7 +712,7 @@ struct DispatchSpmv
                 spmv_grid_size.x, spmv_grid_size.y, spmv_grid_size.z, spmv_config.block_threads, (long long) stream, spmv_config.items_per_thread, spmv_sm_occupancy);
 
             // Invoke spmv_kernel
-            hipLaunchKernel(HIP_KERNEL_NAME(spmv_kernel), dim3(spmv_grid_size), dim3(spmv_config.block_threads), 0, stream, 
+            hipLaunchKernel(HIP_KERNEL_NAME(spmv_kernel), dim3(spmv_grid_size), dim3(spmv_config.block_threads), 0, stream,
                 spmv_params,
                 d_tile_coordinates,
                 d_tile_carry_pairs,
@@ -730,7 +734,7 @@ struct DispatchSpmv
                     segment_fixup_grid_size.x, segment_fixup_grid_size.y, segment_fixup_grid_size.z, segment_fixup_config.block_threads, (long long) stream, segment_fixup_config.items_per_thread, segment_fixup_sm_occupancy);
 
                 // Invoke segment_fixup_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(segment_fixup_kernel), dim3(segment_fixup_grid_size), dim3(segment_fixup_config.block_threads), 0, stream, 
+                hipLaunchKernel(HIP_KERNEL_NAME(segment_fixup_kernel), dim3(segment_fixup_grid_size), dim3(segment_fixup_config.block_threads), 0, stream,
                     d_tile_carry_pairs,
                     spmv_params.d_vector_y,
                     num_merge_tiles,

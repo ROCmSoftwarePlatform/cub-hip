@@ -1,5 +1,3 @@
-#include "hip/hip_runtime.h"
-
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
@@ -35,6 +33,8 @@
 
 #pragma once
 
+#include "hip/hip_runtime.h"
+
 #include <stdio.h>
 #include <iterator>
 
@@ -44,8 +44,6 @@
 #include "../../grid/grid_queue.cuh"
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
-
-
 
 #define Dispatch_if(d_temp_storage, temp_storage_bytes, d_in, d_flags, d_selected_out, d_num_selected_out, select_op, equality_op, num_items, stream, debug_synchronous, ptx_version, scan_init_kernel, select_if_kernel, select_if_config)\
         hipError_t error = hipSuccess;\
@@ -127,9 +125,11 @@ template <
     typename            EqualityOpT,                ///< Equality operator type (NullType if selection functor or selection flags is to be used for selection)
     typename            OffsetT,                    ///< Signed integer type for global offsets
     bool                KEEP_REJECTS>               ///< Whether or not we push rejected items to the back of the output
-__launch_bounds__ (int(AgentSelectIfPolicyT::BLOCK_THREADS), 1)
+#if !defined(__HIP_PLATFORM_HCC__)
+    __launch_bounds__ (int(AgentSelectIfPolicyT::BLOCK_THREADS), 1)
+#endif
 __global__
-__attribute__((used))
+__attribute__((weak))
 void DeviceSelectSweepKernel(
     hipLaunchParm           lp,
     InputIteratorT          d_in,                   ///< [in] Pointer to the input sequence of data items

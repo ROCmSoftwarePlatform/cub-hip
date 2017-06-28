@@ -298,15 +298,15 @@ struct AgentHistogram
         for (int CHANNEL = 0; CHANNEL < NUM_ACTIVE_CHANNELS; ++CHANNEL)
         {
             int channel_bins = num_privatized_bins[CHANNEL];
-            for (int privatized_bin = hipThreadIdx_x; 
-                    privatized_bin < channel_bins;  
+            for (int privatized_bin = hipThreadIdx_x;
+                    privatized_bin < channel_bins;
                     privatized_bin += BLOCK_THREADS)
             {
                 int         output_bin  = -1;
                 CounterT    count       = privatized_histograms[CHANNEL][privatized_bin];
                 bool        is_valid    = count > 0;
 
-                output_decode_op[CHANNEL].BinSelect<LOAD_MODIFIER>((SampleT) privatized_bin, output_bin, is_valid);
+                output_decode_op[CHANNEL].template BinSelect<LOAD_MODIFIER>((SampleT) privatized_bin, output_bin, is_valid);
 
                 if (output_bin >= 0)
                 {
@@ -358,7 +358,7 @@ struct AgentHistogram
             for (int PIXEL = 0; PIXEL < PIXELS_PER_THREAD; ++PIXEL)
             {
                 bins[PIXEL] = -1;
-                privatized_decode_op[CHANNEL].BinSelect<LOAD_MODIFIER>(samples[PIXEL][CHANNEL], bins[PIXEL], is_valid[PIXEL]);
+                privatized_decode_op[CHANNEL].template BinSelect<LOAD_MODIFIER>(samples[PIXEL][CHANNEL], bins[PIXEL], is_valid[PIXEL]);
             }
 
             CounterT accumulator = 1;
@@ -606,7 +606,7 @@ struct AgentHistogram
                 // Consume a partially-full tile at the end of the row
                 OffsetT num_remaining = (num_row_pixels * NUM_CHANNELS) - col_offset;
                 ConsumeTile<IS_ALIGNED, false>(tile_offset, num_remaining);
-            } 
+            }
             else
             {
                 // Consume full tile

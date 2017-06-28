@@ -1,4 +1,3 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
  *
@@ -25,8 +24,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  ******************************************************************************/
+#pragma once
 
 #include <test/test_util.h>
+
+#include "hip/hip_runtime.h"
 
 namespace histogram_smem_atomics
 {
@@ -68,7 +70,7 @@ namespace histogram_smem_atomics
     __global__
     inline
     void histogram_smem_atomics(
-        hipLaunchKernel lp,
+        hipLaunchParm lp,
         const PixelType *in,
         int width,
         int height,
@@ -132,7 +134,7 @@ namespace histogram_smem_atomics
     __global__
     inline
     void histogram_smem_accum(
-        hipLaunchKernel lp,
+        hipLaunchParm lp,
         const unsigned int *in,
         int n,
         unsigned int *out)
@@ -181,13 +183,27 @@ double run_smem_atomics(
     GpuTimer gpu_timer;
     gpu_timer.Start();
 
-    histogram_smem_atomics::hipLaunchKernel(HIP_KERNEL_NAME(histogram_smem_atomics<NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>), dim3(grid), dim3(block), 0, 0,
+    hipLaunchKernel(
+        HIP_KERNEL_NAME(
+            histogram_smem_atomics::histogram_smem_atomics<
+                NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>),
+        dim3(grid),
+        dim3(block),
+        0,
+        0,
         d_image,
         width,
         height,
         d_part_hist);
 
-    histogram_smem_atomics::hipLaunchKernel(HIP_KERNEL_NAME(histogram_smem_accum<NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>), dim3(grid2), dim3(block2), 0, 0,
+    hipLaunchKernel(
+        HIP_KERNEL_NAME(
+            histogram_smem_atomics::histogram_smem_accum<
+                NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>),
+        dim3(grid2),
+        dim3(block2),
+        0,
+        0,
         d_part_hist,
         total_blocks,
         d_hist);

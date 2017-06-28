@@ -1371,10 +1371,10 @@ int main(int argc, char** argv)
 
         TestGen<long>                 (num_items, num_segments);
         TestGen<unsigned long>        (num_items, num_segments);
-
+//
         TestGen<long long>            (num_items, num_segments);
         TestGen<unsigned long long>   (num_items, num_segments);
-
+//
         TestGen<float>                (num_items, num_segments);
 
         if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted

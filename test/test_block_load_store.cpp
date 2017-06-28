@@ -73,7 +73,9 @@ template <
     BlockStoreAlgorithm STORE_ALGORITHM,
     typename            InputIteratorT,
     typename            OutputIteratorT>
-__launch_bounds__ (BLOCK_THREADS, 1)
+#if !defined(__HIP_PLATFORM_HCC__)
+    __launch_bounds__ (BLOCK_THREADS, 1)
+#endif
 __global__ void Kernel(hipLaunchParm   lp,
 	    InputIteratorT d_in,
 	    OutputIteratorT d_out_unguarded,
@@ -102,6 +104,9 @@ __global__ void Kernel(hipLaunchParm   lp,
     {
         typename BlockLoad::TempStorage     load;
         typename BlockStore::TempStorage    store;
+
+        __host__ __device__
+        ~TempStorage() {};
     };
 
     // Allocate temp storage in shared memory
@@ -560,9 +565,7 @@ void TestItemsPerThread(int grid_size, float fraction_valid)
  * Evaluate different threadblock sizes
  */
 template <typename T>
-void TestThreads(
-    int grid_size,
-    float fraction_valid)
+void TestThreads(int grid_size, float fraction_valid)
 {
     #ifdef __HIP_PLATFORM_NVCC__
     TestItemsPerThread<T, 15>(grid_size, fraction_valid);
@@ -609,31 +612,21 @@ int main(int argc, char** argv)
     CubDebugExit(PtxVersion(ptx_version));
 
 #ifdef QUICK_TEST
-
     // Compile/run quick tests
     TestNative<int, 64, 2, BLOCK_LOAD_WARP_TRANSPOSE, BLOCK_STORE_WARP_TRANSPOSE>(1, 0.8f, Int2Type<true>());
     TestIterator<int, 64, 2, BLOCK_LOAD_WARP_TRANSPOSE, BLOCK_STORE_WARP_TRANSPOSE, LOAD_DEFAULT, STORE_DEFAULT>(1, 0.8f, Int2Type<true>());
-
 #else
-
     // Compile/run thorough tests
     TestThreads<char>(2, 0.8f);
     TestThreads<int>(2, 0.8f);
     TestThreads<long>(2, 0.8f);
-    //TODO: Revert once hang issue is fixed
-#ifdef __HIP_PLATFORM_NVCC__
-    // TODO: this is disabled because HIP's vector types are not Regular, which
-    //       is a requirement.
     TestThreads<long2>(2, 0.8f);
 
     if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
-    // TODO: this is disabled because HIP's vector types are not Regular, which
-    //       is a requirement.
-           TestThreads<double2>(2, 0.8f);
-    TestThreads<TestFoo>(2, 0.8f);
-#endif
-    TestThreads<TestBar>(2, 0.8f);
+        TestThreads<double2>(2, 0.8f);
 
+    //TestThreads<TestFoo>(2, 0.8f);
+    TestThreads<TestBar>(2, 0.8f);
 #endif
 
     return 0;

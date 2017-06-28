@@ -632,8 +632,11 @@ template <
     BlockScanAlgorithm  ALGORITHM,
     typename            T,
     typename            ScanOpT>
-__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
-__global__ void BlockScanKernel(
+#if !defined(__HIP_PLATFORM_HCC__)
+    __launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
+#endif
+__global__
+void BlockScanKernel(
     hipLaunchParm       lp,
     T                   *d_in,
     T                   *d_out,

@@ -161,7 +161,9 @@ template <
     typename            EqualityOpT,                            ///< KeyT equality operator type
     typename            ReductionOpT,                           ///< ValueT reduction operator type
     typename            OffsetT>                                ///< Signed integer type for global offsets
-__launch_bounds__ (int(AgentReduceByKeyPolicyT::BLOCK_THREADS), 1)
+#if !defined(__HIP_PLATFORM_HCC__)
+    __launch_bounds__ (int(AgentReduceByKeyPolicyT::BLOCK_THREADS), 1)
+#endif
 __global__
 __attribute__((used))
 void DeviceReduceByKeyKernel(

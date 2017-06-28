@@ -145,7 +145,7 @@ void TestBlockSort(
 }
 
 
-//TODO: hipSharedMemConfig hasn't supported yet NV 
+//TODO: hipSharedMemConfig hasn't supported yet NV
 /**
  * BlockRadixSort kernel
  */
@@ -161,7 +161,9 @@ template <
     int                 BLOCKED_OUTPUT,
     typename            Key,
     typename            Value>
-__launch_bounds__ (BLOCK_THREADS, 1)
+#if !defined(__HIP_PLATFORM_HCC__)
+    __launch_bounds__ (BLOCK_THREADS, 1)
+#endif
 __global__
 void Kernel(
     hipLaunchParm               lp,
@@ -726,7 +728,7 @@ void TestKeysAndPairs()
     Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, cudaSharedMemBankSizeFourByte, Key, Key>();         // With same-values
  #endif
     // TODO: these are temporarily disabled due to compiler breakage.
-    //Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, TestFoo>();     // With large values
+    Test<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, hipSharedMemBankSizeFourByte, Key, TestFoo>();     // With large values
 }
 
 

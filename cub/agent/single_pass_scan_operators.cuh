@@ -93,6 +93,9 @@ struct BlockScanRunningPrefixOp
         running_total = op(running_total, block_aggregate);
         return retval;
     }
+
+    __host__ __device__
+    ~BlockScanRunningPrefixOp() = default;
 };
 
 
@@ -263,7 +266,7 @@ struct ScanTileState<T, true>
         {
             __threadfence_block(); // prevent hoisting loads from loop
             TxnWord alias = ThreadLoad<LOAD_CG>(reinterpret_cast<TxnWord*>(d_tile_status + TILE_STATUS_PADDING + tile_idx));
-            tile_descriptor = reinterpret_cast<TileDescriptor&>(alias);
+            tile_descriptor = *reinterpret_cast<TileDescriptor*>(&alias);
 
         } while (WarpAny(tile_descriptor.status == SCAN_TILE_INVALID));
 
@@ -423,7 +426,7 @@ struct ScanTileState<T, false>
 
         } while (status == SCAN_TILE_INVALID);
 
-        if (status == StatusWord(SCAN_TILE_PARTIAL)) 
+        if (status == StatusWord(SCAN_TILE_PARTIAL))
             value = ThreadLoad<LOAD_CG>(d_tile_partial + TILE_STATUS_PADDING + tile_idx);
         else
             value = ThreadLoad<LOAD_CG>(d_tile_inclusive + TILE_STATUS_PADDING + tile_idx);
@@ -622,14 +625,14 @@ struct ReduceByKeyScanTileState<ValueT, KeyT, true>
         KeyValuePairT           &value)
     {
         TxnWord         alias           = ThreadLoad<LOAD_CG>(reinterpret_cast<TxnWord*>(d_tile_status + TILE_STATUS_PADDING + tile_idx));
-        TileDescriptor  tile_descriptor = reinterpret_cast<TileDescriptor&>(alias);
+        TileDescriptor  tile_descriptor = *reinterpret_cast<TileDescriptor*>(&alias);
 
         while (tile_descriptor.status == SCAN_TILE_INVALID)
         {
             __threadfence_block();  // prevent hoisting loads from loop
 
             alias           = ThreadLoad<LOAD_CG>(reinterpret_cast<TxnWord*>(d_tile_status + TILE_STATUS_PADDING + tile_idx));
-            tile_descriptor = reinterpret_cast<TileDescriptor&>(alias);
+            tile_descriptor = *reinterpret_cast<TileDescriptor*>(&alias);
         }
 
         status      = tile_descriptor.status;
@@ -664,9 +667,9 @@ struct TilePrefixCallbackOp
     struct _TempStorage
     {
         typename WarpReduceT::TempStorage   warp_reduce;
-        alignas(8) T                                   exclusive_prefix;
-        alignas(8) T                                   inclusive_prefix;
-        alignas(8) T                                   block_aggregate;
+        T                                   exclusive_prefix;
+        T                                   inclusive_prefix;
+        T                                   block_aggregate;
     };
 
     // Alias wrapper allowing temporary storage to be unioned

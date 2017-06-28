@@ -646,18 +646,18 @@ int main(int argc, char** argv)
         Test<unsigned int>(num_items);
         Test<unsigned long long>(num_items);
 
-//        Test<uchar2>(num_items);
-//        Test<ushort2>(num_items);
-//        Test<uint2>(num_items);
-//        Test<ulonglong2>(num_items);
-//
-//        Test<uchar4>(num_items);
-//        Test<ushort4>(num_items);
-//        Test<uint4>(num_items);
-//        Test<ulonglong4>(num_items);
-//
+        Test<uchar2>(num_items);
+        Test<ushort2>(num_items);
+        Test<uint2>(num_items);
+        Test<ulonglong2>(num_items);
+
+        Test<uchar4>(num_items);
+        Test<ushort4>(num_items);
+        Test<uint4>(num_items);
+        Test<ulonglong4>(num_items);
+
 //        Test<TestFoo>(num_items);
-//        Test<TestBar>(num_items);
+        Test<TestBar>(num_items);
     }
 
 #endif

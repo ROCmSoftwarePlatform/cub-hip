@@ -2,7 +2,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -935,7 +935,7 @@ public:
         OutputIteratorT     block_itr,                  ///< [in] The thread block's base output iterator for storing to
         T                   (&items)[ITEMS_PER_THREAD]) ///< [in] Data to store
     {
-        InternalStore(temp_storage, linear_tid).Store(block_itr, items);
+        InternalStore{temp_storage, linear_tid}.Store(block_itr, items);
     }
 
     /**

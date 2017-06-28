@@ -78,7 +78,9 @@ template <
     typename    Key,
     int         BLOCK_THREADS,
     int         ITEMS_PER_THREAD>
-__launch_bounds__ (BLOCK_THREADS)
+#if !defined(__HIP_PLATFORM_HCC__)
+    __launch_bounds__ (BLOCK_THREADS)
+#endif
 __global__
 inline
 void BlockSortKernel(
@@ -96,10 +98,13 @@ void BlockSortKernel(
     typedef BlockRadixSort<Key, BLOCK_THREADS, ITEMS_PER_THREAD> BlockRadixSortT;
 
     // Shared memory
-    __shared__ union
+    __shared__ union foo
     {
         typename BlockLoadT::TempStorage        load;
         typename BlockRadixSortT::TempStorage   sort;
+
+        __host__ __device__
+        ~foo() {}
     } temp_storage;
 
     // Per-thread tile items

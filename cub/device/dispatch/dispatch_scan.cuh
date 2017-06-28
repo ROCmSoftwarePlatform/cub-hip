@@ -161,9 +161,11 @@ template <
     typename            ScanOpT,            ///< Binary scan functor type having member <tt>T operator()(const T &a, const T &b)</tt>
     typename            InitValueT,         ///< Initial value to seed the exclusive scan (cub::NullType for inclusive scans)
     typename            OffsetT>            ///< Signed integer type for global offsets
-__launch_bounds__ (int(ScanPolicyT::BLOCK_THREADS), 1)
+#if !defined(__HIP_PLATFORM_HCC__)
+    __launch_bounds__ (int(ScanPolicyT::BLOCK_THREADS), 1)
+#endif
 __global__
-__attribute__((used))
+__attribute__((weak))
 void DeviceScanKernel(
     hipLaunchParm       lp,
     InputIteratorT      d_in,               ///< Input data
@@ -471,7 +473,7 @@ struct DispatchScan
             // Get kernel kernel dispatch configurations
             KernelConfig scan_kernel_config;
             InitConfigs(ptx_version, scan_kernel_config);
-            
+
             // Dispatch
             /*if (CubDebug(error = Dispatch_t(
                 d_temp_storage,
@@ -498,7 +500,7 @@ struct DispatchScan
                 stream,
                 debug_synchronous,
                 ptx_version,
-                DeviceScanInitKernel<ScanTileStateT>,
+                (DeviceScanInitKernel<ScanTileStateT>),
                 (DeviceScanKernel<PtxAgentScanPolicy, InputIteratorT, OutputIteratorT, ScanTileStateT, ScanOpT, InitValueT, OffsetT>),
                 scan_kernel_config);
         }

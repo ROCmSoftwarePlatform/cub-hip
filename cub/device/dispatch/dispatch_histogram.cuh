@@ -190,7 +190,9 @@ template <
     typename                                            PrivatizedDecodeOpT,            ///< The transform operator type for determining privatized counter indices from samples, one for each channel
     typename                                            OutputDecodeOpT,                ///< The transform operator type for determining output bin-ids from privatized counter indices, one for each channel
     typename                                            OffsetT>                        ///< Signed integer type for global offsets
-__launch_bounds__ (int(AgentHistogramPolicyT::BLOCK_THREADS), 1)
+#if !defined(__HIP_PLATFORM_HCC__)
+    __launch_bounds__ (int(AgentHistogramPolicyT::BLOCK_THREADS), 1)
+#endif
 __global__ void DeviceHistogramSweepKernel(
     hipLaunchParm                                           lp,
     SampleIteratorT                                         d_samples,                          ///< Input data to reduce
@@ -417,7 +419,7 @@ struct DipatchHistogram
             if (valid)
                 bin = (int) sample;
         }
-        uint8_t _dummyPad; 
+        uint8_t _dummyPad;
     };
 
 
@@ -998,7 +1000,7 @@ struct DipatchHistogram
                     (DeviceHistogramSweepKernel<PtxHistogramSweepPolicy, PRIVATIZED_SMEM_BINS, NUM_CHANNELS, NUM_ACTIVE_CHANNELS, SampleIteratorT, CounterT, PrivatizedDecodeOpT, OutputDecodeOpT, OffsetT>),
                     histogram_sweep_config,
                     stream,
-                    debug_synchronous);              
+                    debug_synchronous);
             }
         }
         while (0);

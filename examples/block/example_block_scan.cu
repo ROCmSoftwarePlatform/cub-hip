@@ -91,11 +91,14 @@ __global__ void BlockPrefixSumKernel(
     typedef BlockScan<int, BLOCK_THREADS, ALGORITHM> BlockScanT;
 
     // Shared memory
-    __shared__ union
+    __shared__ union foo
     {
         typename BlockLoadT::TempStorage    load;
         typename BlockStoreT::TempStorage   store;
         typename BlockScanT::TempStorage    scan;
+
+        __host__ __device__
+        ~foo() {}
     } temp_storage;
 
     // Per-thread tile data
@@ -208,7 +211,7 @@ void Test()
         TILE_SIZE, g_timing_iterations, g_grid_size, BLOCK_THREADS, ITEMS_PER_THREAD, max_sm_occupancy);
 
     // Run aggregate/prefix kernel
-    hipLaunchKernel(HIP_KERNEL_NAME(BlockPrefixSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0, 
+    hipLaunchKernel(HIP_KERNEL_NAME(BlockPrefixSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0,
         d_in,
         d_out,
         d_elapsed);
@@ -238,7 +241,7 @@ void Test()
         timer.Start();
 
         // Run aggregate/prefix kernel
-        hipLaunchKernel(HIP_KERNEL_NAME(BlockPrefixSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0, 
+        hipLaunchKernel(HIP_KERNEL_NAME(BlockPrefixSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0,
             d_in,
             d_out,
             d_elapsed);
@@ -310,7 +313,9 @@ int main(int argc, char** argv)
     Test<256, 4, BLOCK_SCAN_RAKING>();
     Test<128, 8, BLOCK_SCAN_RAKING>();
     Test<64, 16, BLOCK_SCAN_RAKING>();
-    Test<32, 32, BLOCK_SCAN_RAKING>();
+    #if !defined(__HIP_PLATFORM_HCC__)
+        Test<32, 32, BLOCK_SCAN_RAKING>();
+    #endif
 
     printf("-------------\n");
 
@@ -319,7 +324,9 @@ int main(int argc, char** argv)
     Test<256, 4, BLOCK_SCAN_RAKING_MEMOIZE>();
     Test<128, 8, BLOCK_SCAN_RAKING_MEMOIZE>();
     Test<64, 16, BLOCK_SCAN_RAKING_MEMOIZE>();
-    Test<32, 32, BLOCK_SCAN_RAKING_MEMOIZE>();
+    #if !defined(__HIP_PLATFORM_HCC__)
+        Test<32, 32, BLOCK_SCAN_RAKING_MEMOIZE>();
+    #endif
 
     printf("-------------\n");
 
@@ -328,7 +335,9 @@ int main(int argc, char** argv)
     Test<256, 4, BLOCK_SCAN_WARP_SCANS>();
     Test<128, 8, BLOCK_SCAN_WARP_SCANS>();
     Test<64, 16, BLOCK_SCAN_WARP_SCANS>();
-    Test<32, 32, BLOCK_SCAN_WARP_SCANS>();
+    #if !defined(__HIP_PLATFORM_HCC__)
+        Test<32, 32, BLOCK_SCAN_WARP_SCANS>();
+    #endif
 
 
     return 0;

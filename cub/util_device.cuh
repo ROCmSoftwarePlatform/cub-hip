@@ -110,7 +110,7 @@ hipError_t AliasTemporaries(
  */
 template <typename T = void>
 __global__
-__attribute__((used))
+__attribute__((weak))
 void EmptyKernel(hipLaunchParm lp, int x) { }
 
 

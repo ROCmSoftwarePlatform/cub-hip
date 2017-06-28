@@ -88,6 +88,9 @@ struct WrapperFunctor
     {
         return op(a, b);
     }
+
+    __host__ __device__
+    ~WrapperFunctor() = default;
 };
 
 
@@ -1044,21 +1047,21 @@ int main(int argc, char** argv)
 //        TestSize<uchar2>(num_items,     make_uchar2(0, 0),              make_uchar2(17, 21));
 //        TestSize<char2>(num_items,      make_char2(0, 0),               make_char2(17, 21));
 //        TestSize<ushort2>(num_items,    make_ushort2(0, 0),             make_ushort2(17, 21));
-//        TestSize<uint2>(num_items,      make_uint2(0, 0),               make_uint2(17, 21));
-//        TestSize<ulonglong2>(num_items, make_ulonglong2(0, 0),          make_ulonglong2(17, 21));
+        TestSize<uint2>(num_items,      make_uint2(0, 0),               make_uint2(17, 21));
+        TestSize<ulonglong2>(num_items, make_ulonglong2(0, 0),          make_ulonglong2(17, 21));
 //        TestSize<uchar4>(num_items,     make_uchar4(0, 0, 0, 0),        make_uchar4(17, 21, 32, 85));
 //        TestSize<char4>(num_items,      make_char4(0, 0, 0, 0),         make_char4(17, 21, 32, 85));
-//        TestSize<ushort4>(num_items,    make_ushort4(0, 0, 0, 0),       make_ushort4(17, 21, 32, 85));
-//        TestSize<uint4>(num_items,      make_uint4(0, 0, 0, 0),         make_uint4(17, 21, 32, 85));
-//        TestSize<ulonglong4>(num_items, make_ulonglong4(0, 0, 0, 0),    make_ulonglong4(17, 21, 32, 85));
-//
+        TestSize<ushort4>(num_items,    make_ushort4(0, 0, 0, 0),       make_ushort4(17, 21, 32, 85));
+        TestSize<uint4>(num_items,      make_uint4(0, 0, 0, 0),         make_uint4(17, 21, 32, 85));
+        TestSize<ulonglong4>(num_items, make_ulonglong4(0, 0, 0, 0),    make_ulonglong4(17, 21, 32, 85));
+
 //        TestSize<TestFoo>(num_items,
 //            TestFoo::MakeTestFoo(0, 0, 0, 0),
 //            TestFoo::MakeTestFoo(1ll << 63, 1 << 31, short(1 << 15), char(1 << 7)));
-//
-//        TestSize<TestBar>(num_items,
-//            TestBar(0, 0),
-//            TestBar(1ll << 63, 1 << 31));
+
+        TestSize<TestBar>(num_items,
+            TestBar(0, 0),
+            TestBar(1ll << 63, 1 << 31));
     }
 
 #endif
