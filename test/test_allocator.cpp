@@ -63,8 +63,6 @@ int main(int argc, char** argv)
         exit(0);
     }
 
-#if (CUB_PTX_ARCH == 0)
-
     // Initialize device
     CubDebugExit(args.DeviceInit());
 
@@ -467,9 +465,6 @@ int main(int argc, char** argv)
         cuda_malloc_elapsed_millis / cub_calloc_elapsed_millis,
         cuda_malloc_elapsed_millis / timing_iterations,
         cub_calloc_elapsed_millis / timing_iterations);
-
-
-#endif
 
     printf("Success\n");
 

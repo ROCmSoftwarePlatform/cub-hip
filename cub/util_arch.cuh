@@ -46,69 +46,32 @@ namespace cub {
 /// CUB_PTX_ARCH reflects the PTX version targeted by the active compiler pass (or zero during the host pass).
 #ifndef CUB_PTX_ARCH
     #ifdef __HIP_DEVICE_COMPILE__          //Set to ptx version for device pass
-        #if __HIP_ARCH_HAS_GLOBAL_INT32_ATOMICS__ && \
-            __HIP_ARCH_HAS_GLOBAL_FLOAT_ATOMIC_EXCH__
-            #define CUB_PTX_ARCH 110
-        #endif
-
-        #if __HIP_ARCH_HAS_SHARED_INT32_ATOMICS__ && \
-            __HIP_ARCH_HAS_SHARED_FLOAT_ATOMIC_EXCH__ && \
-            __HIP_ARCH_HAS_SHARED_INT64_ATOMICS__ && \
-            __HIP_ARCH_HAS_DOUBLES__ && \
-            __HIP_ARCH_HAS_WARP_VOTE__
-            #ifndef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 120
-            #else
-                #undef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 120
-            #endif
-        #endif
-
-        #if __HIP_ARCH_HAS_GLOBAL_INT64_ATOMICS__ && \
+        #if __HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__ && \
+            __HIP_ARCH_HAS_DYNAMIC_PARALLEL__
+                #define CUB_PTX_ARCH 350
+        #elif __HIP_ARCH_HAS_WARP_SHUFFLE__
+                #define CUB_PTX_ARCH 300
+        #elif __HIP_ARCH_HAS_GLOBAL_INT64_ATOMICS__ && \
             __HIP_ARCH_HAS_WARP_BALLOT__ && \
             __HIP_ARCH_HAS_THREAD_FENCE_SYSTEM__ && \
             __HIP_ARCH_HAS_SYNC_THREAD_EXT__ && \
             __HIP_ARCH_HAS_SURFACE_FUNCS__ && \
             __HIP_ARCH_HAS_3DGRID__
-            #ifndef CUB_PTX_ARCH
                 #define CUB_PTX_ARCH 200
-            #else
-                #undef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 200
-            #endif
+        #elif __HIP_ARCH_HAS_SHARED_INT32_ATOMICS__ && \
+            __HIP_ARCH_HAS_SHARED_FLOAT_ATOMIC_EXCH__ && \
+            __HIP_ARCH_HAS_SHARED_INT64_ATOMICS__ && \
+            __HIP_ARCH_HAS_DOUBLES__ && \
+            __HIP_ARCH_HAS_WARP_VOTE__
+                #define CUB_PTX_ARCH 120
+        #elif __HIP_ARCH_HAS_GLOBAL_INT32_ATOMICS__ && \
+            __HIP_ARCH_HAS_GLOBAL_FLOAT_ATOMIC_EXCH__
+            #define CUB_PTX_ARCH 110
         #endif
-
-        #if __HIP_ARCH_HAS_WARP_SHUFFLE__
-            #ifndef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 300
-            #else
-                #undef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 300
-            #endif
-        #endif
-
-        #if __HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__ && \
-            __HIP_ARCH_HAS_DYNAMIC_PARALLEL__
-            #ifndef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 350
-            #else
-                #undef CUB_PTX_ARCH
-                #define CUB_PTX_ARCH 350
-            #endif
-        #endif
-
-        #ifndef CUB_PTX_ARCH
-            #define CUB_PTX_ARCH 520
-        #endif
-
     #else               //For the host usage ptx arch will be zero
         #define CUB_PTX_ARCH 0
     #endif
 #endif
-
-
-
-
 
 
 /// Whether or not the source targeted by the active compiler pass is allowed to  invoke device kernels or methods from the CUDA runtime API.
