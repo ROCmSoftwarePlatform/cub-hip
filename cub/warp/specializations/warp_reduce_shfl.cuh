@@ -165,9 +165,9 @@ struct WarpReduceShfl
             "}"
             : "=r"(output) : "r"(input), "r"(offset), "r"(last_lane), "r"(input));
 #elif defined(__HIP_PLATFORM_HCC__)
-	register unsigned int r0;
-	register int lane_id;
-	register bool pred = false;
+	 unsigned int r0;
+	 int lane_id;
+	 bool pred = false;
 	r0 = __shfl_down((int)input, offset);
 	lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize);
 	if (offset + lane_id <= last_lane)
@@ -201,9 +201,9 @@ struct WarpReduceShfl
             : "=f"(output) : "f"(input), "r"(offset), "r"(last_lane), "f"(input));
 #elif defined(__HIP_PLATFORM_HCC__)
 
-	register float r0;
-        register int lane_id;
-        register bool pred = false;
+	 float r0;
+         int lane_id;
+         bool pred = false;
         r0 = __shfl_down(input, offset);
 	lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize);
         if (offset + lane_id <= last_lane)
@@ -237,7 +237,7 @@ struct WarpReduceShfl
             "}"
             : "=l"(output) : "l"(input), "r"(offset), "r"(last_lane));
 #elif defined(__HIP_PLATFORM_HCC__)
-	register unsigned int hi , lo;
+	 unsigned int hi , lo;
 	int lane_id;
 	lo = 0xFFFFFFFF & input;
 	hi = 0xFFFFFFFF & (input >> 32);
@@ -277,7 +277,7 @@ struct WarpReduceShfl
             "}"
             : "=l"(output) : "l"(input), "r"(offset), "r"(last_lane));
 #elif defined(__HIP_PLATFORM_HCC__)
-	register unsigned int hi , lo;
+	 unsigned int hi , lo;
         int lane_id;
         lo = 0xFFFFFFFF & input;
         hi = 0xFFFFFFFF & (input >> 32);
@@ -327,13 +327,13 @@ struct WarpReduceShfl
 		double d;
 	}s;
 	s.d = input;
-        register unsigned int hi, lo;
+         unsigned int hi, lo;
 	int lane_id;
         lo = 0xFFFFFFFF & s.l;
         hi = 0xFFFFFFFF & (s.l >> 32);
         lo = __shfl_down((int)lo,offset);
         hi = __shfl_down((int)hi,offset);
-	register long long r0 = 0x0000;
+	 long long r0 = 0x0000;
 	output = input ;
 	r0 = ((r0 | hi)<<32) | lo;
 	lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) ;
