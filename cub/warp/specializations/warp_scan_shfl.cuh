@@ -130,9 +130,9 @@ struct WarpScanShfl
             "}"
             : "=r"(output) : "r"(input), "r"(offset), "r"(shfl_c), "r"(input));
 #elif defined(__HIP_PLATFORM_HCC__)
-        register int r0;
-        register int lane_id;
-        register bool pred = false ;
+         int r0;
+         int lane_id;
+         bool pred = false ;
         r0 = __shfl_up(input, offset, shfl_c);
         lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
 	if (lane_id >=0)
@@ -166,9 +166,9 @@ struct WarpScanShfl
             "}"
             : "=r"(output) : "r"(input), "r"(offset), "r"(shfl_c), "r"(input));
 #elif defined(__HIP_PLATFORM_HCC__)
-	register unsigned int r0;
-        register int lane_id;
-        register bool pred = false ;
+	 unsigned int r0;
+         int lane_id;
+         bool pred = false ;
         r0 = __shfl_up((int)input, offset, shfl_c);
         lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
         if (lane_id >=0)
@@ -203,9 +203,9 @@ struct WarpScanShfl
             "}"
             : "=f"(output) : "f"(input), "r"(offset), "r"(shfl_c), "f"(input));
 #elif defined(__HIP_PLATFORM_HCC__)
-        register float r0;
-        register int lane_id;
-        register bool pred = false;
+         float r0;
+         int lane_id;
+         bool pred = false;
         r0 = __shfl_up(input, offset, shfl_c);
         lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
         if (lane_id >= 0 )//&& lane_id <= shfl_c)
@@ -245,14 +245,14 @@ struct WarpScanShfl
             "}"
             : "=l"(output) : "l"(input), "r"(offset), "r"(shfl_c), "l"(input));
 #elif defined(__HIP_PLATFORM_HCC__)
-	register unsigned int hi, lo;
+	 unsigned int hi, lo;
         int lane_id;
-        register bool pred = false;
+         bool pred = false;
         lo = 0xFFFFFFFF & input;
         hi = 0xFFFFFFFF & (input >> 32);
         lo = __shfl_up((int)lo, offset, shfl_c);
         hi = __shfl_up((int)hi, offset, shfl_c);
-        register long long r0 = 0x0000;
+         long long r0 = 0x0000;
         r0 = ((r0 | hi) << 32) | lo;
         lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
         if (lane_id >= 0 )
@@ -292,14 +292,14 @@ struct WarpScanShfl
             "}"
             : "=l"(output) : "l"(input), "r"(offset), "r"(shfl_c), "l"(input));
 #elif defined(__HIP_PLATFORM_HCC__)
-        register unsigned int hi, lo;
+         unsigned int hi, lo;
         int lane_id;
-        register bool pred = false;
+         bool pred = false;
         lo = 0xFFFFFFFF & input;
         hi = 0xFFFFFFFF & (input >> 32);
         lo = __shfl_up((int)lo, offset, shfl_c);
         hi = __shfl_up((int)hi, offset, shfl_c);
-        register long long r0 = 0x0000;
+         long long r0 = 0x0000;
         r0 = ((r0 | hi) << 32) | lo;
         lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
         if (lane_id >= 0 )
@@ -345,14 +345,14 @@ struct WarpScanShfl
                 double d;
         }s;
         s.d = input;
-        register unsigned int hi, lo;
+         unsigned int hi, lo;
         int lane_id;
-        register bool pred = false;
+         bool pred = false;
         lo = 0xFFFFFFFF & s.l;
         hi = 0xFFFFFFFF & (s.l >> 32);
         lo = __shfl_up((int)lo, offset,shfl_c );
         hi = __shfl_up((int)hi, offset, shfl_c);
-        register long long r0 = 0x0000;
+         long long r0 = 0x0000;
         output = input ;
         r0 = ((r0 | hi) << 32) | lo;
         lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
