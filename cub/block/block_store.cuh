@@ -935,7 +935,7 @@ public:
         OutputIteratorT     block_itr,                  ///< [in] The thread block's base output iterator for storing to
         T                   (&items)[ITEMS_PER_THREAD]) ///< [in] Data to store
     {
-        InternalStore{temp_storage, linear_tid}.Store(block_itr, items);
+        InternalStore(temp_storage, linear_tid).Store(block_itr, items);
     }
 
     /**
