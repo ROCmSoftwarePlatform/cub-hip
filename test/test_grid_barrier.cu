@@ -69,7 +69,7 @@ __global__ void Kernel(
  */
 int main(int argc, char** argv)
 {
-    cudaError_t retval = cudaSuccess;
+    hipError_t retval = hipSuccess;
 
     // Defaults
     int iterations = 10000;
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 
     // Get device ordinal
     int device_ordinal;
-    CubDebugExit(cudaGetDevice(&device_ordinal));
+    CubDebugExit(hipGetDevice(&device_ordinal));
 
     // Get device SM version
     int sm_version;
@@ -109,8 +109,8 @@ int main(int argc, char** argv)
 
     // Get SM properties
     int sm_count, max_block_threads, max_sm_occupancy;
-    CubDebugExit(cudaDeviceGetAttribute(&sm_count, cudaDevAttrMultiProcessorCount, device_ordinal));
-    CubDebugExit(cudaDeviceGetAttribute(&max_block_threads, cudaDevAttrMaxThreadsPerBlock, device_ordinal));
+    CubDebugExit(hipDeviceGetAttribute(&sm_count, hipDevAttrMultiProcessorCount, device_ordinal));
+    CubDebugExit(hipDeviceGetAttribute(&max_block_threads, hipDevAttrMaxThreadsPerBlock, device_ordinal));
     CubDebugExit(MaxSmOccupancy(max_sm_occupancy, EmptyKernel<void>, 32));
 
     // Compute grid size and occupancy
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
     Kernel<<<grid_size, block_size>>>(global_barrier, iterations);
     gpu_timer.Stop();
 
-    retval = CubDebug(cudaThreadSynchronize());
+    retval = CubDebug(hipThreadSynchronize());
 
     // Output timing results
     float avg_elapsed = gpu_timer.ElapsedMillis() / float(iterations);

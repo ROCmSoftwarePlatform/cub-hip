@@ -570,9 +570,9 @@ void Test(
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_in, sizeof(T) * TILE_SIZE));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_out, sizeof(T) * (TILE_SIZE + 2)));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_aggregate, sizeof(T) * BLOCK_THREADS));
-    CubDebugExit(cudaMemcpy(d_in, h_in, sizeof(T) * TILE_SIZE, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemset(d_out, 0, sizeof(T) * (TILE_SIZE + 1)));
-    CubDebugExit(cudaMemset(d_aggregate, 0, sizeof(T) * BLOCK_THREADS));
+    CubDebugExit(hipMemcpy(d_in, h_in, sizeof(T) * TILE_SIZE, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemset(d_out, 0, sizeof(T) * (TILE_SIZE + 1)));
+    CubDebugExit(hipMemset(d_aggregate, 0, sizeof(T) * BLOCK_THREADS));
 
     // Display input problem data
     if (g_verbose)
@@ -595,8 +595,8 @@ void Test(
         initial_value,
         d_elapsed);
 
-    CubDebugExit(cudaPeekAtLastError());
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipPeekAtLastError());
+    CubDebugExit(hipDeviceSynchronize());
 
     // Copy out and display results
     printf("\tScan results: ");

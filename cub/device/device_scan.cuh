@@ -130,7 +130,7 @@ struct DeviceScan
      * cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes, d_in, d_out, num_items);
      *
      * // Allocate temporary storage
-     * cudaMalloc(&d_temp_storage, temp_storage_bytes);
+     * hipMalloc(&d_temp_storage, temp_storage_bytes);
      *
      * // Run exclusive prefix sum
      * cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes, d_in, d_out, num_items);
@@ -146,13 +146,13 @@ struct DeviceScan
         typename        InputIteratorT,
         typename        OutputIteratorT>
     CUB_RUNTIME_FUNCTION
-    static cudaError_t ExclusiveSum(
+    static hipError_t ExclusiveSum(
         void            *d_temp_storage,                    ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t          &temp_storage_bytes,                ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         InputIteratorT  d_in,                               ///< [in] Pointer to the input sequence of data items
         OutputIteratorT d_out,                              ///< [out] Pointer to the output sequence of data items
         int             num_items,                          ///< [in] Total number of input items (i.e., the length of \p d_in)
-        cudaStream_t    stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t    stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool            debug_synchronous   = false)        ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  May cause significant slowdown.  Default is \p false.
     {
         // Signed integer type for global offsets
@@ -220,7 +220,7 @@ struct DeviceScan
      * cub::DeviceScan::ExclusiveScan(d_temp_storage, temp_storage_bytes, d_in, d_out, min_op, (int) MAX_INT, num_items);
      *
      * // Allocate temporary storage for exclusive prefix scan
-     * cudaMalloc(&d_temp_storage, temp_storage_bytes);
+     * hipMalloc(&d_temp_storage, temp_storage_bytes);
      *
      * // Run exclusive prefix min-scan
      * cub::DeviceScan::ExclusiveScan(d_temp_storage, temp_storage_bytes, d_in, d_out, min_op, (int) MAX_INT, num_items);
@@ -240,7 +240,7 @@ struct DeviceScan
         typename        ScanOpT,
         typename        InitValueT>
     CUB_RUNTIME_FUNCTION
-    static cudaError_t ExclusiveScan(
+    static hipError_t ExclusiveScan(
         void            *d_temp_storage,                    ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t          &temp_storage_bytes,                ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         InputIteratorT  d_in,                               ///< [in] Pointer to the input sequence of data items
@@ -248,7 +248,7 @@ struct DeviceScan
         ScanOpT         scan_op,                            ///< [in] Binary scan functor
         InitValueT      init_value,                         ///< [in] Initial value to seed the exclusive scan (and is assigned to *d_out)
         int             num_items,                          ///< [in] Total number of input items (i.e., the length of \p d_in)
-        cudaStream_t    stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t    stream              = 0,            ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool            debug_synchronous   = false)        ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  May cause significant slowdown.  Default is \p false.
     {
         // Signed integer type for global offsets
@@ -304,7 +304,7 @@ struct DeviceScan
      * cub::DeviceScan::InclusiveSum(d_temp_storage, temp_storage_bytes, d_in, d_out, num_items);
      *
      * // Allocate temporary storage for inclusive prefix sum
-     * cudaMalloc(&d_temp_storage, temp_storage_bytes);
+     * hipMalloc(&d_temp_storage, temp_storage_bytes);
      *
      * // Run inclusive prefix sum
      * cub::DeviceScan::InclusiveSum(d_temp_storage, temp_storage_bytes, d_in, d_out, num_items);
@@ -320,13 +320,13 @@ struct DeviceScan
         typename            InputIteratorT,
         typename            OutputIteratorT>
     CUB_RUNTIME_FUNCTION
-    static cudaError_t InclusiveSum(
+    static hipError_t InclusiveSum(
         void*               d_temp_storage,                 ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&             temp_storage_bytes,             ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         InputIteratorT      d_in,                           ///< [in] Pointer to the input sequence of data items
         OutputIteratorT     d_out,                          ///< [out] Pointer to the output sequence of data items
         int                 num_items,                      ///< [in] Total number of input items (i.e., the length of \p d_in)
-        cudaStream_t        stream             = 0,         ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t        stream             = 0,         ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                debug_synchronous  = false)     ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  May cause significant slowdown.  Default is \p false.
     {
         // Signed integer type for global offsets
@@ -386,7 +386,7 @@ struct DeviceScan
      * cub::DeviceScan::InclusiveScan(d_temp_storage, temp_storage_bytes, d_in, d_out, min_op, num_items);
      *
      * // Allocate temporary storage for inclusive prefix scan
-     * cudaMalloc(&d_temp_storage, temp_storage_bytes);
+     * hipMalloc(&d_temp_storage, temp_storage_bytes);
      *
      * // Run inclusive prefix min-scan
      * cub::DeviceScan::InclusiveScan(d_temp_storage, temp_storage_bytes, d_in, d_out, min_op, num_items);
@@ -404,14 +404,14 @@ struct DeviceScan
         typename        OutputIteratorT,
         typename        ScanOpT>
     CUB_RUNTIME_FUNCTION
-    static cudaError_t InclusiveScan(
+    static hipError_t InclusiveScan(
         void            *d_temp_storage,                    ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t          &temp_storage_bytes,                ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         InputIteratorT  d_in,                               ///< [in] Pointer to the input sequence of data items
         OutputIteratorT d_out,                              ///< [out] Pointer to the output sequence of data items
         ScanOpT         scan_op,                            ///< [in] Binary scan functor
         int             num_items,                          ///< [in] Total number of input items (i.e., the length of \p d_in)
-        cudaStream_t    stream             = 0,             ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t    stream             = 0,             ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool            debug_synchronous  = false)         ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  May cause significant slowdown.  Default is \p false.
     {
         // Signed integer type for global offsets

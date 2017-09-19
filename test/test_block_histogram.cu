@@ -164,8 +164,8 @@ void Test(
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_histogram,   sizeof(int) * BINS));
 
     // Initialize/clear device arrays
-    CubDebugExit(cudaMemcpy(d_samples, h_samples, sizeof(SampleT) * num_samples, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemset(d_histogram, 0, sizeof(int) * BINS));
+    CubDebugExit(hipMemcpy(d_samples, h_samples, sizeof(SampleT) * num_samples, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemset(d_histogram, 0, sizeof(int) * BINS));
 
     // Run kernel
     BlockHistogramKernel<BINS, BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM><<<1, BLOCK_THREADS>>>(
@@ -177,8 +177,8 @@ void Test(
     printf("\t%s\n\n", compare ? "FAIL" : "PASS");
 
     // Flush any stdout/stderr
-    CubDebugExit(cudaPeekAtLastError());
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipPeekAtLastError());
+    CubDebugExit(hipDeviceSynchronize());
     fflush(stdout);
     fflush(stderr);
 

@@ -349,8 +349,8 @@ void TestFullTile(
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_elapsed, sizeof(unsigned long long)));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_in, sizeof(T) * num_items));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_out, sizeof(T) * 1));
-    CubDebugExit(cudaMemcpy(d_in, h_in, sizeof(T) * num_items, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemset(d_out, 0, sizeof(T) * 1));
+    CubDebugExit(hipMemcpy(d_in, h_in, sizeof(T) * num_items, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemset(d_out, 0, sizeof(T) * 1));
 
     // Test multi-tile (unguarded)
     printf("TestFullTile %s, %s, gen-mode %d, num_items(%d), BLOCK_THREADS(%d) (%d,%d,%d), ITEMS_PER_THREAD(%d), tiles(%d), %s (%d bytes) elements:\n",
@@ -373,8 +373,8 @@ void TestFullTile(
         tiles,
         d_elapsed);
 
-    CubDebugExit(cudaPeekAtLastError());
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipPeekAtLastError());
+    CubDebugExit(hipDeviceSynchronize());
 
     // Copy out and display results
     printf("\tReduction results: ");
@@ -538,8 +538,8 @@ void TestPartialTile(
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_elapsed, sizeof(unsigned long long)));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_in, sizeof(T) * TILE_SIZE));
     CubDebugExit(g_allocator.DeviceAllocate((void**)&d_out, sizeof(T) * 1));
-    CubDebugExit(cudaMemcpy(d_in, h_in, sizeof(T) * num_items, cudaMemcpyHostToDevice));
-    CubDebugExit(cudaMemset(d_out, 0, sizeof(T) * 1));
+    CubDebugExit(hipMemcpy(d_in, h_in, sizeof(T) * num_items, hipMemcpyHostToDevice));
+    CubDebugExit(hipMemset(d_out, 0, sizeof(T) * 1));
 
     printf("TestPartialTile %s, gen-mode %d, num_items(%d), BLOCK_THREADS(%d) (%d,%d,%d), %s (%d bytes) elements:\n",
         (ALGORITHM == BLOCK_REDUCE_RAKING) ? "BLOCK_REDUCE_RAKING" : (ALGORITHM == BLOCK_REDUCE_RAKING_COMMUTATIVE_ONLY) ? "BLOCK_REDUCE_RAKING_COMMUTATIVE_ONLY" : "BLOCK_REDUCE_WARP_REDUCTIONS",
@@ -558,8 +558,8 @@ void TestPartialTile(
         reduction_op,
         d_elapsed);
 
-    CubDebugExit(cudaPeekAtLastError());
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipPeekAtLastError());
+    CubDebugExit(hipDeviceSynchronize());
 
     // Copy out and display results
     printf("\tReduction results: ");

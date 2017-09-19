@@ -41,6 +41,7 @@
 #include "../util_device.cuh"
 #include "../util_debug.cuh"
 #include "../util_namespace.cuh"
+#include "hip/hip_runtime_api.h"
 
 #if (THRUST_VERSION >= 100700)
     // This iterator is compatible with Thrust API 1.7 and newer
@@ -145,7 +146,11 @@ private:
 
     T*                  ptr;
     difference_type     tex_offset;
+#ifdef __HCC__
+    hipTextureObject_t tex_obj;
+#else
     cudaTextureObject_t tex_obj;
+#endif
 
 public:
 
@@ -159,31 +164,35 @@ public:
 
     /// Use this iterator to bind \p ptr with a texture reference
     template <typename QualifiedT>
-    cudaError_t BindTexture(
-        QualifiedT      *ptr,               ///< Native pointer to wrap that is aligned to cudaDeviceProp::textureAlignment
+    hipError_t BindTexture(
+        QualifiedT      *ptr,               ///< Native pointer to wrap that is aligned to hipDeviceProp_t::textureAlignment
         size_t          bytes = size_t(-1),         ///< Number of bytes in the range
         size_t          tex_offset = 0)     ///< OffsetT (in items) from \p ptr denoting the position of the iterator
     {
         this->ptr = const_cast<typename RemoveQualifiers<QualifiedT>::Type *>(ptr);
         this->tex_offset = tex_offset;
 
-        cudaChannelFormatDesc   channel_desc = cudaCreateChannelDesc<TextureWord>();
-        cudaResourceDesc        res_desc;
-        cudaTextureDesc         tex_desc;
-        memset(&res_desc, 0, sizeof(cudaResourceDesc));
-        memset(&tex_desc, 0, sizeof(cudaTextureDesc));
-        res_desc.resType                = cudaResourceTypeLinear;
+#if 0 //Disable by Neel
+        hipChannelFormatDesc   channel_desc = hipCreateChannelDesc<TextureWord>();
+        hipResourceDesc        res_desc;
+        hipTextureDesc         tex_desc;
+        memset(&res_desc, 0, sizeof(hipResourceDesc));
+        memset(&tex_desc, 0, sizeof(hipTextureDesc));
+        res_desc.resType                = hipResourceTypeLinear;
         res_desc.res.linear.devPtr      = this->ptr;
         res_desc.res.linear.desc        = channel_desc;
         res_desc.res.linear.sizeInBytes = bytes;
-        tex_desc.readMode               = cudaReadModeElementType;
-        return cudaCreateTextureObject(&tex_obj, &res_desc, &tex_desc, NULL);
+        tex_desc.readMode               = hipReadModeElementType;
+        return hipCreateTextureObject(&tex_obj, &res_desc, &tex_desc, NULL);
+#endif
+        return hipErrorNotInitialized; 
     }
 
     /// Unbind this iterator from its texture reference
-    cudaError_t UnbindTexture()
+    hipError_t UnbindTexture()
     {
-        return cudaDestroyTextureObject(tex_obj);
+       // return hipDestroyTextureObject(tex_obj); Disabled by Neel
+          return hipErrorNotInitialized;
     }
 
     /// Postfix increment

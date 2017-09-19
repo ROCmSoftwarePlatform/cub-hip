@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include "util_namespace.cuh"
 #include "util_arch.cuh"
+#include "hip/hip_runtime.h"
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -61,12 +62,12 @@ namespace cub {
 
 
 /**
- * \brief %If \p CUB_STDERR is defined and \p error is not \p cudaSuccess, the corresponding error message is printed to \p stderr (or \p stdout in device code) along with the supplied source context.
+ * \brief %If \p CUB_STDERR is defined and \p error is not \p hipSuccess, the corresponding error message is printed to \p stderr (or \p stdout in device code) along with the supplied source context.
  *
  * \return The CUDA error.
  */
-__host__ __device__ __forceinline__ cudaError_t Debug(
-    cudaError_t     error,
+__host__ __device__ __forceinline__ hipError_t Debug(
+    hipError_t     error,
     const char*     filename,
     int             line)
 {
@@ -76,7 +77,7 @@ __host__ __device__ __forceinline__ cudaError_t Debug(
     if (error)
     {
     #if (CUB_PTX_ARCH == 0)
-        fprintf(stderr, "CUDA error %d [%s, %d]: %s\n", error, filename, line, cudaGetErrorString(error));
+        fprintf(stderr, "CUDA error %d [%s, %d]: %s\n", error, filename, line, hipGetErrorString(error));
         fflush(stderr);
     #elif (CUB_PTX_ARCH >= 200)
         printf("CUDA error %d [block (%d,%d,%d) thread (%d,%d,%d), %s, %d]\n", error, blockIdx.z, blockIdx.y, blockIdx.x, threadIdx.z, threadIdx.y, threadIdx.x, filename, line);
@@ -91,7 +92,7 @@ __host__ __device__ __forceinline__ cudaError_t Debug(
  * \brief Debug macro
  */
 #ifndef CubDebug
-    #define CubDebug(e) cub::Debug((cudaError_t) (e), __FILE__, __LINE__)
+    #define CubDebug(e) cub::Debug((hipError_t) (e), __FILE__, __LINE__)
 #endif
 
 
@@ -99,7 +100,7 @@ __host__ __device__ __forceinline__ cudaError_t Debug(
  * \brief Debug macro with exit
  */
 #ifndef CubDebugExit
-    #define CubDebugExit(e) if (cub::Debug((cudaError_t) (e), __FILE__, __LINE__)) { exit(1); }
+    #define CubDebugExit(e) if (cub::Debug((hipError_t) (e), __FILE__, __LINE__)) { exit(1); }
 #endif
 
 

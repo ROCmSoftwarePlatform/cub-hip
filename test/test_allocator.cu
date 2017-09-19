@@ -75,8 +75,8 @@ int main(int argc, char** argv)
     int timing_iterations           = 10000;
     int timing_bytes                = 1024 * 1024;
 
-    if (CubDebug(cudaGetDeviceCount(&num_gpus))) exit(1);
-    if (CubDebug(cudaGetDevice(&initial_gpu))) exit(1);
+    if (CubDebug(hipGetDeviceCount(&num_gpus))) exit(1);
+    if (CubDebug(hipGetDevice(&initial_gpu))) exit(1);
     args.GetCmdLineArgument("i", timing_iterations);
     args.GetCmdLineArgument("bytes", timing_bytes);
 
@@ -91,8 +91,8 @@ int main(int argc, char** argv)
     //
 
     // Create a new stream
-    cudaStream_t other_stream;
-    CubDebugExit(cudaStreamCreate(&other_stream));
+    hipStream_t other_stream;
+    CubDebugExit(hipStreamCreate(&other_stream));
 
     // Allocate 999 bytes on the current gpu in stream0
     char *d_999B_stream0_a;
@@ -138,7 +138,7 @@ int main(int argc, char** argv)
     CubDebugExit(allocator.DeviceFree(d_999B_stream_other_a));
 
     // Check that we can now use both allocations in stream 0 after synchronizing the device
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipDeviceSynchronize());
     CubDebugExit(allocator.DeviceAllocate((void **) &d_999B_stream0_a, 999, 0));
     CubDebugExit(allocator.DeviceAllocate((void **) &d_999B_stream0_b, 999, 0));
 
@@ -153,7 +153,7 @@ int main(int argc, char** argv)
     CubDebugExit(allocator.DeviceFree(d_999B_stream0_b));
 
     // Check that we can now use both allocations in other_stream
-    CubDebugExit(cudaDeviceSynchronize());
+    CubDebugExit(hipDeviceSynchronize());
     CubDebugExit(allocator.DeviceAllocate((void **) &d_999B_stream_other_a, 999, other_stream));
     CubDebugExit(allocator.DeviceAllocate((void **) &d_999B_stream_other_b, 999, other_stream));
 
@@ -171,8 +171,8 @@ int main(int argc, char** argv)
     CubDebugExit(allocator.DeviceFree(d_999B_stream_other_b));
 
     // Check that we can now use both allocations in stream 0 after synchronizing the device and destroying the other stream
-    CubDebugExit(cudaDeviceSynchronize());
-    CubDebugExit(cudaStreamDestroy(other_stream));
+    CubDebugExit(hipDeviceSynchronize());
+    CubDebugExit(hipStreamDestroy(other_stream));
     CubDebugExit(allocator.DeviceAllocate((void **) &d_999B_stream0_a, 999, 0));
     CubDebugExit(allocator.DeviceAllocate((void **) &d_999B_stream0_b, 999, 0));
 
@@ -386,11 +386,11 @@ int main(int argc, char** argv)
     cpu_timer.Start();
     for (int i = 0; i < timing_iterations; ++i)
     {
-        CubDebugExit(cudaMalloc((void **) &d_1024MB, timing_bytes));
-        CubDebugExit(cudaFree(d_1024MB));
+        CubDebugExit(hipMalloc((void **) &d_1024MB, timing_bytes));
+        CubDebugExit(hipFree(d_1024MB));
     }
     cpu_timer.Stop();
-    float cuda_malloc_elapsed_millis = cpu_timer.ElapsedMillis();
+    float hip_malloc_elapsed_millis = cpu_timer.ElapsedMillis();
 
     // CUB
     cpu_timer.Start();
@@ -402,9 +402,9 @@ int main(int argc, char** argv)
     cpu_timer.Stop();
     float cub_calloc_elapsed_millis = cpu_timer.ElapsedMillis();
 
-    printf("\t CUB CachingDeviceAllocator allocation CPU speedup: %.2f (avg cudaMalloc %.4f ms vs. avg DeviceAllocate %.4f ms)\n",
-        cuda_malloc_elapsed_millis / cub_calloc_elapsed_millis,
-        cuda_malloc_elapsed_millis / timing_iterations,
+    printf("\t CUB CachingDeviceAllocator allocation CPU speedup: %.2f (avg hipMalloc %.4f ms vs. avg DeviceAllocate %.4f ms)\n",
+        hip_malloc_elapsed_millis / cub_calloc_elapsed_millis,
+        hip_malloc_elapsed_millis / timing_iterations,
         cub_calloc_elapsed_millis / timing_iterations);
 
     // GPU performance comparisons.  Allocate and free a 1MB block 2000 times
@@ -420,18 +420,18 @@ int main(int argc, char** argv)
         cub::EmptyKernel<void><<<1, 32>>>();
     }
     gpu_timer.Stop();
-    float cuda_empty_elapsed_millis = gpu_timer.ElapsedMillis();
+    float hip_empty_elapsed_millis = gpu_timer.ElapsedMillis();
 
     // CUDA
     gpu_timer.Start();
     for (int i = 0; i < timing_iterations; ++i)
     {
-        CubDebugExit(cudaMalloc((void **) &d_1024MB, timing_bytes));
+        CubDebugExit(hipMalloc((void **) &d_1024MB, timing_bytes));
         cub::EmptyKernel<void><<<1, 32>>>();
-        CubDebugExit(cudaFree(d_1024MB));
+        CubDebugExit(hipFree(d_1024MB));
     }
     gpu_timer.Stop();
-    cuda_malloc_elapsed_millis = gpu_timer.ElapsedMillis() - cuda_empty_elapsed_millis;
+    hip_malloc_elapsed_millis = gpu_timer.ElapsedMillis() - hip_empty_elapsed_millis;
 
     // CUB
     gpu_timer.Start();
@@ -442,11 +442,11 @@ int main(int argc, char** argv)
         CubDebugExit(allocator.DeviceFree(d_1024MB));
     }
     gpu_timer.Stop();
-    cub_calloc_elapsed_millis = gpu_timer.ElapsedMillis() - cuda_empty_elapsed_millis;
+    cub_calloc_elapsed_millis = gpu_timer.ElapsedMillis() - hip_empty_elapsed_millis;
 
-    printf("\t CUB CachingDeviceAllocator allocation GPU speedup: %.2f (avg cudaMalloc %.4f ms vs. avg DeviceAllocate %.4f ms)\n",
-        cuda_malloc_elapsed_millis / cub_calloc_elapsed_millis,
-        cuda_malloc_elapsed_millis / timing_iterations,
+    printf("\t CUB CachingDeviceAllocator allocation GPU speedup: %.2f (avg hipMalloc %.4f ms vs. avg DeviceAllocate %.4f ms)\n",
+        hip_malloc_elapsed_millis / cub_calloc_elapsed_millis,
+        hip_malloc_elapsed_millis / timing_iterations,
         cub_calloc_elapsed_millis / timing_iterations);
 
 

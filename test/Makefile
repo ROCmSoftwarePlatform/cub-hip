@@ -1,6 +1,6 @@
 #/******************************************************************************
 # * Copyright (c) 2011, Duane Merrill.  All rights reserved.
-# * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
+# * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
 # * 
 # * Redistribution and use in source and binary forms, with or without
 # * modification, are permitted provided that the following conditions are met:
@@ -34,23 +34,21 @@
 # make <target> [sm=<XXX,...>] [cdp=<0|1>] [force32=<0|1>] [abi=<0|1>] [open64=<0|1>] [verbose=<0|1>] [keep=<0|1>] [quicktest=<0|1>] [quickertest=<0|1>]
 #
 #-------------------------------------------------------------------------------
-
 include ../common.mk 
- 
+
 #-------------------------------------------------------------------------------
 # Commandline Options
 #-------------------------------------------------------------------------------
 
 # Testing mode option (quick/thorough)
 ifeq ($(quickertest), 1)
-	NVCCFLAGS += -DQUICKER_TEST
+	HIPCCFLAGS += -DQUICKER_TEST
 	TEST_SUFFIX = quicker
 else ifeq ($(quicktest), 1)
-	NVCCFLAGS += -DQUICK_TEST
+	HIPCCFLAGS += -DQUICK_TEST
 	TEST_SUFFIX = quick
 else 
 	TEST_SUFFIX = thorough
-	NPPI = 
 endif
 
 
@@ -58,22 +56,27 @@ endif
 ifeq ($(memcheck), 0)
 	MEMCHECK = 
 else 
-	MEMCHECK = cuda-memcheck
+ifeq ($(HIP_PLATFORM), nvcc)
+	MEMCHECK = hip-memcheck
+else
+	MEMCHECK =
+endif
 endif
 
 
 #-------------------------------------------------------------------------------
 # Compiler and compilation platform
 #-------------------------------------------------------------------------------
-
-# Includes
-INC += -I$(CUB_DIR) -I$(CUB_DIR)test 
-
-# Suffix to append to each binary
-SUFFIX = $(BIN_SUFFIX)_$(TEST_SUFFIX)
-
-# Define test arch
-DEFINES += -DTEST_ARCH=$(TEST_ARCH)
+ifeq ($(HIP_PLATFORM), hcc)
+	# Includes
+	INC += -I$(CUB_DIR) -I$(CUB_DIR)test -I$(CUB_DIR)external/bolt/include -I$(CUB_DIR)external/boost -I${HIP_INC}
+else
+	INC += -I$(CUB_DIR) -I$(CUB_DIR)test -I${HIP_INC} -std=c++11
+	# Define test arch
+	DEFINES += -DTEST_ARCH=$(TEST_ARCH)
+endif
+	# Suffix to append to each binary
+	SUFFIX = $(BIN_SUFFIX)_$(TEST_SUFFIX)
 
 
 #-------------------------------------------------------------------------------
@@ -113,7 +116,7 @@ ALL = 				link \
 				 	test_device_reduce \
 			 		test_device_histogram \
 			 		test_device_scan \
-			 		test_device_radix_sort \
+					test_device_radix_sort \
 					test_device_reduce_by_key\
 					test_device_run_length_encode\
 		 			test_device_select_unique \
@@ -128,16 +131,16 @@ ALL = 				link \
 # make default
 #-------------------------------------------------------------------------------
 
-default:
-
+#default:
+.PHONY:$(ALL)
 
 #-------------------------------------------------------------------------------
 # make clean
 #-------------------------------------------------------------------------------
 
 clean :
-	rm -f bin/*$(CPU_ARCH_SUFFIX)* 
-	rm -f *.i* *.cubin *.cu.c *.cudafe* *.fatbin.c *.ptx *.hash *.cu.cpp *.o
+	rm -f bin/*$(CPU_ARCH_SUFFIX)* bin/*.obj
+	rm -f *.i* *.cubin *.cu.c *.hipfe* *.fatbin.c *.ptx *.hash *.cu.cpp *.o
 
 
 #-------------------------------------------------------------------------------
@@ -164,19 +167,28 @@ run_block_radix_sort :
 	for i in $(BLOCK_RADIX_SORT); do $(MEMCHECK) ./bin/$${i}_$(SUFFIX) --device=$(device) || exit 1; done
 
 
-
 #-------------------------------------------------------------------------------
 # make link
 #-------------------------------------------------------------------------------
-
+ifeq ($(HIP_PLATFORM), nvcc)
 link : bin/link_$(SUFFIX)
 
 bin/link_$(SUFFIX) : link_a.cu link_b.cu link_main.cpp $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_a.cu -c -o bin/link_a.obj
-	$(NVCC) $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_b.cu -c -o bin/link_b.obj
-	$(NVCC) $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_main.cpp bin/link_a.obj bin/link_b.obj -o bin/link_$(SUFFIX)
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_a.cu -c -o bin/link_a.obj
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_b.cu -c -o bin/link_b.obj
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) link_main.cpp -c -o bin/link_main.obj
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) bin/link_main.obj bin/link_a.obj bin/link_b.obj -o bin/link_$(SUFFIX)
+else
+link : bin/link_$(SUFFIX)
 
+bin/link_$(SUFFIX) : link_a.cpp link_b.cpp link_main.cpp $(DEPS)
+	mkdir -p bin
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 link_a.cpp -c -o bin/link_a.obj
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 link_b.cpp -c -o bin/link_b.obj
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 link_main.cpp -c -o bin/link_main.obj
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 bin/link_main.obj bin/link_a.obj bin/link_b.obj -o bin/link_$(SUFFIX)
+endif
 
 #-------------------------------------------------------------------------------
 # make test_iterator 
@@ -186,19 +198,26 @@ test_iterator: bin/test_iterator_$(SUFFIX)
 
 bin/test_iterator_$(SUFFIX) : test_iterator.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_iterator_$(SUFFIX) test_iterator.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_iterator_$(SUFFIX) test_iterator.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
 # make test_allocator 
 #-------------------------------------------------------------------------------
+ifeq ($(HIP_PLATFORM), nvcc)
 
 test_allocator: bin/test_allocator_$(SUFFIX)
 
 bin/test_allocator_$(SUFFIX) : test_allocator.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_allocator_$(SUFFIX) test_allocator.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
-	
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_allocator_$(SUFFIX) test_allocator.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+else
+test_allocator: bin/test_allocator_$(SUFFIX)
+
+bin/test_allocator_$(SUFFIX) : test_allocator.cu $(DEPS)
+	mkdir -p bin
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 -o bin/test_allocator_$(SUFFIX) test_allocator.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+endif	
 	
 #-------------------------------------------------------------------------------
 # make test_grid_barrier 
@@ -208,7 +227,7 @@ test_grid_barrier: bin/test_grid_barrier_$(SUFFIX)
 
 bin/test_grid_barrier_$(SUFFIX) : test_grid_barrier.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_grid_barrier_$(SUFFIX) test_grid_barrier.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_grid_barrier_$(SUFFIX) test_grid_barrier.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 	
 
 #-------------------------------------------------------------------------------
@@ -219,7 +238,7 @@ test_warp_scan: bin/test_warp_scan_$(SUFFIX)
 
 bin/test_warp_scan_$(SUFFIX) : test_warp_scan.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_warp_scan_$(SUFFIX) test_warp_scan.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_warp_scan_$(SUFFIX) test_warp_scan.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 
 
 #-------------------------------------------------------------------------------
@@ -230,7 +249,7 @@ test_warp_reduce: bin/test_warp_reduce_$(SUFFIX)
 
 bin/test_warp_reduce_$(SUFFIX) : test_warp_reduce.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_warp_reduce_$(SUFFIX) test_warp_reduce.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_warp_reduce_$(SUFFIX) test_warp_reduce.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 
 
 #-------------------------------------------------------------------------------
@@ -241,7 +260,7 @@ test_block_reduce_raking: bin/test_block_reduce_raking_$(SUFFIX)
 
 bin/test_block_reduce_raking_$(SUFFIX) : test_block_reduce.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) -DTEST_RAKING $(SM_TARGETS) -o bin/test_block_reduce_raking_$(SUFFIX) test_block_reduce.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_RAKING $(SM_TARGETS) -o bin/test_block_reduce_raking_$(SUFFIX) test_block_reduce.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 
 
 #-------------------------------------------------------------------------------
@@ -252,7 +271,7 @@ test_block_reduce_warp_reductions: bin/test_block_reduce_warp_reductions_$(SUFFI
 
 bin/test_block_reduce_warp_reductions_$(SUFFIX) : test_block_reduce.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) -DTEST_WARP_REDUCTIONS $(SM_TARGETS) -o bin/test_block_reduce_warp_reductions_$(SUFFIX) test_block_reduce.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_WARP_REDUCTIONS $(SM_TARGETS) -o bin/test_block_reduce_warp_reductions_$(SUFFIX) test_block_reduce.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 
 
 #-------------------------------------------------------------------------------
@@ -270,7 +289,7 @@ test_block_scan_raking: bin/test_block_scan_raking_$(SUFFIX)
 
 bin/test_block_scan_raking_$(SUFFIX) : test_block_scan.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) -DTEST_RAKING $(SM_TARGETS) -o bin/test_block_scan_raking_$(SUFFIX) test_block_scan.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_RAKING $(SM_TARGETS) -o bin/test_block_scan_raking_$(SUFFIX) test_block_scan.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 
 
 #-------------------------------------------------------------------------------
@@ -281,7 +300,7 @@ test_block_scan_raking_memoize: bin/test_block_scan_raking_memoize_$(SUFFIX)
 
 bin/test_block_scan_raking_memoize_$(SUFFIX) : test_block_scan.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) -DTEST_RAKING_MEMOIZE $(SM_TARGETS) -o bin/test_block_scan_raking_memoize_$(SUFFIX) test_block_scan.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_RAKING_MEMOIZE $(SM_TARGETS) -o bin/test_block_scan_raking_memoize_$(SUFFIX) test_block_scan.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 
 
 #-------------------------------------------------------------------------------
@@ -292,7 +311,7 @@ test_block_scan_warp_scans: bin/test_block_scan_warp_scans_$(SUFFIX)
 
 bin/test_block_scan_warp_scans_$(SUFFIX) : test_block_scan.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) -DTEST_WARP_SCANS $(SM_TARGETS) -o bin/test_block_scan_warp_scans_$(SUFFIX) test_block_scan.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_WARP_SCANS $(SM_TARGETS) -o bin/test_block_scan_warp_scans_$(SUFFIX) test_block_scan.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 
 
 #-------------------------------------------------------------------------------
@@ -310,7 +329,7 @@ test_block_load_store: bin/test_block_load_store_$(SUFFIX)
 
 bin/test_block_load_store_$(SUFFIX) : test_block_load_store.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_block_load_store_$(SUFFIX) test_block_load_store.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_block_load_store_$(SUFFIX) test_block_load_store.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 	
 	
 #-------------------------------------------------------------------------------
@@ -321,7 +340,7 @@ test_block_radix_sort_keys: bin/test_block_radix_sort_keys_$(SUFFIX)
 
 bin/test_block_radix_sort_keys_$(SUFFIX) : test_block_radix_sort.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) -DTEST_KEYS_ONLY $(SM_TARGETS) -o bin/test_block_radix_sort_keys_$(SUFFIX) test_block_radix_sort.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) -DTEST_KEYS_ONLY $(SM_TARGETS) -o bin/test_block_radix_sort_keys_$(SUFFIX) test_block_radix_sort.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 #-------------------------------------------------------------------------------
 # make test_block_radix_sort_pairs 
@@ -331,7 +350,7 @@ test_block_radix_sort_pairs: bin/test_block_radix_sort_pairs_$(SUFFIX)
 
 bin/test_block_radix_sort_pairs_$(SUFFIX) : test_block_radix_sort.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_block_radix_sort_pairs_$(SUFFIX) test_block_radix_sort.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_block_radix_sort_pairs_$(SUFFIX) test_block_radix_sort.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -349,7 +368,7 @@ test_block_histogram: bin/test_block_histogram_$(SUFFIX)
 
 bin/test_block_histogram_$(SUFFIX) : test_block_histogram.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_block_histogram_$(SUFFIX) test_block_histogram.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_block_histogram_$(SUFFIX) test_block_histogram.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -360,19 +379,24 @@ test_device_reduce: bin/test_device_reduce_$(SUFFIX)
 
 bin/test_device_reduce_$(SUFFIX) : test_device_reduce.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_reduce_$(SUFFIX) test_device_reduce.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_reduce_$(SUFFIX) test_device_reduce.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
 # make test_device_histogram
 #-------------------------------------------------------------------------------
 
+ifeq ($(HIP_PLATFORM), nvcc)
 test_device_histogram: bin/test_device_histogram_$(SUFFIX)
-
 bin/test_device_histogram_$(SUFFIX) : test_device_histogram.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_histogram_$(SUFFIX) test_device_histogram.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) $(NPPI) -O3
-
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_histogram_$(SUFFIX) test_device_histogram.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) $(NPPI) -O3
+else
+test_device_histogram: bin/test_device_histogram_$(SUFFIX)
+bin/test_device_histogram_$(SUFFIX) : test_device_histogram.cu $(DEPS)
+	mkdir -p bin
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_histogram_$(SUFFIX) test_device_histogram.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+endif
 
 #-------------------------------------------------------------------------------
 # make test_device_scan
@@ -382,7 +406,7 @@ test_device_scan: bin/test_device_scan_$(SUFFIX)
 
 bin/test_device_scan_$(SUFFIX) : test_device_scan.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_scan_$(SUFFIX) test_device_scan.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_scan_$(SUFFIX) test_device_scan.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -393,7 +417,7 @@ test_device_radix_sort: bin/test_device_radix_sort_$(SUFFIX)
 
 bin/test_device_radix_sort_$(SUFFIX) : test_device_radix_sort.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_radix_sort_$(SUFFIX) test_device_radix_sort.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_radix_sort_$(SUFFIX) test_device_radix_sort.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -404,7 +428,7 @@ test_device_select_unique: bin/test_device_select_unique_$(SUFFIX)
 
 bin/test_device_select_unique_$(SUFFIX) : test_device_select_unique.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_select_unique_$(SUFFIX) test_device_select_unique.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_select_unique_$(SUFFIX) test_device_select_unique.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -415,7 +439,7 @@ test_device_select_if: bin/test_device_select_if_$(SUFFIX)
 
 bin/test_device_select_if_$(SUFFIX) : test_device_select_if.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_select_if_$(SUFFIX) test_device_select_if.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_select_if_$(SUFFIX) test_device_select_if.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 #-------------------------------------------------------------------------------
 # make test_device_reduce_by_key
@@ -425,7 +449,7 @@ test_device_reduce_by_key: bin/test_device_reduce_by_key_$(SUFFIX)
 
 bin/test_device_reduce_by_key_$(SUFFIX) : test_device_reduce_by_key.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_reduce_by_key_$(SUFFIX) test_device_reduce_by_key.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_reduce_by_key_$(SUFFIX) test_device_reduce_by_key.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 #-------------------------------------------------------------------------------
 # make test_device_run_length_encode
@@ -435,7 +459,7 @@ test_device_run_length_encode: bin/test_device_run_length_encode_$(SUFFIX)
 
 bin/test_device_run_length_encode_$(SUFFIX) : test_device_run_length_encode.cu $(DEPS)
 	mkdir -p bin
-	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_run_length_encode_$(SUFFIX) test_device_run_length_encode.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_run_length_encode_$(SUFFIX) test_device_run_length_encode.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 
@@ -448,6 +472,6 @@ bin/test_device_run_length_encode_$(SUFFIX) : test_device_run_length_encode.cu $
 #
 #bin/test_device_seg_reduce_$(SUFFIX) : test_device_seg_reduce.cu $(DEPS)
 #	mkdir -p bin
-#	$(NVCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_seg_reduce_$(SUFFIX) test_device_seg_reduce.cu $(NVCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+#	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_seg_reduce_$(SUFFIX) test_device_seg_reduce.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 

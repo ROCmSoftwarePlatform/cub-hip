@@ -126,7 +126,7 @@ __device__ __forceinline__ void StoreDirectBlocked(
  * \blocked
  *
  * The output offset (\p block_ptr + \p block_offset) must be quad-item aligned,
- * which is the default starting offset returned by \p cudaMalloc()
+ * which is the default starting offset returned by \p hipMalloc()
  *
  * \par
  * The following conditions will prevent vectorization and storing will fall back to cub::BLOCK_STORE_DIRECT:
