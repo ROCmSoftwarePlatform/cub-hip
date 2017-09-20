@@ -1202,10 +1202,8 @@ struct DispatchRadixSort :
             if (CubDebug(error = hipGetDevice(&device_ordinal))) break;
 
             // Get SM count
-            int sm_count = 8;
-#if 0 // Disabled by Neel
-            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDevAttrMultiProcessorCount, device_ordinal))) break;
-#endif
+            int sm_count;
+            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;
 
             // Init regular and alternate-digit kernel configurations
             PassConfig<UpsweepKernelT, ScanKernelT, DownsweepKernelT> pass_config, alt_pass_config;

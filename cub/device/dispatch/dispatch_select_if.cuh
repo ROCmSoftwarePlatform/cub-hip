@@ -391,10 +391,8 @@ struct DispatchSelectIf
             if (CubDebug(error = hipGetDevice(&device_ordinal))) break;
 
             // Get SM count
-            int sm_count = 8;
-#if 0   // Dsabled by Neel
-            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDevAttrMultiProcessorCount, device_ordinal))) break;
-#endif
+            int sm_count;
+            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;
 
             // Number of input tiles
             int tile_size = select_if_config.block_threads * select_if_config.items_per_thread;
@@ -445,10 +443,8 @@ struct DispatchSelectIf
                 select_if_config.block_threads))) break;
 
             // Get max x-dimension of grid
-            int max_dim_x = 256;
- #if 0
-            if (CubDebug(error = hipDeviceGetAttribute(&max_dim_x, hipDevAttrMaxGridDimX, device_ordinal))) break;;
-#endif
+            int max_dim_x;
+            if (CubDebug(error = hipDeviceGetAttribute(&max_dim_x, hipDeviceAttributeMaxGridDimX, device_ordinal))) break;;
 
             // Get grid size for scanning tiles
             dim3 scan_grid_size;

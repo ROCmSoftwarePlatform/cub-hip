@@ -424,10 +424,8 @@ struct DispatchScan
             if (CubDebug(error = hipGetDevice(&device_ordinal))) break;
 
             // Get SM count
-            //int sm_count = 8;
-#if 0 // Disabled By Neel
-            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDevAttrMultiProcessorCount, device_ordinal))) break;
-#endif
+            int sm_count;
+            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;
             // Number of input tiles
             int tile_size = scan_kernel_config.block_threads * scan_kernel_config.items_per_thread;
             int num_tiles = (num_items + tile_size - 1) / tile_size;
@@ -476,10 +474,8 @@ struct DispatchScan
                 scan_kernel_config.block_threads))) break;
 
             // Get max x-dimension of grid
-            int max_dim_x = 256;
-#if 0 // Disabled by Neel
-            if (CubDebug(error = hipDeviceGetAttribute(&max_dim_x, hipDevAttrMaxGridDimX, device_ordinal))) break;;
-#endif
+            int max_dim_x;
+            if (CubDebug(error = hipDeviceGetAttribute(&max_dim_x, hipDeviceAttributeMaxGridDimX, device_ordinal))) break;;
             // Run grids in epochs (in case number of tiles exceeds max x-dimension
             int scan_grid_size = CUB_MIN(num_tiles, max_dim_x);
             for (int start_tile = 0; start_tile < num_tiles; start_tile += scan_grid_size)

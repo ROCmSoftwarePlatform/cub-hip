@@ -518,10 +518,8 @@ struct DispatchReduce :
             if (CubDebug(error = hipGetDevice(&device_ordinal))) break;
 
             // Get SM count
-            int sm_count = 8;
-#if 0 // Disabled by Neel
-            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDevAttrMultiProcessorCount, device_ordinal))) break;
-#endif
+            int sm_count;
+            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;
 
             // Init regular kernel configuration
             KernelConfig reduce_config;

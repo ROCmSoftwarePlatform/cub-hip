@@ -605,16 +605,12 @@ struct DispatchSpmv
             if (CubDebug(error = hipGetDevice(&device_ordinal))) break;
 
             // Get SM count
-            int sm_count = 8;
-#if 0 // Disabled by Neel
-            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDevAttrMultiProcessorCount, device_ordinal))) break;
-#endif
+            int sm_count;
+            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;
 
             // Get max x-dimension of grid
-            int max_dim_x = 256;
-#if 0 // Disabled by Neel
-            if (CubDebug(error = hipDeviceGetAttribute(&max_dim_x, hipDevAttrMaxGridDimX, device_ordinal))) break;;
-#endif
+            int max_dim_x;
+            if (CubDebug(error = hipDeviceGetAttribute(&max_dim_x, hipDeviceAttributeMaxGridDimX, device_ordinal))) break;;
 
             // Total number of spmv work items
             int num_merge_items = spmv_params.num_rows + spmv_params.num_nonzeros;

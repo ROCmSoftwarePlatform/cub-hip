@@ -108,8 +108,8 @@ int main(int argc, char** argv)
     CubDebugExit(SmVersion(sm_version, device_ordinal));
 
     // Get SM properties
-    int sm_count = 8, max_block_threads = 256, max_sm_occupancy;
-    //CubDebugExit(hipDeviceGetAttribute(&sm_count, hipDevAttrMultiProcessorCount, device_ordinal));
+    int sm_count , max_block_threads = 256, max_sm_occupancy;
+    CubDebugExit(hipDeviceGetAttribute(&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal));
     //CubDebugExit(hipDeviceGetAttribute(&max_block_threads, hipDevAttrMaxThreadsPerBlock, device_ordinal));
     CubDebugExit(MaxSmOccupancy(max_sm_occupancy, EmptyKernel<void>, 32));
 
