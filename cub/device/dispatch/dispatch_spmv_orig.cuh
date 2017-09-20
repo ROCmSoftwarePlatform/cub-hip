@@ -76,7 +76,7 @@ __global__ void DeviceSpmv1ColKernel(
 
     VectorValueIteratorT wrapped_vector_x(spmv_params.d_vector_x);
 
-    int row_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
+    int row_idx = (hipBlockIdx_x * hipBlockDim_x) + hipThreadIdx_x;
     if (row_idx < spmv_params.num_rows)
     {
         OffsetT     end_nonzero_idx = spmv_params.d_row_end_offsets[row_idx];
@@ -121,7 +121,7 @@ __global__ void DeviceSpmvSearchKernel(
         RowOffsetsSearchIteratorT;
 
     // Find the starting coordinate for all tiles (plus the end coordinate of the last one)
-    int tile_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
+    int tile_idx = (hipBlockIdx_x * hipBlockDim_x) + hipThreadIdx_x;
     if (tile_idx < num_merge_tiles + 1)
     {
         OffsetT                         diagonal = (tile_idx * TILE_ITEMS);
@@ -154,7 +154,11 @@ template <
     typename        CoordinateT,                ///< Merge path coordinate type
     bool            HAS_ALPHA,                  ///< Whether the input parameter Alpha is 1
     bool            HAS_BETA>                   ///< Whether the input parameter Beta is 0
+#ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(SpmvPolicyT::BLOCK_THREADS))
+#elif defined(__HIP_PLATFORM_HCC__)
+__launch_bounds__(256)
+#endif
 __global__ void DeviceSpmvKernel(
     SpmvParams<ValueT, OffsetT>     spmv_params,                ///< [in] SpMV input parameter bundle
     CoordinateT*                    d_tile_coordinates,         ///< [in] Pointer to the temporary array of tile starting coordinates
@@ -195,7 +199,11 @@ template <
     typename    AggregatesOutputIteratorT,      ///< Random-access output iterator type for values
     typename    OffsetT,                        ///< Signed integer type for global offsets
     typename    ScanTileStateT>                 ///< Tile status interface type
+#ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(AgentSegmentFixupPolicyT::BLOCK_THREADS))
+#elif defined(__HIP_PLATFORM_HCC__)
+__launch_bounds__(256)
+#endif
 __global__ void DeviceSegmentFixupKernel(
     PairsInputIteratorT         d_pairs_in,         ///< [in] Pointer to the array carry-out dot product row-ids, one per spmv block
     AggregatesOutputIteratorT   d_aggregates_out,   ///< [in,out] Output value aggregates

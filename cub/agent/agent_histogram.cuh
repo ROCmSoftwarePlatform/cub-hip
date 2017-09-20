@@ -254,7 +254,7 @@ struct AgentHistogram
         #pragma unroll
         for (int CHANNEL = 0; CHANNEL < NUM_ACTIVE_CHANNELS; ++CHANNEL)
         {
-            for (int privatized_bin = threadIdx.x; privatized_bin < num_privatized_bins[CHANNEL]; privatized_bin += BLOCK_THREADS)
+            for (int privatized_bin = hipThreadIdx_x; privatized_bin < num_privatized_bins[CHANNEL]; privatized_bin += BLOCK_THREADS)
             {
                 privatized_histograms[CHANNEL][privatized_bin] = 0;
             }
@@ -299,7 +299,7 @@ struct AgentHistogram
         for (int CHANNEL = 0; CHANNEL < NUM_ACTIVE_CHANNELS; ++CHANNEL)
         {
             int channel_bins = num_privatized_bins[CHANNEL];
-            for (int privatized_bin = threadIdx.x; 
+            for (int privatized_bin = hipThreadIdx_x; 
                     privatized_bin < channel_bins;  
                     privatized_bin += BLOCK_THREADS)
             {
@@ -561,7 +561,7 @@ struct AgentHistogram
         // Set valid flags
         #pragma unroll
         for (int PIXEL = 0; PIXEL < PIXELS_PER_THREAD; ++PIXEL)
-            is_valid[PIXEL] = IS_FULL_TILE || (((threadIdx.x * PIXELS_PER_THREAD + PIXEL) * NUM_CHANNELS) < valid_samples);
+            is_valid[PIXEL] = IS_FULL_TILE || (((hipThreadIdx_x * PIXELS_PER_THREAD + PIXEL) * NUM_CHANNELS) < valid_samples);
 
         // Accumulate samples
 #if CUB_PTX_ARCH >= 120
@@ -588,8 +588,8 @@ struct AgentHistogram
     {
 
         int         num_tiles                   = num_rows * tiles_per_row;
-        int         tile_idx                    = (blockIdx.y  * gridDim.x) + blockIdx.x;
-        OffsetT     num_even_share_tiles        = gridDim.x * gridDim.y;
+        int         tile_idx                    = (hipBlockIdx_y  * hipGridDim_x) + hipBlockIdx_x;
+        OffsetT     num_even_share_tiles        = hipGridDim_x * hipGridDim_y;
 
         while (tile_idx < num_tiles)
         {
@@ -614,7 +614,7 @@ struct AgentHistogram
             CTA_SYNC();
 
             // Get next tile
-            if (threadIdx.x == 0)
+            if (hipThreadIdx_x == 0)
                 temp_storage.tile_idx = tile_queue.Drain(1) + num_even_share_tiles;
 
             CTA_SYNC();
@@ -634,11 +634,11 @@ struct AgentHistogram
         GridQueue<int>      tile_queue,
         Int2Type<false>     is_work_stealing)
     {
-        for (int row = blockIdx.y; row < num_rows; row += gridDim.y)
+        for (int row = hipBlockIdx_y; row < num_rows; row += hipGridDim_y)
         {
             OffsetT row_begin   = row * row_stride_samples;
             OffsetT row_end     = row_begin + (num_row_pixels * NUM_CHANNELS);
-            OffsetT tile_offset = row_begin + (blockIdx.x * TILE_SAMPLES);
+            OffsetT tile_offset = row_begin + (hipBlockIdx_x * TILE_SAMPLES);
 
             while (tile_offset < row_end)
             {
@@ -653,7 +653,7 @@ struct AgentHistogram
 
                 // Consume full tile
                 ConsumeTile<IS_ALIGNED, true>(tile_offset, TILE_SAMPLES);
-                tile_offset += gridDim.x * TILE_SAMPLES;
+                tile_offset += hipGridDim_x * TILE_SAMPLES;
             }
         }
     }
@@ -712,9 +712,9 @@ struct AgentHistogram
             true :                              // prefer smem privatized histograms
             (MEM_PREFERENCE == GMEM) ?
                 false :                         // prefer gmem privatized histograms
-                blockIdx.x & 1)                 // prefer blended privatized histograms
+                hipBlockIdx_x & 1)                 // prefer blended privatized histograms
     {
-        int blockId = (blockIdx.y * gridDim.x) + blockIdx.x;
+        int blockId = (hipBlockIdx_y * hipGridDim_x) + hipBlockIdx_x;
 
         // Initialize the locations of this block's privatized histograms
         for (int CHANNEL = 0; CHANNEL < NUM_ACTIVE_CHANNELS; ++CHANNEL)

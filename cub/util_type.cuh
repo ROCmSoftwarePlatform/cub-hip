@@ -40,6 +40,7 @@
 #include "util_macro.cuh"
 #include "util_arch.cuh"
 #include "util_namespace.cuh"
+#include "hip/hip_runtime_api.h"
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -250,7 +251,9 @@ struct RemoveQualifiers<Tp, const volatile Up>
 struct NullType
 {
 #ifndef DOXYGEN_SHOULD_SKIP_THIS    // Do not document
-
+    #if defined(__HIP_PLATFORM_HCC__)
+        int dummy_for_hcc_;
+    #endif
     template <typename T>
     __host__ __device__ __forceinline__ NullType& operator =(const T&) { return *this; }
 
@@ -303,9 +306,17 @@ struct AlignBytes
 // with device C++ compilers (EDG) on types passed as template parameters through
 // kernel functions
 
+#ifdef __HIP_PLATFORM_NVCC__
 #define __CUB_ALIGN_BYTES(t, b)         \
     template <> struct AlignBytes<t>    \
     { enum { ALIGN_BYTES = b }; typedef __align__(b) t Type; };
+#elif defined(__HIP_PLATFORM_HCC__)
+#define __CUB_ALIGN_BYTES(t, b)         \
+    template <> struct AlignBytes<t>    \
+    { enum { ALIGN_BYTES = b }; typedef __attribute__((aligned(b))) t Type; };
+#endif
+
+
 
 __CUB_ALIGN_BYTES(short4, 8)
 __CUB_ALIGN_BYTES(ushort4, 8)

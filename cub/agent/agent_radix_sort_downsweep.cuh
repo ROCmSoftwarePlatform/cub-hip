@@ -175,7 +175,11 @@ struct AgentRadixSortDownsweep
     /**
      * Shared memory storage layout
      */
+#ifdef __HIP_PLATFORM_NVCC__
     union __align__(16) _TempStorage
+#elif defined(__HIP_PLATFORM_HCC__)
+    union __attribute__((aligned(16))) _TempStorage
+#endif
     {
         typename BlockLoadKeysT::TempStorage    load_keys;
         typename BlockLoadValuesT::TempStorage  load_values;
@@ -248,7 +252,7 @@ struct AgentRadixSortDownsweep
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
-            UnsignedBits key            = temp_storage.exchange_keys[threadIdx.x + (ITEM * BLOCK_THREADS)];
+            UnsignedBits key            = temp_storage.exchange_keys[hipThreadIdx_x + (ITEM * BLOCK_THREADS)];
             UnsignedBits digit          = BFE(key, current_bit, num_bits);
             relative_bin_offsets[ITEM]  = temp_storage.relative_bin_offsets[digit];
 
@@ -256,9 +260,9 @@ struct AgentRadixSortDownsweep
             key = Traits<KeyT>::TwiddleOut(key);
 
             if (FULL_TILE || 
-                (static_cast<OffsetT>(threadIdx.x + (ITEM * BLOCK_THREADS)) < valid_items))
+                (static_cast<OffsetT>(hipThreadIdx_x + (ITEM * BLOCK_THREADS)) < valid_items))
             {
-                d_keys_out[relative_bin_offsets[ITEM] + threadIdx.x + (ITEM * BLOCK_THREADS)] = key;
+                d_keys_out[relative_bin_offsets[ITEM] + hipThreadIdx_x + (ITEM * BLOCK_THREADS)] = key;
             }
         }
     }
@@ -287,12 +291,12 @@ struct AgentRadixSortDownsweep
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
-            ValueT value = temp_storage.exchange_values[threadIdx.x + (ITEM * BLOCK_THREADS)];
+            ValueT value = temp_storage.exchange_values[hipThreadIdx_x + (ITEM * BLOCK_THREADS)];
 
             if (FULL_TILE || 
-                (static_cast<OffsetT>(threadIdx.x + (ITEM * BLOCK_THREADS)) < valid_items))
+                (static_cast<OffsetT>(hipThreadIdx_x + (ITEM * BLOCK_THREADS)) < valid_items))
             {
-                d_values_out[relative_bin_offsets[ITEM] + threadIdx.x + (ITEM * BLOCK_THREADS)] = value;
+                d_values_out[relative_bin_offsets[ITEM] + hipThreadIdx_x + (ITEM * BLOCK_THREADS)] = value;
             }
         }
     }
@@ -346,7 +350,7 @@ struct AgentRadixSortDownsweep
         Int2Type<true>              is_full_tile,
         Int2Type<RADIX_RANK_MATCH>  rank_algorithm)
     {
-        LoadDirectWarpStriped(threadIdx.x, d_keys_in + block_offset, keys);
+        LoadDirectWarpStriped(hipThreadIdx_x, d_keys_in + block_offset, keys);
     }
 
 
@@ -361,7 +365,7 @@ struct AgentRadixSortDownsweep
         Int2Type<false>             is_full_tile,
         Int2Type<RADIX_RANK_MATCH>  rank_algorithm)
     {
-        LoadDirectWarpStriped(threadIdx.x, d_keys_in + block_offset, keys, valid_items, oob_item);
+        LoadDirectWarpStriped(hipThreadIdx_x, d_keys_in + block_offset, keys, valid_items, oob_item);
     }
 
 
@@ -411,7 +415,7 @@ struct AgentRadixSortDownsweep
         Int2Type<true>              is_full_tile,
         Int2Type<RADIX_RANK_MATCH>  rank_algorithm)
     {
-        LoadDirectWarpStriped(threadIdx.x, d_values_in + block_offset, values);
+        LoadDirectWarpStriped(hipThreadIdx_x, d_values_in + block_offset, values);
     }
 
 
@@ -425,7 +429,7 @@ struct AgentRadixSortDownsweep
         Int2Type<false>             is_full_tile,
         Int2Type<RADIX_RANK_MATCH>  rank_algorithm)
     {
-        LoadDirectWarpStriped(threadIdx.x, d_values_in + block_offset, values, valid_items);
+        LoadDirectWarpStriped(hipThreadIdx_x, d_values_in + block_offset, values, valid_items);
     }
 
 
@@ -518,7 +522,7 @@ struct AgentRadixSortDownsweep
         #pragma unroll
         for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
         {
-            int bin_idx = (threadIdx.x * BINS_TRACKED_PER_THREAD) + track;
+            int bin_idx = (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + track;
             if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
             {
                 // Store exclusive prefix
@@ -535,7 +539,7 @@ struct AgentRadixSortDownsweep
         #pragma unroll
         for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
         {
-            int bin_idx = (threadIdx.x * BINS_TRACKED_PER_THREAD) + track;
+            int bin_idx = (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + track;
             if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
             {
                 if (IS_DESCENDING)
@@ -561,7 +565,7 @@ struct AgentRadixSortDownsweep
         #pragma unroll
         for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
         {
-            int bin_idx = (threadIdx.x * BINS_TRACKED_PER_THREAD) + track;
+            int bin_idx = (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + track;
             if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
             {
                 bin_offset[track] -= exclusive_digit_prefix[track];
@@ -600,9 +604,9 @@ struct AgentRadixSortDownsweep
         {
             T items[ITEMS_PER_THREAD];
 
-            LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_in + block_offset, items);
+            LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_in + block_offset, items);
             CTA_SYNC();
-            StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_out + block_offset, items);
+            StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_out + block_offset, items);
 
             block_offset += TILE_ITEMS;
         }
@@ -614,9 +618,9 @@ struct AgentRadixSortDownsweep
 
             T items[ITEMS_PER_THREAD];
 
-            LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_in + block_offset, items, valid_items);
+            LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_in + block_offset, items, valid_items);
             CTA_SYNC();
-            StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_out + block_offset, items, valid_items);
+            StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_out + block_offset, items, valid_items);
         }
     }
 
@@ -665,7 +669,7 @@ struct AgentRadixSortDownsweep
         {
             this->bin_offset[track] = bin_offset[track];
 
-            int bin_idx = (threadIdx.x * BINS_TRACKED_PER_THREAD) + track;
+            int bin_idx = (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + track;
             if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
             {
                 // Short circuit if the histogram has only bin counts of only zeros or problem-size
@@ -703,7 +707,7 @@ struct AgentRadixSortDownsweep
         #pragma unroll
         for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
         {
-            int bin_idx = (threadIdx.x * BINS_TRACKED_PER_THREAD) + track;
+            int bin_idx = (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + track;
 
             // Load digit bin offsets (each of the first RADIX_DIGITS threads will load an offset for that digit)
             if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
@@ -712,11 +716,11 @@ struct AgentRadixSortDownsweep
                     bin_idx = RADIX_DIGITS - bin_idx - 1;
 
                 // Short circuit if the first block's histogram has only bin counts of only zeros or problem-size
-                OffsetT first_block_bin_offset = d_spine[gridDim.x * bin_idx];
+                OffsetT first_block_bin_offset = d_spine[hipGridDim_x * bin_idx];
                 short_circuit = short_circuit && ((first_block_bin_offset == 0) || (first_block_bin_offset == num_items));
 
                 // Load my block's bin offset for my bin
-                bin_offset[track] = d_spine[(gridDim.x * bin_idx) + blockIdx.x];
+                bin_offset[track] = d_spine[(hipGridDim_x * bin_idx) + hipBlockIdx_x];
             }
         }
 

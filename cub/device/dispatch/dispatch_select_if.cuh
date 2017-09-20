@@ -72,7 +72,10 @@ template <
     typename            EqualityOpT,                ///< Equality operator type (NullType if selection functor or selection flags is to be used for selection)
     typename            OffsetT,                    ///< Signed integer type for global offsets
     bool                KEEP_REJECTS>               ///< Whether or not we push rejected items to the back of the output
+#ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(AgentSelectIfPolicyT::BLOCK_THREADS))
+#elif defined(__HIP_PLATFORM_HCC__)
+#endif
 __global__ void DeviceSelectSweepKernel(
     InputIteratorT          d_in,                   ///< [in] Pointer to the input sequence of data items
     FlagsInputIteratorT     d_flags,                ///< [in] Pointer to the input sequence of selection flags (if applicable)
@@ -340,7 +343,7 @@ struct DispatchSelectIf
     template <
         typename                    ScanInitKernelPtrT,             ///< Function type of cub::DeviceScanInitKernel
         typename                    SelectIfKernelPtrT>             ///< Function type of cub::SelectIfKernelPtrT
-    CUB_RUNTIME_FUNCTION __forceinline__
+     __forceinline__
     static hipError_t Dispatch(
         void*                       d_temp_storage,                 ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&                     temp_storage_bytes,             ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation

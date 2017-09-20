@@ -158,7 +158,11 @@ private:
 
 
     /// Shared memory storage layout type for BlockRadixRank
+#ifdef __HIP_PLATFORM_NVCC__
     struct __align__(16) _TempStorage
+#elif defined(__HIP_PLATFORM_HCC__)
+    struct __attribute__((aligned(16))) _TempStorage
+#endif
     {
         union Aliasable
         {
@@ -512,11 +516,20 @@ private:
 
 
     /// Shared memory storage layout type for BlockRadixRank
+#ifdef __HIP_PLATFORM_NVCC__
     struct __align__(16) _TempStorage
+#elif defined(__HIP_PLATFORM_HCC__)
+    struct __attribute__((aligned(16))) _TempStorage
+#endif
     {
         typename BlockScanT::TempStorage            block_scan;
 
+#ifdef __HIP_PLATFORM_NVCC__
         union __align__(16) Aliasable
+#elif defined(__HIP_PLATFORM_HCC__)
+        union  __attribute__((aligned(16))) Aliasable
+#endif
+
         {
             volatile DigitCounterT                  warp_digit_counters[RADIX_DIGITS][PADDED_WARPS];
             DigitCounterT                           raking_grid[BLOCK_THREADS][PADDED_RAKING_SEGMENT];

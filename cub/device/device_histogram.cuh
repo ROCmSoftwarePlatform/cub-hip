@@ -428,7 +428,6 @@ struct DeviceHistogram
         typename            CounterT,
         typename            LevelT,
         typename            OffsetT>
-    CUB_RUNTIME_FUNCTION
     static hipError_t MultiHistogramEven(
         void*               d_temp_storage,                             ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&             temp_storage_bytes,                        ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
@@ -821,7 +820,6 @@ struct DeviceHistogram
         typename            CounterT,
         typename            LevelT,
         typename            OffsetT>
-    CUB_RUNTIME_FUNCTION
     static hipError_t MultiHistogramRange(
         void*               d_temp_storage,                         ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&             temp_storage_bytes,                    ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation

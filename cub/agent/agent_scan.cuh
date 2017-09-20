@@ -307,7 +307,7 @@ struct AgentScan
             // Scan first tile
             OutputT block_aggregate;
             ScanTile(items, init_value, scan_op, block_aggregate, Int2Type<IS_INCLUSIVE>());
-            if ((!IS_LAST_TILE) && (threadIdx.x == 0))
+            if ((!IS_LAST_TILE) && (hipThreadIdx_x == 0))
                 tile_state.SetInclusive(0, block_aggregate);
         }
         else
@@ -336,7 +336,7 @@ struct AgentScan
         int                 start_tile)         ///< The starting tile for the current grid
     {
         // Blocks are launched in increasing order, so just assign one tile per block
-        int     tile_idx        = start_tile + blockIdx.x;          // Current tile index
+        int     tile_idx        = start_tile + hipBlockIdx_x;          // Current tile index
         OffsetT tile_offset     = OffsetT(TILE_ITEMS) * tile_idx;   // Global offset for the current tile
         OffsetT num_remaining   = num_items - tile_offset;          // Remaining items (including this tile)
 

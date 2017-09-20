@@ -31,6 +31,7 @@
  * PTX intrinsics
  */
 
+#include "hip/hip_runtime.h"
 
 #pragma once
 
@@ -38,7 +39,6 @@
 #include "util_arch.cuh"
 #include "util_namespace.cuh"
 #include "util_debug.cuh"
-
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -263,7 +263,11 @@ __device__  __forceinline__ void CTA_SYNC()
  */
 __device__  __forceinline__ int CTA_SYNC_AND(int p)
 {
+#ifdef __HIP_PLATFORM_NVCC__
     return __syncthreads_and(p);
+#elif defined(__HIP_PLATFORM_HCC__)
+    return 0;    // TODO: Neel revert back to __syncthreads
+#endif
 }
 
 
@@ -370,7 +374,9 @@ unsigned int SHFL_IDX_SYNC(unsigned int word, int src_lane, int last_lane, unsig
 __device__ __forceinline__ float FMUL_RZ(float a, float b)
 {
     float d;
+#ifdef __HIP_PLATFORM_NVCC__ //TODO:NEEL: Alternate implementation
     asm ("mul.rz.f32 %0, %1, %2;" : "=f"(d) : "f"(a), "f"(b));
+#endif
     return d;
 }
 
@@ -381,7 +387,9 @@ __device__ __forceinline__ float FMUL_RZ(float a, float b)
 __device__ __forceinline__ float FFMA_RZ(float a, float b, float c)
 {
     float d;
+#ifdef __HIP_PLATFORM_NVCC__ //TODO:NEEL: Alternate implementation
     asm ("fma.rz.f32 %0, %1, %2, %3;" : "=f"(d) : "f"(a), "f"(b), "f"(c));
+#endif
     return d;
 }
 
@@ -408,9 +416,9 @@ __device__ __forceinline__ void ThreadTrap() {
  */
 __device__ __forceinline__ int RowMajorTid(int block_dim_x, int block_dim_y, int block_dim_z)
 {
-    return ((block_dim_z == 1) ? 0 : (threadIdx.z * block_dim_x * block_dim_y)) +
-            ((block_dim_y == 1) ? 0 : (threadIdx.y * block_dim_x)) +
-            threadIdx.x;
+    return ((block_dim_z == 1) ? 0 : (hipThreadIdx_z * block_dim_x * block_dim_y)) +
+            ((block_dim_y == 1) ? 0 : (hipThreadIdx_y * block_dim_x)) +
+            hipThreadIdx_x;
 }
 
 

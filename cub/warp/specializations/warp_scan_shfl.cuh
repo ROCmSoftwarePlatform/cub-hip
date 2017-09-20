@@ -214,7 +214,11 @@ struct WarpScanShfl
             "  @p add.f32 r0, r0, %4;"
             "  mov.f32 %0, r0;"
             "}"
+#ifdef __HIP_PLATFORM_NVCC__ //TODO:NEEL find alternatives
             : "=f"(output) : "f"(input), "r"(offset), "r"(shfl_c), "f"(input));
+#else
+     );
+#endif
 #endif
 
         return output;
@@ -261,7 +265,11 @@ struct WarpScanShfl
             "  @p add.u64 r0, r0, %4;"
             "  mov.u64 %0, r0;"
             "}"
+#ifdef __HIP_PLATFORM_NVCC__  // TODO:NEEL Find alternatives
             : "=l"(output) : "l"(input), "r"(offset), "r"(shfl_c), "l"(input));
+#else
+     );
+#endif
 #endif
 
         return output;
@@ -308,7 +316,11 @@ struct WarpScanShfl
             "  @p add.s64 r0, r0, %4;"
             "  mov.s64 %0, r0;"
             "}"
+#ifdef __HIP_PLATFORM_NVCC__ //TODO:NEEL find alternatives
             : "=l"(output) : "l"(input), "r"(offset), "r"(shfl_c), "l"(input));
+#else
+     );
+#endif
 #endif
 
         return output;
@@ -355,7 +367,11 @@ struct WarpScanShfl
             "  mov.b64 r0, {lo, hi};"
             "  @p add.f64 %0, %0, r0;"
             "}"
+#ifdef __HIP_PLATFORM_NVCC__ //TODO:NEEL find alternatives
             : "=d"(output) : "d"(input), "r"(offset), "r"(shfl_c));
+#else
+     );
+#endif
 #endif
 
         return output;

@@ -106,10 +106,15 @@ struct BlockRakingLayout
     /**
      * \brief Shared memory storage type
      */
+#ifdef __HIP_PLATFORM_NVCC__
     struct __align__(16) _TempStorage
+#elif defined (__HIP_PLATFORM_HCC__)
+    struct __attribute__((aligned(16))) _TempStorage
+#endif
     {
         T buff[BlockRakingLayout::GRID_ELEMENTS];
     };
+
 
     /// Alias wrapper allowing storage to be unioned
     struct TempStorage : Uninitialized<_TempStorage> {};

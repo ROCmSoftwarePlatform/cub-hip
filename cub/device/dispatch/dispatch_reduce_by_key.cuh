@@ -44,6 +44,9 @@
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
 
+#undef CUB_RUNTIME_FUNCTION
+#define CUB_RUNTIME_FUNCTION  __host__
+
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
 
@@ -68,7 +71,11 @@ template <
     typename            EqualityOpT,                            ///< KeyT equality operator type
     typename            ReductionOpT,                           ///< ValueT reduction operator type
     typename            OffsetT>                                ///< Signed integer type for global offsets
+#ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(AgentReduceByKeyPolicyT::BLOCK_THREADS))
+#elif defined(__HIP_PLATFORM_HCC__)
+__launch_bounds__(256)
+#endif
 __global__ void DeviceReduceByKeyKernel(
     KeysInputIteratorT          d_keys_in,                      ///< Pointer to the input sequence of keys
     UniqueOutputIteratorT       d_unique_out,                   ///< Pointer to the output sequence of unique keys (one key per run)

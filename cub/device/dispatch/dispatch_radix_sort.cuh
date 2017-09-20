@@ -46,6 +46,7 @@
 #include "../../util_debug.cuh"
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
+#include "../../../hip_helpers/forwarder.hpp" 
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -66,9 +67,13 @@ template <
     bool                    IS_DESCENDING,                  ///< Whether or not the sorted-order is high-to-low
     typename                KeyT,                           ///< Key type
     typename                OffsetT>                        ///< Signed integer type for global offsets
+#ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltUpsweepPolicy::BLOCK_THREADS :
     ChainedPolicyT::ActivePolicy::UpsweepPolicy::BLOCK_THREADS))
+#elif defined(__HIP_PLATFORM_HCC__)
+__launch_bounds__(256)
+#endif
 __global__ void DeviceRadixSortUpsweepKernel(
     const KeyT              *d_keys,                        ///< [in] Input keys buffer
     OffsetT                 *d_spine,                       ///< [out] Privatized (per block) digit histograms (striped, i.e., 0s counts from each block, then 1s counts from each block, etc.)
@@ -104,7 +109,9 @@ __global__ void DeviceRadixSortUpsweepKernel(
     CTA_SYNC();
 
     // Write out digit counts (striped)
-    upsweep.ExtractCounts<IS_DESCENDING>(d_spine, gridDim.x, blockIdx.x);
+#ifdef __HIP_PLATFORM_NVCC__ // TODO:NEEL Enable by Neel after verification
+    upsweep.ExtractCounts<IS_DESCENDING>(d_spine, hipGridDim_x, hipBlockIdx_x);
+#endif
 }
 
 
@@ -114,7 +121,11 @@ __global__ void DeviceRadixSortUpsweepKernel(
 template <
     typename                ChainedPolicyT,                 ///< Chained tuning policy
     typename                OffsetT>                        ///< Signed integer type for global offsets
+#ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ScanPolicy::BLOCK_THREADS), 1)
+#elif defined(__HIP_PLATFORM_HCC__)
+__launch_bounds__(256)
+#endif
 __global__ void RadixSortScanBinsKernel(
     OffsetT                 *d_spine,                       ///< [in,out] Privatized (per block) digit histograms (striped, i.e., 0s counts from each block, then 1s counts from each block, etc.)
     int                     num_counts)                     ///< [in] Total number of bin-counts
@@ -156,9 +167,13 @@ template <
     typename                KeyT,                           ///< Key type
     typename                ValueT,                         ///< Value type
     typename                OffsetT>                        ///< Signed integer type for global offsets
+#ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltDownsweepPolicy::BLOCK_THREADS :
     ChainedPolicyT::ActivePolicy::DownsweepPolicy::BLOCK_THREADS))
+#elif defined(__HIP_PLATFORM_HCC__)
+__launch_bounds__(256)
+#endif
 __global__ void DeviceRadixSortDownsweepKernel(
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
     KeyT                    *d_keys_out,                    ///< [in] Output keys buffer
@@ -208,7 +223,11 @@ template <
     typename                KeyT,                           ///< Key type
     typename                ValueT,                         ///< Value type
     typename                OffsetT>                        ///< Signed integer type for global offsets
+#ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::SingleTilePolicy::BLOCK_THREADS), 1)
+#elif defined(__HIP_PLATFORM_HCC__)
+__launch_bounds__(256)
+#endif
 __global__ void DeviceRadixSortSingleTileKernel(
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
     KeyT                    *d_keys_out,                    ///< [in] Output keys buffer
@@ -261,6 +280,9 @@ __global__ void DeviceRadixSortSingleTileKernel(
         typename BlockLoadKeys::TempStorage         load_keys;
         typename BlockLoadValues::TempStorage       load_values;
 
+        // Add explicit destructor by Neel
+        __host__ __device__ ~TempStorage() {}
+
     } temp_storage;
 
     // Keys and values for the block
@@ -269,7 +291,11 @@ __global__ void DeviceRadixSortSingleTileKernel(
 
     // Get default (min/max) value for out-of-bounds keys
     UnsignedBitsT   default_key_bits = (IS_DESCENDING) ? Traits<KeyT>::LOWEST_KEY : Traits<KeyT>::MAX_KEY;
+#ifdef __HIP_PLATFORM_NVCC__
     KeyT            default_key = reinterpret_cast<KeyT&>(default_key_bits);
+#elif defined __HIP_PLATFORM_HCC__
+    KeyT            default_key = *reinterpret_cast<KeyT*>(&default_key_bits);
+#endif
 
     // Load keys
     BlockLoadKeys(temp_storage.load_keys).Load(d_keys_in, keys, num_items, default_key);
@@ -297,7 +323,7 @@ __global__ void DeviceRadixSortSingleTileKernel(
     #pragma unroll
     for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
     {
-        int item_offset = ITEM * BLOCK_THREADS + threadIdx.x;
+        int item_offset = ITEM * BLOCK_THREADS + hipThreadIdx_x;
         if (item_offset < num_items)
         {
             d_keys_out[item_offset] = keys[ITEM];
@@ -319,9 +345,13 @@ template <
     typename                ValueT,                         ///< Value type
     typename                OffsetIteratorT,                ///< Random-access input iterator type for reading segment offsets \iterator
     typename                OffsetT>                        ///< Signed integer type for global offsets
+#ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltSegmentedPolicy::BLOCK_THREADS :
     ChainedPolicyT::ActivePolicy::SegmentedPolicy::BLOCK_THREADS))
+#elif defined(__HIP_PLATFORM_HCC__)
+__launch_bounds__(256)
+#endif
 __global__ void DeviceSegmentedRadixSortKernel(
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
     KeyT                    *d_keys_out,                    ///< [in] Output keys buffer
@@ -388,8 +418,8 @@ __global__ void DeviceSegmentedRadixSortKernel(
 
     } temp_storage;
 
-    OffsetT segment_begin   = d_begin_offsets[blockIdx.x];
-    OffsetT segment_end     = d_end_offsets[blockIdx.x];
+    OffsetT segment_begin   = d_begin_offsets[hipBlockIdx_x];
+    OffsetT segment_end     = d_end_offsets[hipBlockIdx_x];
     OffsetT num_items       = segment_end - segment_begin;
 
     // Check if empty segment
@@ -414,7 +444,7 @@ __global__ void DeviceSegmentedRadixSortKernel(
         #pragma unroll
         for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
         {
-            int bin_idx = (threadIdx.x * BINS_TRACKED_PER_THREAD) + track;
+            int bin_idx = (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + track;
 
             if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
                 temp_storage.reverse_counts_in[bin_idx] = bin_count[track];
@@ -425,7 +455,7 @@ __global__ void DeviceSegmentedRadixSortKernel(
         #pragma unroll
         for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
         {
-            int bin_idx = (threadIdx.x * BINS_TRACKED_PER_THREAD) + track;
+            int bin_idx = (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + track;
 
             if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
                 bin_count[track] = temp_storage.reverse_counts_in[RADIX_DIGITS - bin_idx - 1];
@@ -448,10 +478,10 @@ __global__ void DeviceSegmentedRadixSortKernel(
         #pragma unroll
         for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
         {
-            int bin_idx = (threadIdx.x * BINS_TRACKED_PER_THREAD) + track;
+            int bin_idx = (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + track;
 
             if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
-                temp_storage.reverse_counts_out[threadIdx.x] = bin_offset[track];
+                temp_storage.reverse_counts_out[hipThreadIdx_x] = bin_offset[track];
         }
 
         CTA_SYNC();
@@ -459,7 +489,7 @@ __global__ void DeviceSegmentedRadixSortKernel(
         #pragma unroll
         for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
         {
-            int bin_idx = (threadIdx.x * BINS_TRACKED_PER_THREAD) + track;
+            int bin_idx = (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + track;
 
             if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
                 bin_offset[track] = temp_storage.reverse_counts_out[RADIX_DIGITS - bin_idx - 1];
@@ -909,7 +939,7 @@ struct DispatchRadixSort :
     template <
         typename                ActivePolicyT,          ///< Umbrella policy active for the target device
         typename                SingleTileKernelT>      ///< Function type of cub::DeviceRadixSortSingleTileKernel
-    CUB_RUNTIME_FUNCTION __forceinline__
+    __forceinline__
     hipError_t InvokeSingleTile(
         SingleTileKernelT       single_tile_kernel)     ///< [in] Kernel function pointer to parameterization of cub::DeviceRadixSortSingleTileKernel
     {
@@ -939,7 +969,8 @@ struct DispatchRadixSort :
                     ActivePolicyT::SingleTilePolicy::ITEMS_PER_THREAD, 1, begin_bit, ActivePolicyT::SingleTilePolicy::RADIX_BITS);
 
             // Invoke upsweep_kernel with same grid size as downsweep_kernel
-            hipLaunchKernelGGL(single_tile_kernel, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream, 
+            static const auto tmp = make_forwarder(single_tile_kernel);
+            hipLaunchKernelGGL(tmp, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream, 
                 d_keys.Current(),
                 d_keys.Alternate(),
                 d_values.Current(),
@@ -974,7 +1005,7 @@ struct DispatchRadixSort :
      * Invoke a three-kernel sorting pass at the current bit.
      */
     template <typename PassConfigT>
-    CUB_RUNTIME_FUNCTION __forceinline__
+    __forceinline__
     hipError_t InvokePass(
         const KeyT      *d_keys_in,
         KeyT            *d_keys_out,
@@ -997,7 +1028,8 @@ struct DispatchRadixSort :
                 pass_config.upsweep_config.items_per_thread, pass_config.upsweep_config.sm_occupancy, current_bit, pass_bits);
 
             // Invoke upsweep_kernel with same grid size as downsweep_kernel
-            hipLaunchKernelGGL(pass_config.upsweep_kernel, pass_config.even_share.grid_size, pass_config.upsweep_config.block_threads, 0, stream,
+            static const auto tmp = make_forwarder(pass_config.upsweep_kernel);
+            hipLaunchKernelGGL(tmp, pass_config.even_share.grid_size, pass_config.upsweep_config.block_threads, 0, stream,
                 d_keys_in,
                 d_spine,
                 num_items,
@@ -1016,7 +1048,8 @@ struct DispatchRadixSort :
                 1, pass_config.scan_config.block_threads, (long long) stream, pass_config.scan_config.items_per_thread);
 
             // Invoke scan_kernel
-            hipLaunchKernelGGL(pass_config.scan_kernel, 1, pass_config.scan_config.block_threads, 0, stream,
+            static const auto tmp1 = make_forwarder(pass_config.scan_kernel);
+            hipLaunchKernelGGL(tmp1, 1, pass_config.scan_config.block_threads, 0, stream,
                 d_spine,
                 spine_length);
 
@@ -1032,7 +1065,8 @@ struct DispatchRadixSort :
                 pass_config.downsweep_config.items_per_thread, pass_config.downsweep_config.sm_occupancy);
 
             // Invoke downsweep_kernel
-            hipLaunchKernelGGL(pass_config.downsweep_kernel, pass_config.even_share.grid_size, pass_config.downsweep_config.block_threads, 0, stream,
+            static const auto tmp2 = make_forwarder(pass_config.downsweep_kernel);
+            hipLaunchKernelGGL(tmp2, pass_config.even_share.grid_size, pass_config.downsweep_config.block_threads, 0, stream,
                 d_keys_in,
                 d_keys_out,
                 d_values_in,
@@ -1125,7 +1159,7 @@ struct DispatchRadixSort :
         typename            UpsweepKernelT,         ///< Function type of cub::DeviceRadixSortUpsweepKernel
         typename            ScanKernelT,            ///< Function type of cub::SpineScanKernel
         typename            DownsweepKernelT>       ///< Function type of cub::DeviceRadixSortDownsweepKernel
-    CUB_RUNTIME_FUNCTION __forceinline__
+    __forceinline__
     hipError_t InvokePasses(
         UpsweepKernelT      upsweep_kernel,         ///< [in] Kernel function pointer to parameterization of cub::DeviceRadixSortUpsweepKernel
         UpsweepKernelT      alt_upsweep_kernel,     ///< [in] Alternate kernel function pointer to parameterization of cub::DeviceRadixSortUpsweepKernel
@@ -1286,7 +1320,7 @@ struct DispatchRadixSort :
     /**
      * Internal dispatch routine
      */
-    CUB_RUNTIME_FUNCTION __forceinline__
+    __forceinline__
     static hipError_t Dispatch(
         void*                   d_temp_storage,         ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t                  &temp_storage_bytes,    ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
@@ -1418,7 +1452,7 @@ struct DispatchSegmentedRadixSort :
 
     /// Invoke a three-kernel sorting pass at the current bit.
     template <typename PassConfigT>
-    CUB_RUNTIME_FUNCTION __forceinline__
+    __forceinline__
     hipError_t InvokePass(
         const KeyT      *d_keys_in,
         KeyT            *d_keys_out,
@@ -1438,7 +1472,8 @@ struct DispatchSegmentedRadixSort :
                     num_segments, pass_config.segmented_config.block_threads, (long long) stream,
                 pass_config.segmented_config.items_per_thread, pass_config.segmented_config.sm_occupancy, current_bit, pass_bits);
 
-            hipLaunchKernelGGL(pass_config.segmented_kernel, num_segments, pass_config.segmented_config.block_threads, 0, stream,
+            static const auto tmp = make_forwarder(pass_config.segmented_kernel);
+            hipLaunchKernelGGL(tmp, num_segments, pass_config.segmented_config.block_threads, 0, stream,
                 d_keys_in, d_keys_out,
                 d_values_in,  d_values_out,
                 d_begin_offsets, d_end_offsets, num_segments,

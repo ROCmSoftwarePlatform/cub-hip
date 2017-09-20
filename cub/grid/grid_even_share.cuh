@@ -190,7 +190,7 @@ public:
         GridMappingStrategy STRATEGY>
     __device__ __forceinline__ void BlockInit()
     {
-        BlockInit<TILE_ITEMS>(blockIdx.x, Int2Type<STRATEGY>());
+        BlockInit<TILE_ITEMS>(hipBlockIdx_x, Int2Type<STRATEGY>());
     }
 
 

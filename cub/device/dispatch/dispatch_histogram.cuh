@@ -64,15 +64,15 @@ template <
     int                                             NUM_ACTIVE_CHANNELS,            ///< Number of channels actively being histogrammed
     typename                                        CounterT,                       ///< Integer type for counting sample occurrences per histogram bin
     typename                                        OffsetT>                        ///< Signed integer type for global offsets
-__global__ void DeviceHistogramInitKernel(
+__global__ void DeviceHistogramInitKernel( 
     ArrayWrapper<int, NUM_ACTIVE_CHANNELS>          num_output_bins_wrapper,        ///< Number of output histogram bins per channel
     ArrayWrapper<CounterT*, NUM_ACTIVE_CHANNELS>    d_output_histograms_wrapper,    ///< Histogram counter data having logical dimensions <tt>CounterT[NUM_ACTIVE_CHANNELS][num_bins.array[CHANNEL]]</tt>
     GridQueue<int>                                  tile_queue)                     ///< Drain queue descriptor for dynamically mapping tile data onto thread blocks
 {
-    if ((threadIdx.x == 0) && (blockIdx.x == 0))
+    if ((hipThreadIdx_x == 0) && (hipBlockIdx_x == 0))
         tile_queue.ResetDrain();
 
-    int output_bin = (blockIdx.x * blockDim.x) + threadIdx.x;
+    int output_bin = (hipBlockIdx_x * hipBlockDim_x) + hipThreadIdx_x;
 
     #pragma unroll
     for (int CHANNEL = 0; CHANNEL < NUM_ACTIVE_CHANNELS; ++CHANNEL)
@@ -96,7 +96,11 @@ template <
     typename                                            PrivatizedDecodeOpT,            ///< The transform operator type for determining privatized counter indices from samples, one for each channel
     typename                                            OutputDecodeOpT,                ///< The transform operator type for determining output bin-ids from privatized counter indices, one for each channel
     typename                                            OffsetT>                        ///< Signed integer type for global offsets
+#ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(AgentHistogramPolicyT::BLOCK_THREADS))
+#elif defined(__HIP_PLATFORM_HCC__)
+__launch_bounds__ (256)
+#endif
 __global__ void DeviceHistogramSweepKernel(
     SampleIteratorT                                         d_samples,                          ///< Input data to reduce
     ArrayWrapper<int, NUM_ACTIVE_CHANNELS>                  num_output_bins_wrapper,            ///< The number bins per final output histogram
@@ -314,6 +318,9 @@ struct DipatchHistogram
     // Pass-through bin transform operator
     struct PassThruTransform
     {
+        #ifdef __HIP_PLATFORM_HCC__
+            int dummy_for_hcc;
+        #endif
         // Method for converting samples to bin-ids
         template <CacheLoadModifier LOAD_MODIFIER, typename _SampleT>
         __host__ __device__ __forceinline__ void BinSelect(_SampleT sample, int &bin, bool valid)
@@ -525,8 +532,8 @@ struct DipatchHistogram
         typename                            OutputDecodeOpT,                                ///< The transform operator type for determining output bin-ids from privatized counter indices, one for each channel
         typename                            DeviceHistogramInitKernelT,                     ///< Function type of cub::DeviceHistogramInitKernel
         typename                            DeviceHistogramSweepKernelT>                    ///< Function type of cub::DeviceHistogramSweepKernel
-    CUB_RUNTIME_FUNCTION __forceinline__
-    static hipError_t PrivatizedDispatch(
+    static  __forceinline__
+    hipError_t PrivatizedDispatch(
         void*                               d_temp_storage,                                 ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&                             temp_storage_bytes,                             ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
         SampleIteratorT                     d_samples,                                      ///< [in] The pointer to the input sequence of sample items. The samples from different channels are assumed to be interleaved (e.g., an array of 32-bit pixels where each pixel consists of four RGBA 8-bit samples).

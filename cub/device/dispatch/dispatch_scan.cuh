@@ -84,7 +84,7 @@ __global__ void DeviceCompactInitKernel(
     tile_state.InitializeStatus(num_tiles);
 
     // Initialize d_num_selected_out
-    if ((blockIdx.x == 0) && (threadIdx.x == 0))
+    if ((hipBlockIdx_x == 0) && (hipThreadIdx_x == 0))
         *d_num_selected_out = 0;
 }
 
@@ -100,7 +100,11 @@ template <
     typename            ScanOpT,            ///< Binary scan functor type having member <tt>T operator()(const T &a, const T &b)</tt>
     typename            InitValueT,         ///< Initial value to seed the exclusive scan (cub::NullType for inclusive scans)
     typename            OffsetT>            ///< Signed integer type for global offsets
-__launch_bounds__ (int(ScanPolicyT::BLOCK_THREADS))
+#ifdef __HIP_PLATFORM_NVCC__
+  __launch_bounds__ (int(ScanPolicyT::BLOCK_THREADS))
+#elif defined(__HIP_PLATFORM_HCC__)
+  __launch_bounds__ (256)
+#endif 
 __global__ void DeviceScanKernel(
     InputIteratorT      d_in,               ///< Input data
     OutputIteratorT     d_out,              ///< Output data
@@ -377,7 +381,7 @@ struct DispatchScan
     template <
         typename            ScanInitKernelPtrT,     ///< Function type of cub::DeviceScanInitKernel
         typename            ScanSweepKernelPtrT>    ///< Function type of cub::DeviceScanKernelPtrT
-    CUB_RUNTIME_FUNCTION __forceinline__
+     __forceinline__
     static hipError_t Dispatch(
         void*               d_temp_storage,         ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&             temp_storage_bytes,     ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation

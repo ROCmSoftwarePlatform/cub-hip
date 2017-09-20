@@ -65,7 +65,11 @@ template <
     typename                OutputIteratorT,            ///< Output iterator type for recording the reduced aggregate \iterator
     typename                OffsetT,                    ///< Signed integer type for global offsets
     typename                ReductionOpT>               ///< Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
+#ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS))
+#elif defined(__HIP_PLATFORM_HCC__)
+__launch_bounds__(256)
+#endif
 __global__ void DeviceReduceKernel(
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
@@ -94,8 +98,8 @@ __global__ void DeviceReduceKernel(
     OutputT block_aggregate = AgentReduceT(temp_storage, d_in, reduction_op).ConsumeTiles(even_share);
 
     // Output result
-    if (threadIdx.x == 0)
-        d_out[blockIdx.x] = block_aggregate;
+    if (hipThreadIdx_x == 0)
+        d_out[hipBlockIdx_x] = block_aggregate;
 }
 
 
@@ -109,7 +113,11 @@ template <
     typename                OffsetT,                    ///< Signed integer type for global offsets
     typename                ReductionOpT,               ///< Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
     typename                OuputT>                     ///< Data element type that is convertible to the \p value type of \p OutputIteratorT
+#ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::SingleTilePolicy::BLOCK_THREADS), 1)
+#elif defined(__HIP_PLATFORM_HCC__)
+__launch_bounds__(256)
+#endif
 __global__ void DeviceReduceSingleTileKernel(
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
@@ -132,7 +140,7 @@ __global__ void DeviceReduceSingleTileKernel(
     // Check if empty problem
     if (num_items == 0)
     {
-        if (threadIdx.x == 0)
+        if (hipThreadIdx_x == 0)
             *d_out = init;
         return;
     }
@@ -143,7 +151,7 @@ __global__ void DeviceReduceSingleTileKernel(
         num_items);
 
     // Output result
-    if (threadIdx.x == 0)
+    if (hipThreadIdx_x == 0)
         *d_out = reduction_op(init, block_aggregate);
 }
 
@@ -181,7 +189,11 @@ template <
     typename                OffsetT,                    ///< Signed integer type for global offsets
     typename                ReductionOpT,               ///< Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
     typename                OutputT>                    ///< Data element type that is convertible to the \p value type of \p OutputIteratorT
+#ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS))
+#elif defined(__HIP_PLATFORM_HCC__)
+__launch_bounds__(256)
+#endif
 __global__ void DeviceSegmentedReduceKernel(
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
@@ -203,14 +215,14 @@ __global__ void DeviceSegmentedReduceKernel(
     // Shared memory storage
     __shared__ typename AgentReduceT::TempStorage temp_storage;
 
-    OffsetT segment_begin   = d_begin_offsets[blockIdx.x];
-    OffsetT segment_end     = d_end_offsets[blockIdx.x];
+    OffsetT segment_begin   = d_begin_offsets[hipBlockIdx_x];
+    OffsetT segment_end     = d_end_offsets[hipBlockIdx_x];
 
     // Check if empty problem
     if (segment_begin == segment_end)
     {
-        if (threadIdx.x == 0)
-            d_out[blockIdx.x] = init;
+        if (hipThreadIdx_x == 0)
+            d_out[hipBlockIdx_x] = init;
         return;
     }
 
@@ -222,8 +234,8 @@ __global__ void DeviceSegmentedReduceKernel(
     // Normalize as needed
     NormalizeReductionOutput(block_aggregate, segment_begin, d_in);
 
-    if (threadIdx.x == 0)
-        d_out[blockIdx.x] = reduction_op(init, block_aggregate);;
+    if (hipThreadIdx_x == 0)
+        d_out[hipBlockIdx_x] = reduction_op(init, block_aggregate);;
 }
 
 
@@ -428,7 +440,7 @@ struct DispatchReduce :
     template <
         typename                ActivePolicyT,          ///< Umbrella policy active for the target device
         typename                SingleTileKernelT>      ///< Function type of cub::DeviceReduceSingleTileKernel
-    CUB_RUNTIME_FUNCTION __forceinline__
+    __forceinline__
     hipError_t InvokeSingleTile(
         SingleTileKernelT       single_tile_kernel)     ///< [in] Kernel function pointer to parameterization of cub::DeviceReduceSingleTileKernel
     {
@@ -485,7 +497,7 @@ struct DispatchReduce :
         typename                ActivePolicyT,              ///< Umbrella policy active for the target device
         typename                ReduceKernelT,              ///< Function type of cub::DeviceReduceKernel
         typename                SingleTileKernelT>          ///< Function type of cub::DeviceReduceSingleTileKernel
-    CUB_RUNTIME_FUNCTION __forceinline__
+    __forceinline__
     hipError_t InvokePasses(
         ReduceKernelT           reduce_kernel,          ///< [in] Kernel function pointer to parameterization of cub::DeviceReduceKernel
         SingleTileKernelT       single_tile_kernel)     ///< [in] Kernel function pointer to parameterization of cub::DeviceReduceSingleTileKernel
@@ -757,7 +769,7 @@ struct DispatchSegmentedReduce :
     template <
         typename                        ActivePolicyT,                  ///< Umbrella policy active for the target device
         typename                        DeviceSegmentedReduceKernelT>   ///< Function type of cub::DeviceSegmentedReduceKernel
-    CUB_RUNTIME_FUNCTION __forceinline__
+    __forceinline__
     hipError_t InvokePasses(
         DeviceSegmentedReduceKernelT    segmented_reduce_kernel)        ///< [in] Kernel function pointer to parameterization of cub::DeviceSegmentedReduceKernel
     {

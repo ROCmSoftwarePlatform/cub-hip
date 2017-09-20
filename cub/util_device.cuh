@@ -262,12 +262,14 @@ hipError_t MaxSmOccupancy(
 
 #else
 
-    hipError_t err = hipOccupancyMaxActiveBlocksPerMultiprocessor (
+   /* hipError_t err = hipOccupancyMaxActiveBlocksPerMultiprocessor (
         &max_sm_occupancy,
         (const void *)kernel_ptr,
         block_threads,
         dynamic_smem_bytes);
-    return err;
+    return err;*/
+    max_sm_occupancy = 4;
+    return hipSuccess;
 
 #endif  // CUB_RUNTIME_ENABLED
 }

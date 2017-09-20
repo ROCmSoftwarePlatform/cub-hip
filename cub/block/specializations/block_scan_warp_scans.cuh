@@ -78,14 +78,17 @@ struct BlockScanWarpScans
     ///  WarpScan utility type
     typedef WarpScan<T, WARPS, PTX_ARCH> WarpAggregateScan;
 
-    /// Shared memory storage layout type
-
+#ifdef __HIP_PLATFORM_NVCC__
     struct __align__(32) _TempStorage
+#elif defined(__HIP_PLATFORM_HCC__)
+    struct __attribute__((aligned(32))) _TempStorage
+#endif
     {
         T                               warp_aggregates[WARPS];
         typename WarpScanT::TempStorage warp_scan[WARPS];           ///< Buffer for warp-synchronous scans
-        T                               block_prefix;               ///< Shared prefix for the entire thread block
+        T                               block_prefix;               ///< Shared prefix for the entire threadblock
     };
+
 
 
     /// Alias wrapper allowing storage to be unioned
