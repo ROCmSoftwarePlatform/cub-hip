@@ -277,7 +277,10 @@ endif
 else
     # For g++
     # Disable excess x86 floating point precision that can lead to results being labeled incorrectly
+ifeq (${HIP_PLATFORM}, nvcc)
     HIPCCFLAGS += -Xcompiler -ffloat-store
+endif
+
     CC = g++
 ifneq ($(force32), 1)
     CUDART = "$(shell dirname $(HIPCC))/../lib/libcudart_static.a"
