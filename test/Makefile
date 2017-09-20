@@ -69,7 +69,7 @@ endif
 #-------------------------------------------------------------------------------
 ifeq ($(HIP_PLATFORM), hcc)
 	# Includes
-	INC += -I$(CUB_DIR) -I$(CUB_DIR)test -I$(CUB_DIR)external/bolt/include -I$(CUB_DIR)external/boost -I${HIP_INC}
+	INC += -I$(CUB_DIR) -I$(CUB_DIR)test -I$(CUB_DIR)external/Thrust  -I${HIP_INC}
 else
 	INC += -I$(CUB_DIR) -I$(CUB_DIR)test -I${HIP_INC} -std=c++11
 	# Define test arch
@@ -182,12 +182,12 @@ bin/link_$(SUFFIX) : link_a.cu link_b.cu link_main.cpp $(DEPS)
 else
 link : bin/link_$(SUFFIX)
 
-bin/link_$(SUFFIX) : link_a.cpp link_b.cpp link_main.cpp $(DEPS)
+bin/link_$(SUFFIX) : link_a.cu link_b.cu link_main.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 link_a.cpp -c -o bin/link_a.obj
-	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 link_b.cpp -c -o bin/link_b.obj
-	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 link_main.cpp -c -o bin/link_main.obj
-	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 bin/link_main.obj bin/link_a.obj bin/link_b.obj -o bin/link_$(SUFFIX)
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES)  link_a.cu -c -o bin/link_a.obj
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES)  link_b.cu -c -o bin/link_b.obj
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES)  link_main.cpp -c -o bin/link_main.obj
+	$(HIPCC) $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(DEFINES)  bin/link_main.obj bin/link_a.obj bin/link_b.obj -o bin/link_$(SUFFIX)
 endif
 
 #-------------------------------------------------------------------------------
