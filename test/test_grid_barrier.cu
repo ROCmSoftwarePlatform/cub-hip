@@ -108,9 +108,9 @@ int main(int argc, char** argv)
     CubDebugExit(SmVersion(sm_version, device_ordinal));
 
     // Get SM properties
-    int sm_count, max_block_threads, max_sm_occupancy;
-    CubDebugExit(hipDeviceGetAttribute(&sm_count, hipDevAttrMultiProcessorCount, device_ordinal));
-    CubDebugExit(hipDeviceGetAttribute(&max_block_threads, hipDevAttrMaxThreadsPerBlock, device_ordinal));
+    int sm_count = 8, max_block_threads = 256, max_sm_occupancy;
+    //CubDebugExit(hipDeviceGetAttribute(&sm_count, hipDevAttrMultiProcessorCount, device_ordinal));
+    //CubDebugExit(hipDeviceGetAttribute(&max_block_threads, hipDevAttrMaxThreadsPerBlock, device_ordinal));
     CubDebugExit(MaxSmOccupancy(max_sm_occupancy, EmptyKernel<void>, 32));
 
     // Compute grid size and occupancy
@@ -136,10 +136,10 @@ int main(int argc, char** argv)
     // Time kernel
     GpuTimer gpu_timer;
     gpu_timer.Start();
-    Kernel<<<grid_size, block_size>>>(global_barrier, iterations);
+    hipLaunchKernelGGL(Kernel, grid_size, block_size, 0, 0, global_barrier, iterations);
     gpu_timer.Stop();
 
-    retval = CubDebug(hipThreadSynchronize());
+    retval = CubDebug(hipDeviceSynchronize()); //cudaThreadSynchronize is deprecated so hipDeviceSynchronize as replacement
 
     // Output timing results
     float avg_elapsed = gpu_timer.ElapsedMillis() / float(iterations);

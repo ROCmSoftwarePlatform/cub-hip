@@ -522,7 +522,7 @@ hipError_t Dispatch(
     bool                    debug_synchronous)
 {
     // Invoke kernel to invoke device-side dispatch
-    CnpDispatchKernel<<<1,1>>>(
+    hipLaunchKernelGGL(CnpDispatchKernel, 1, 1, 0, stream, 
         is_descending, d_selector, d_temp_storage_bytes, d_cdp_error,
         d_temp_storage, temp_storage_bytes, d_keys, d_values,
         num_items, num_segments, d_segment_offsets,

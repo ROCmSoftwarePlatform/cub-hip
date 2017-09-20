@@ -417,7 +417,7 @@ struct DeviceRleDispatch
             if (debug_synchronous) _CubLog("Invoking device_scan_init_kernel<<<%d, %d, 0, %lld>>>()\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
 
             // Invoke device_scan_init_kernel to initialize tile descriptors and queue descriptors
-            device_scan_init_kernel<<<init_grid_size, INIT_KERNEL_THREADS, 0, stream>>>(
+            hipLaunchKernelGGL(device_scan_init_kernel, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
                 tile_status,
                 num_tiles,
                 d_num_runs_out);
@@ -456,7 +456,7 @@ struct DeviceRleDispatch
                 scan_grid_size.x, scan_grid_size.y, scan_grid_size.z, device_rle_config.block_threads, (long long) stream, device_rle_config.items_per_thread, device_rle_kernel_sm_occupancy);
 
             // Invoke device_rle_sweep_kernel
-            device_rle_sweep_kernel<<<scan_grid_size, device_rle_config.block_threads, 0, stream>>>(
+            hipLaunchKernelGGL(device_rle_sweep_kernel, scan_grid_size, device_rle_config.block_threads, 0, stream,
                 d_in,
                 d_offsets_out,
                 d_lengths_out,

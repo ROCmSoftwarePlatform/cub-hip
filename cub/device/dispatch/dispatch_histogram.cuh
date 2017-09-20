@@ -655,7 +655,7 @@ struct DipatchHistogram
                 histogram_init_grid_dims, histogram_init_block_threads, (long long) stream);
 
             // Invoke histogram_init_kernel
-            histogram_init_kernel<<<histogram_init_grid_dims, histogram_init_block_threads, 0, stream>>>(
+            hipLaunchKernelGGL(histogram_init_kernel, histogram_init_grid_dims, histogram_init_block_threads, 0, stream,
                 num_output_bins_wrapper,
                 d_output_histograms_wrapper,
                 tile_queue);
@@ -670,7 +670,7 @@ struct DipatchHistogram
                 histogram_sweep_config.block_threads, (long long) stream, histogram_sweep_config.pixels_per_thread, histogram_sweep_sm_occupancy);
 
             // Invoke histogram_sweep_kernel
-            histogram_sweep_kernel<<<sweep_grid_dims, histogram_sweep_config.block_threads, 0, stream>>>(
+            hipLaunchKernelGGL(histogram_sweep_kernel, sweep_grid_dims, histogram_sweep_config.block_threads, 0, stream,
                 d_samples,
                 num_output_bins_wrapper,
                 num_privatized_bins_wrapper,

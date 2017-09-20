@@ -454,7 +454,7 @@ struct DispatchScan
             if (debug_synchronous) _CubLog("Invoking init_kernel<<<%d, %d, 0, %lld>>>()\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
 
             // Invoke init_kernel to initialize tile descriptors
-            init_kernel<<<init_grid_size, INIT_KERNEL_THREADS, 0, stream>>>(
+            hipLaunchKernelGGL(init_kernel, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
                 tile_state,
                 num_tiles);
 
@@ -485,7 +485,7 @@ struct DispatchScan
                     start_tile, scan_grid_size, scan_kernel_config.block_threads, (long long) stream, scan_kernel_config.items_per_thread, scan_sm_occupancy);
 
                 // Invoke scan_kernel
-                scan_kernel<<<scan_grid_size, scan_kernel_config.block_threads, 0, stream>>>(
+                hipLaunchKernelGGL(scan_kernel, scan_grid_size, scan_kernel_config.block_threads, 0, stream, 
                     d_in,
                     d_out,
                     tile_state,

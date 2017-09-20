@@ -172,16 +172,15 @@ void TestKernel(
     typedef typename std::iterator_traits<InputIteratorT>::difference_type OffsetT;
     DiscardOutputIterator<OffsetT> discard_itr;
 
-    Kernel<BLOCK_THREADS, ITEMS_PER_THREAD, LOAD_ALGORITHM, STORE_ALGORITHM>
-        <<<grid_size, BLOCK_THREADS>>>(
+    hipLaunchKernelGGL((Kernel<BLOCK_THREADS, ITEMS_PER_THREAD, LOAD_ALGORITHM, STORE_ALGORITHM>), grid_size, BLOCK_THREADS, 0, 0, 
             d_in,
             discard_itr,
             discard_itr,
             guarded_elements);
 
     // Test with regular output iterator
-    Kernel<BLOCK_THREADS, ITEMS_PER_THREAD, LOAD_ALGORITHM, STORE_ALGORITHM>
-        <<<grid_size, BLOCK_THREADS>>>(
+    hipLaunchKernelGGL((Kernel<BLOCK_THREADS, ITEMS_PER_THREAD, LOAD_ALGORITHM, STORE_ALGORITHM>),
+            grid_size, BLOCK_THREADS, 0, 0,
             d_in,
             d_out_unguarded_itr,
             d_out_guarded_itr,

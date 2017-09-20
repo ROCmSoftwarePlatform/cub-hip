@@ -455,7 +455,7 @@ struct DispatchReduce :
                 ActivePolicyT::SingleTilePolicy::ITEMS_PER_THREAD);
 
             // Invoke single_reduce_sweep_kernel
-            single_tile_kernel<<<1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream>>>(
+            hipLaunchKernelGGL(single_tile_kernel, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream,
                 d_in,
                 d_out,
                 num_items,
@@ -551,7 +551,7 @@ struct DispatchReduce :
                 reduce_config.sm_occupancy);
 
             // Invoke DeviceReduceKernel
-            reduce_kernel<<<reduce_grid_size, ActivePolicyT::ReducePolicy::BLOCK_THREADS, 0, stream>>>(
+            hipLaunchKernelGGL(reduce_kernel, reduce_grid_size, ActivePolicyT::ReducePolicy::BLOCK_THREADS, 0, stream,
                 d_in,
                 d_block_reductions,
                 num_items,
@@ -571,7 +571,7 @@ struct DispatchReduce :
                 ActivePolicyT::SingleTilePolicy::ITEMS_PER_THREAD);
 
             // Invoke DeviceReduceSingleTileKernel
-            single_tile_kernel<<<1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream>>>(
+            hipLaunchKernelGGL(single_tile_kernel, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream, 
                 d_block_reductions,
                 d_out,
                 reduce_grid_size,
@@ -789,7 +789,7 @@ struct DispatchSegmentedReduce :
                 segmented_reduce_config.sm_occupancy);
 
             // Invoke DeviceReduceKernel
-            segmented_reduce_kernel<<<num_segments, ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS, 0, stream>>>(
+            hipLaunchKernelGGL(segmented_reduce_kernel, num_segments, ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS, 0, stream,
                 d_in,
                 d_out,
                 d_begin_offsets,

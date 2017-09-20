@@ -366,7 +366,7 @@ void TestFullTile(
     fflush(stdout);
 
     dim3 block_dims(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z);
-    FullTileReduceKernel<ALGORITHM, BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z, ITEMS_PER_THREAD><<<1, block_dims>>>(
+    hipLaunchKernelGGL((FullTileReduceKernel<ALGORITHM, BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z, ITEMS_PER_THREAD>), 1, block_dims, 0, 0,
         d_in,
         d_out,
         reduction_op,
@@ -551,7 +551,7 @@ void TestPartialTile(
     fflush(stdout);
 
     dim3 block_dims(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z);
-    PartialTileReduceKernel<ALGORITHM, BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z><<<1, block_dims>>>(
+    hipLaunchKernelGGL((PartialTileReduceKernel<ALGORITHM, BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z>), 1, block_dims, 0, 0,
         d_in,
         d_out,
         num_items,

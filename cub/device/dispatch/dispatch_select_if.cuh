@@ -388,8 +388,8 @@ struct DispatchSelectIf
             if (CubDebug(error = hipGetDevice(&device_ordinal))) break;
 
             // Get SM count
+            int sm_count = 8;
 #if 0   // Dsabled by Neel
-            int sm_count;
             if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDevAttrMultiProcessorCount, device_ordinal))) break;
 #endif
 
@@ -419,7 +419,7 @@ struct DispatchSelectIf
             if (debug_synchronous) _CubLog("Invoking scan_init_kernel<<<%d, %d, 0, %lld>>>()\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
 
             // Invoke scan_init_kernel to initialize tile descriptors
-            scan_init_kernel<<<init_grid_size, INIT_KERNEL_THREADS, 0, stream>>>(
+            hipLaunchKernelGGL(scan_init_kernel, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
                 tile_status,
                 num_tiles,
                 d_num_selected_out);
@@ -458,7 +458,7 @@ struct DispatchSelectIf
                 scan_grid_size.x, scan_grid_size.y, scan_grid_size.z, select_if_config.block_threads, (long long) stream, select_if_config.items_per_thread, range_select_sm_occupancy);
 
             // Invoke select_if_kernel
-            select_if_kernel<<<scan_grid_size, select_if_config.block_threads, 0, stream>>>(
+            hipLaunchKernelGGL(select_if_kernel, scan_grid_size, select_if_config.block_threads, 0, stream,
                 d_in,
                 d_flags,
                 d_selected_out,

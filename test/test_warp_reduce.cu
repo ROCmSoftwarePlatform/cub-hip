@@ -516,7 +516,7 @@ void TestReduce(
     if (valid_warp_threads == LOGICAL_WARP_THREADS)
     {
         // Run full-warp kernel
-        FullWarpReduceKernel<WARPS, LOGICAL_WARP_THREADS><<<1, BLOCK_THREADS>>>(
+        hipLaunchKernelGGL((FullWarpReduceKernel<WARPS, LOGICAL_WARP_THREADS>), 1, BLOCK_THREADS, 0, 0, 
             d_in,
             d_out,
             reduction_op,
@@ -525,7 +525,7 @@ void TestReduce(
     else
     {
         // Run partial-warp kernel
-        PartialWarpReduceKernel<WARPS, LOGICAL_WARP_THREADS><<<1, BLOCK_THREADS>>>(
+        hipLaunchKernelGGL((PartialWarpReduceKernel<WARPS, LOGICAL_WARP_THREADS>), 1, BLOCK_THREADS, 0, 0,
             d_in,
             d_out,
             reduction_op,
@@ -618,7 +618,7 @@ void TestSegmentedReduce(
     fflush(stdout);
 
     // Run head-based kernel
-    WarpHeadSegmentedReduceKernel<WARPS, LOGICAL_WARP_THREADS><<<1, BLOCK_THREADS>>>(
+    hipLaunchKernelGGL((WarpHeadSegmentedReduceKernel<WARPS, LOGICAL_WARP_THREADS>), 1, BLOCK_THREADS, 0, 0, 
         d_in,
         d_flags,
         d_head_out,
@@ -637,7 +637,7 @@ void TestSegmentedReduce(
     DisplayDeviceResults(d_elapsed, 1);
 
     // Run tail-based kernel
-    WarpTailSegmentedReduceKernel<WARPS, LOGICAL_WARP_THREADS><<<1, BLOCK_THREADS>>>(
+    hipLaunchKernelGGL((WarpTailSegmentedReduceKernel<WARPS, LOGICAL_WARP_THREADS>), 1, BLOCK_THREADS, 0, 0,
         d_in,
         d_flags,
         d_tail_out,

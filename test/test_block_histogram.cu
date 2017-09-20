@@ -168,7 +168,7 @@ void Test(
     CubDebugExit(hipMemset(d_histogram, 0, sizeof(int) * BINS));
 
     // Run kernel
-    BlockHistogramKernel<BINS, BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM><<<1, BLOCK_THREADS>>>(
+    hipLaunchKernelGGL((BlockHistogramKernel<BINS, BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>), 1, BLOCK_THREADS, 0, 0,
         d_samples,
         d_histogram);
 

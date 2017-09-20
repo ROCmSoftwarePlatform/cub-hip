@@ -580,7 +580,7 @@ struct DispatchSpmv
                     degen_col_kernel_grid_size, degen_col_kernel_block_size, (long long) stream);
 
                 // Invoke spmv_search_kernel
-                spmv_1col_kernel<<<degen_col_kernel_grid_size, degen_col_kernel_block_size, 0, stream>>>(
+                hipLaunchKernelGGL(spmv_1col_kernel, degen_col_kernel_grid_size, degen_col_kernel_block_size, 0, stream,
                     spmv_params);
 
                 // Check for failure to launch
@@ -690,7 +690,7 @@ struct DispatchSpmv
                     search_grid_size, search_block_size, (long long) stream);
 
                 // Invoke spmv_search_kernel
-                spmv_search_kernel<<<search_grid_size, search_block_size, 0, stream>>>(
+                hipLaunchKernelGGL(spmv_search_kernel, search_grid_size, search_block_size, 0, stream,
                     num_merge_tiles,
                     d_tile_coordinates,
                     spmv_params);
@@ -707,7 +707,7 @@ struct DispatchSpmv
                 spmv_grid_size.x, spmv_grid_size.y, spmv_grid_size.z, spmv_config.block_threads, (long long) stream, spmv_config.items_per_thread, spmv_sm_occupancy);
 
             // Invoke spmv_kernel
-            spmv_kernel<<<spmv_grid_size, spmv_config.block_threads, 0, stream>>>(
+            hipLaunchKernelGGL(spmv_kernel, spmv_grid_size, spmv_config.block_threads, 0, stream,
                 spmv_params,
                 d_tile_coordinates,
                 d_tile_carry_pairs,
@@ -729,7 +729,7 @@ struct DispatchSpmv
                     segment_fixup_grid_size.x, segment_fixup_grid_size.y, segment_fixup_grid_size.z, segment_fixup_config.block_threads, (long long) stream, segment_fixup_config.items_per_thread, segment_fixup_sm_occupancy);
 
                 // Invoke segment_fixup_kernel
-                segment_fixup_kernel<<<segment_fixup_grid_size, segment_fixup_config.block_threads, 0, stream>>>(
+                hipLaunchKernelGGL(segment_fixup_kernel, segment_fixup_grid_size, segment_fixup_config.block_threads, 0, stream,
                     d_tile_carry_pairs,
                     spmv_params.d_vector_y,
                     num_merge_tiles,

@@ -157,7 +157,7 @@ void Test(
     int compare;
 
     // Run unguarded kernel
-    Kernel<<<1, 1>>>(d_in, d_out, d_itrs);
+    hipLaunchKernelGGL(Kernel, 1, 1, 0, 0, d_in, d_out, d_itrs);
 
     CubDebugExit(hipPeekAtLastError());
     CubDebugExit(hipDeviceSynchronize());

@@ -390,7 +390,7 @@ void TestDriver(
     hipDeviceSetSharedMemConfig(SMEM_CONFIG);
 
     // Run kernel
-    Kernel<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, SMEM_CONFIG, DESCENDING, BLOCKED_OUTPUT><<<1, BLOCK_THREADS>>>(
+    hipLaunchKernelGGL((Kernel<BLOCK_THREADS, ITEMS_PER_THREAD, RADIX_BITS, MEMOIZE_OUTER_SCAN, INNER_SCAN_ALGORITHM, SMEM_CONFIG, DESCENDING, BLOCKED_OUTPUT>), 1, BLOCK_THREADS, 0, 0,
         d_keys, d_values, begin_bit, end_bit, d_elapsed);
 
     // Flush kernel output / errors
