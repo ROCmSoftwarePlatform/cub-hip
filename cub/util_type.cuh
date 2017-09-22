@@ -987,13 +987,21 @@ struct BaseTraits<UNSIGNED_INTEGER, true, false, _UnsignedBits, T>
     static __host__ __device__ __forceinline__ T Max()
     {
         UnsignedBits retval = MAX_KEY;
+#ifdef __HIP_PLATFORM_NVCC__
         return reinterpret_cast<T&>(retval);
+#else
+        return (T)(retval);
+#endif
     }
 
     static __host__ __device__ __forceinline__ T Lowest()
     {
         UnsignedBits retval = LOWEST_KEY;
+#ifdef __HIP_PLATFORM_NVCC__
         return reinterpret_cast<T&>(retval);
+#else
+        return (T)(retval);
+#endif
     }
 };
 
@@ -1030,13 +1038,21 @@ struct BaseTraits<SIGNED_INTEGER, true, false, _UnsignedBits, T>
     static __host__ __device__ __forceinline__ T Max()
     {
         UnsignedBits retval = MAX_KEY;
+#ifdef __HIP_PLATFORM_NVCC__
         return reinterpret_cast<T&>(retval);
+#else
+        return (T)(retval);
+#endif
     }
 
     static __host__ __device__ __forceinline__ T Lowest()
     {
         UnsignedBits retval = LOWEST_KEY;
+#ifdef __HIP_PLATFORM_NVCC__
         return reinterpret_cast<T&>(retval);
+#else
+        return (T)(retval);
+#endif
     }
 };
 

@@ -196,9 +196,9 @@ endif
 
 test_iterator: bin/test_iterator_$(SUFFIX)
 
-bin/test_iterator_$(SUFFIX) : test_iterator.cu $(DEPS)
+bin/test_iterator_$(SUFFIX) : test_iterator.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_iterator_$(SUFFIX) test_iterator.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS)  -o bin/test_iterator_$(SUFFIX) test_iterator.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------

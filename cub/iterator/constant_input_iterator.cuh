@@ -226,6 +226,10 @@ public:
         return os;
     }
 
+#ifdef __HIP_PLATFORM_HCC__   // Explicit destructor demand by HCC
+   __host__ __device__ ~ConstantInputIterator() {}
+#endif
+
 };
 
 

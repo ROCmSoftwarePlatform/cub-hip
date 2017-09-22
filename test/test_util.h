@@ -512,7 +512,9 @@ __host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, T &value, i
     {
 #if (CUB_PTX_ARCH == 0)
     case RANDOM:
+#ifdef __HIP_PLATFORM_NVCC__ //Not buildable on HCC
          RandomBits(value);
+#endif
          break;
 #endif
      case UNIFORM:
@@ -536,7 +538,9 @@ __host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, bool &value
 #if (CUB_PTX_ARCH == 0)
     case RANDOM:
         char c;
+#ifdef __HIP_PLATFORM_NVCC__ //Not buildable on HCC
         RandomBits(c, 0, 0, 1);
+#endif
         value = (c > 0);
         break;
 #endif
@@ -980,6 +984,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
 /**
  * Define for types
  */
+#ifdef __HIP_PLATFORM_NVCC__ //Below macros conflict with hip_vector_types ones: TODO:NEEL
 CUB_VEC_OVERLOAD(char, char)
 CUB_VEC_OVERLOAD(short, short)
 CUB_VEC_OVERLOAD(int, int)
@@ -992,6 +997,7 @@ CUB_VEC_OVERLOAD(ulong, unsigned long)
 CUB_VEC_OVERLOAD(ulonglong, unsigned long long)
 CUB_VEC_OVERLOAD(float, float)
 CUB_VEC_OVERLOAD(double, double)
+#endif
 
 
 //---------------------------------------------------------------------
@@ -1060,6 +1066,10 @@ struct TestFoo
         if (z > b.z) return true; else if (b.z > z) return false;
         return w > b.w;
     }
+
+#ifdef __HIP_PLATFORM_HCC__ //Explicit destructor demands by HCC
+    __host__ __device__ ~TestFoo() {}
+#endif
 
 };
 
@@ -1179,6 +1189,9 @@ struct TestBar
         return y > b.y;
     }
 
+#ifdef __HIP_PLATFORM_HCC__ //Explicit destructor demands by HCC
+    __host__ __device__ ~TestBar() {}
+#endif
 };
 
 
@@ -1242,9 +1255,11 @@ int CompareResults(T* computed, S* reference, OffsetT len, bool verbose = true)
     {
         if (computed[i] != reference[i])
         {
+#ifdef __HIP_PLATFORM_NVCC__ // Operator << becomes invalid TODO:NEEL
             if (verbose) std::cout << "INCORRECT: [" << i << "]: "
                 << CoutCast(computed[i]) << " != "
                 << CoutCast(reference[i]);
+#endif
             return 1;
         }
     }
@@ -1352,12 +1367,16 @@ int CompareDeviceResults(
         printf("Reference:\n");
         for (int i = 0; i < int(num_items); i++)
         {
-            std::cout << CoutCast(h_reference[i]) << ", ";
+#ifdef __HIP_PLATFORM_NVCC__ // Operator << becomes invalid TODO:NEEL
+            std::cout<<CoutCast(h_reference[i])<<", ";
+#endif 
         }
         printf("\n\nComputed:\n");
         for (int i = 0; i < int(num_items); i++)
         {
+#ifdef __HIP_PLATFORM_NVCC__ // Operator << becomes invalid TODO:NEEL
             std::cout << CoutCast(h_data[i]) << ", ";
+#endif
         }
         printf("\n\n");
     }

@@ -45,6 +45,7 @@
 #include <cub/iterator/tex_obj_input_iterator.cuh>
 #include <cub/iterator/tex_ref_input_iterator.cuh>
 #include <cub/iterator/transform_input_iterator.cuh>
+#include "thrust/system/cuda/detail/cub/iterator/cache_modified_input_iterator.cuh"
 
 #include <cub/util_type.cuh>
 #include <cub/util_allocator.cuh>
@@ -793,7 +794,7 @@ int main(int argc, char** argv)
     if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
         Test<double4>();
 
-    Test<TestFoo>();
+//    Test<TestFoo>();
     Test<TestBar>();
 
     printf("\nTest complete\n"); fflush(stdout);
