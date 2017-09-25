@@ -45,7 +45,6 @@
 #include <cub/iterator/tex_obj_input_iterator.cuh>
 #include <cub/iterator/tex_ref_input_iterator.cuh>
 #include <cub/iterator/transform_input_iterator.cuh>
-#include "thrust/system/cuda/detail/cub/iterator/cache_modified_input_iterator.cuh"
 
 #include <cub/util_type.cuh>
 #include <cub/util_allocator.cuh>
@@ -160,7 +159,7 @@ void Test(
     // Run unguarded kernel
     hipLaunchKernelGGL(Kernel, 1, 1, 0, 0, d_in, d_out, d_itrs);
 
-    CubDebugExit(hipPeekAtLastError());
+    //CubDebugExit(hipPeekAtLastError());
     CubDebugExit(hipDeviceSynchronize());
 
     // Check results

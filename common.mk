@@ -36,6 +36,8 @@ endif
 # HIPCC executable 
 HIPCC=$(HIP_PATH)/bin/hipcc
 
+
+
 # HIP_PLATFORM info (hcc / nvcc)
 HIP_PLATFORM=$(shell $(HIP_PATH)/bin/hipconfig --platform)
 
@@ -57,23 +59,23 @@ endif
 ifeq (${HIP_PLATFORM}, nvcc)
 
 ifeq (700, $(findstring 700, $(SM_ARCH)))
-    SM_TARGETS         += -gencode=arch=compute_70,code=\"sm_70,compute_70\" 
+    SM_TARGETS         += -gencode=arch=compute_70,code=sm_70 
     SM_DEF             += -DSM700
     TEST_ARCH  = 700
 endif
 
 ifeq (620, $(findstring 620, $(SM_ARCH)))
-    SM_TARGETS 	+= -gencode=arch=compute_62,code=\"sm_62,compute_62\" 
+    SM_TARGETS 	+= -gencode=arch=compute_62,code=sm_62 
     SM_DEF 		+= -DSM620
     TEST_ARCH 	= 620
 endif
 ifeq (610, $(findstring 610, $(SM_ARCH)))
-    SM_TARGETS 	+= -gencode=arch=compute_61,code=\"sm_61,compute_61\" 
+    SM_TARGETS 	+= -gencode=arch=compute_61,code=sm_61 
     SM_DEF 		+= -DSM610
     TEST_ARCH 	= 610
 endif
 ifeq (600, $(findstring 600, $(SM_ARCH)))
-    SM_TARGETS 	+= -gencode=arch=compute_60,code=\"sm_60,compute_60\" 
+    SM_TARGETS 	+= -gencode=arch=compute_60,code=sm_60 
     SM_DEF 		+= -DSM600
     TEST_ARCH 	= 600
 endif
@@ -83,47 +85,47 @@ ifeq (520, $(findstring 520, $(SM_ARCH)))
     TEST_ARCH 	= 520
 endif
 ifeq (370, $(findstring 370, $(SM_ARCH)))
-    SM_TARGETS 	+= -gencode=arch=compute_37,code=\"sm_37,compute_37\" 
+    SM_TARGETS 	+= -gencode=arch=compute_37,code=sm_37 
     SM_DEF 		+= -DSM370
     TEST_ARCH 	= 370
 endif
 ifeq (350, $(findstring 350, $(SM_ARCH)))
-    SM_TARGETS 	+= -gencode=arch=compute_35,code=\"sm_35,compute_35\" 
+    SM_TARGETS 	+= -gencode=arch=compute_35,code=sm_35 
     SM_DEF 		+= -DSM350
     TEST_ARCH 	= 350
 endif
 ifeq (300, $(findstring 300, $(SM_ARCH)))
-    SM_TARGETS 	+= -gencode=arch=compute_30,code=\"sm_30,compute_30\"
+    SM_TARGETS 	+= -gencode=arch=compute_30,code=sm_30
     SM_DEF 		+= -DSM300
     TEST_ARCH 	= 300
 endif
 ifeq (210, $(findstring 210, $(SM_ARCH)))
-    SM_TARGETS 	+= -gencode=arch=compute_20,code=\"sm_21,compute_20\"
+    SM_TARGETS 	+= -gencode=arch=compute_20,code=sm_21
     SM_DEF 		+= -DSM210
     TEST_ARCH 	= 210
 endif
 ifeq (200, $(findstring 200, $(SM_ARCH)))
-    SM_TARGETS 	+= -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+    SM_TARGETS 	+= -gencode=arch=compute_20,code=sm_20
     SM_DEF 		+= -DSM200
     TEST_ARCH 	= 200
 endif
 ifeq (130, $(findstring 130, $(SM_ARCH)))
-    SM_TARGETS 	+= -gencode=arch=compute_13,code=\"sm_13,compute_13\" 
+    SM_TARGETS 	+= -gencode=arch=compute_13,code=sm_13 
     SM_DEF 		+= -DSM130
     TEST_ARCH 	= 130
 endif
 ifeq (120, $(findstring 120, $(SM_ARCH)))
-    SM_TARGETS 	+= -gencode=arch=compute_12,code=\"sm_12,compute_12\" 
+    SM_TARGETS 	+= -gencode=arch=compute_12,code=sm_12 
     SM_DEF 		+= -DSM120
     TEST_ARCH 	= 120
 endif
 ifeq (110, $(findstring 110, $(SM_ARCH)))
-    SM_TARGETS 	+= -gencode=arch=compute_11,code=\"sm_11,compute_11\" 
+    SM_TARGETS 	+= -gencode=arch=compute_11,code=sm_11 
     SM_DEF 		+= -DSM110
     TEST_ARCH 	= 110
 endif
 ifeq (100, $(findstring 100, $(SM_ARCH)))
-    SM_TARGETS 	+= -gencode=arch=compute_10,code=\"sm_10,compute_10\" 
+    SM_TARGETS 	+= -gencode=arch=compute_10,code=sm_10 
     SM_DEF 		+= -DSM100
     TEST_ARCH 	= 100
 endif
@@ -237,7 +239,7 @@ CPPFLAGS += $(shell $(HIP_PATH)/bin/hipconfig --cpp_config)
 CUB_DIR = $(dir $(lastword $(MAKEFILE_LIST)))
 
 ifeq (${HIP_PLATFORM}, nvcc)
-HIPCC = "$(shell which nvcc)"
+HIPCC=${HIP_PATH}/bin/hipcc
 ifdef nvccver
     HIPCC_VERSION = $(nvccver)
 else
