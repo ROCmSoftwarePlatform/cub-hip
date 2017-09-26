@@ -236,9 +236,9 @@ bin/test_grid_barrier_$(SUFFIX) : test_grid_barrier.cu $(DEPS)
 
 test_warp_scan: bin/test_warp_scan_$(SUFFIX)
 
-bin/test_warp_scan_$(SUFFIX) : test_warp_scan.cu $(DEPS)
+bin/test_warp_scan_$(SUFFIX) : test_warp_scan.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_warp_scan_$(SUFFIX) test_warp_scan.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_warp_scan_$(SUFFIX) test_warp_scan.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 
 
 #-------------------------------------------------------------------------------

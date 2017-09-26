@@ -428,7 +428,9 @@ __device__ __forceinline__ int RowMajorTid(int block_dim_x, int block_dim_y, int
 __device__ __forceinline__ unsigned int LaneId()
 {
     unsigned int ret;
+#ifdef __HIP_PLATFORM_NVCC__
     asm ("mov.u32 %0, %%laneid;" : "=r"(ret) );
+#endif
     return ret;
 }
 

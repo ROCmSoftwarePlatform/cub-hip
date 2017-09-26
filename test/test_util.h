@@ -1457,7 +1457,9 @@ void DisplayResults(
     // Display data
     for (int i = 0; i < int(num_items); i++)
     {
+#ifdef __HIP_PLATFORM_NVCC__
         std::cout << CoutCast(h_data[i]) << ", ";
+#endif
     }
     printf("\n");
 }
