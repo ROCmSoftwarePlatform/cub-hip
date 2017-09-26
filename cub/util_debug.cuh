@@ -77,10 +77,14 @@ __host__ __device__ __forceinline__ hipError_t Debug(
     if (error)
     {
     #if (CUB_PTX_ARCH == 0)
+#ifdef __HIP_PLATFORM_NVCC__
         fprintf(stderr, "CUDA error %d [%s, %d]: %s\n", error, filename, line, hipGetErrorString(error));
         fflush(stderr);
+#endif
     #elif (CUB_PTX_ARCH >= 200)
+#ifdef __HIP_PLATFORM_NVCC__
         printf("CUDA error %d [block (%d,%d,%d) thread (%d,%d,%d), %s, %d]\n", error, blockIdx.z, blockIdx.y, blockIdx.x, threadIdx.z, threadIdx.y, threadIdx.x, filename, line);
+#endif
     #endif
     }
 #endif

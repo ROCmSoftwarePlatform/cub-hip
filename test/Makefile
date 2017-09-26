@@ -140,7 +140,7 @@ ALL = 				link \
 
 clean :
 	rm -f bin/*$(CPU_ARCH_SUFFIX)* bin/*.obj
-	rm -f *.i* *.cubin *.cu.c *.hipfe* *.fatbin.c *.ptx *.hash *.cu.cpp *.o
+	rm -f *.i* *.cubin *.cu.c *.hipfe* *.fatbin.c *.ptx *.hash *.o
 
 
 #-------------------------------------------------------------------------------
@@ -198,7 +198,7 @@ test_iterator: bin/test_iterator_$(SUFFIX)
 
 bin/test_iterator_$(SUFFIX) : test_iterator.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS)  -o bin/test_iterator_$(SUFFIX) test_iterator.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -std=c++11 -o bin/test_iterator_$(SUFFIX) test_iterator.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -208,15 +208,15 @@ ifeq ($(HIP_PLATFORM), nvcc)
 
 test_allocator: bin/test_allocator_$(SUFFIX)
 
-bin/test_allocator_$(SUFFIX) : test_allocator.cu $(DEPS)
+bin/test_allocator_$(SUFFIX) : test_allocator.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_allocator_$(SUFFIX) test_allocator.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_allocator_$(SUFFIX) test_allocator.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 else
 test_allocator: bin/test_allocator_$(SUFFIX)
 
-bin/test_allocator_$(SUFFIX) : test_allocator.cu $(DEPS)
+bin/test_allocator_$(SUFFIX) : test_allocator.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 -o bin/test_allocator_$(SUFFIX) test_allocator.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_allocator_$(SUFFIX) test_allocator.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 endif	
 	
 #-------------------------------------------------------------------------------
