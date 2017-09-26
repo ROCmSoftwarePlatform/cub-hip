@@ -757,8 +757,8 @@ int main(int argc, char** argv)
     CubDebugExit(PtxVersion(ptx_version));
 
     // Evaluate different data types
-//    Test<char>();
-//    Test<short>();
+    Test<char>();
+    Test<short>();
     Test<int>();
     Test<long>();
     Test<long long>();
@@ -794,7 +794,7 @@ int main(int argc, char** argv)
         Test<double4>();
 
 //    Test<TestFoo>();
-  //Test<TestBar>();
+  Test<TestBar>();
 
     printf("\nTest complete\n"); fflush(stdout);
 

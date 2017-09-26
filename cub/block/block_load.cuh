@@ -762,7 +762,7 @@ private:
             CacheModifiedInputIterator<MODIFIER, ValueType, OffsetT>    block_itr,                      ///< [in] The thread block's base input iterator for loading from
             InputT                                                     (&items)[ITEMS_PER_THREAD])     ///< [out] Data to load
         {
-            InternalLoadDirectBlockedVectorized<MODIFIER>(linear_tid, block_itr.ptr, items);
+            InternalLoadDirectBlockedVectorized<MODIFIER>(linear_tid, reinterpret_cast<ValueType*>(block_itr.ptr), items);
         }
 
         /// Load a linear segment of items from memory, specialized for opaque input iterators (skips vectorization)
