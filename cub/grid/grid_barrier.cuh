@@ -82,18 +82,18 @@ public:
         __threadfence();
         CTA_SYNC();
 
-        if (blockIdx.x == 0)
+        if (hipBlockIdx_x == 0)
         {
             // Report in ourselves
-            if (threadIdx.x == 0)
+            if (hipThreadIdx_x == 0)
             {
-                d_vol_sync[blockIdx.x] = 1;
+                d_vol_sync[hipBlockIdx_x] = 1;
             }
 
             CTA_SYNC();
 
             // Wait for everyone else to report in
-            for (int peer_block = threadIdx.x; peer_block < gridDim.x; peer_block += blockDim.x)
+            for (int peer_block = hipThreadIdx_x; peer_block < hipGridDim_x; peer_block += hipBlockDim_x)
             {
                 while (ThreadLoad<LOAD_CG>(d_sync + peer_block) == 0)
                 {
@@ -104,20 +104,20 @@ public:
             CTA_SYNC();
 
             // Let everyone know it's safe to proceed
-            for (int peer_block = threadIdx.x; peer_block < gridDim.x; peer_block += blockDim.x)
+            for (int peer_block = hipThreadIdx_x; peer_block < hipGridDim_x; peer_block += hipBlockDim_x)
             {
                 d_vol_sync[peer_block] = 0;
             }
         }
         else
         {
-            if (threadIdx.x == 0)
+            if (hipThreadIdx_x == 0)
             {
                 // Report in
-                d_vol_sync[blockIdx.x] = 1;
+                d_vol_sync[hipBlockIdx_x] = 1;
 
                 // Wait for acknowledgment
-                while (ThreadLoad<LOAD_CG>(d_sync + blockIdx.x) == 1)
+                while (ThreadLoad<LOAD_CG>(d_sync + hipBlockIdx_x) == 1)
                 {
                     __threadfence_block();
                 }

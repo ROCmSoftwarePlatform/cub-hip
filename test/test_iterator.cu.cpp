@@ -340,7 +340,7 @@ void TestModified()
     CacheModifiedInputIterator<LOAD_CG, T> d_in_itr((CastT*) d_data);
     CacheModifiedOutputIterator<STORE_CG, T> d_out_itr((CastT*) d_copy);
 
-    thrust::copy_if(d_in_itr, d_in_itr + TEST_VALUES, d_out_itr, SelectOp());
+    //thrust::copy_if(d_in_itr, d_in_itr + TEST_VALUES, d_out_itr, SelectOp());
 
     int compare = CompareDeviceResults(h_data, d_copy, TEST_VALUES, g_verbose, g_verbose);
     printf("\tthrust::copy_if(): %s\n", (compare) ? "FAIL" : "PASS");
@@ -691,8 +691,8 @@ void Test(Int2Type<false> is_integer)
 
 #if CUDA_VERSION >= 5050
     // Test tex-ref iterators for CUDA 5.5
-    TestTexRef<T, CastT>();
-    TestTexTransform<T, CastT>();
+//    TestTexRef<T, CastT>();
+//    TestTexTransform<T, CastT>();
 #endif  // CUDA_VERSION
 }
 
@@ -757,8 +757,8 @@ int main(int argc, char** argv)
     CubDebugExit(PtxVersion(ptx_version));
 
     // Evaluate different data types
-    Test<char>();
-    Test<short>();
+//    Test<char>();
+//    Test<short>();
     Test<int>();
     Test<long>();
     Test<long long>();
@@ -794,7 +794,7 @@ int main(int argc, char** argv)
         Test<double4>();
 
 //    Test<TestFoo>();
-    Test<TestBar>();
+  //Test<TestBar>();
 
     printf("\nTest complete\n"); fflush(stdout);
 

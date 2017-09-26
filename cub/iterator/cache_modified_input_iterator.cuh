@@ -131,96 +131,113 @@ public:
 public:
 
     /// Wrapped native pointer
-    ValueType* ptr;
+    //  ValueType* ptr;
+    std::uintptr_t ptr;
 
     /// Constructor
     template <typename QualifiedValueType>
-    __host__ __device__ __forceinline__ CacheModifiedInputIterator(
-        QualifiedValueType* ptr)     ///< Native pointer to wrap
+    __host__ __device__ __forceinline__
+    CacheModifiedInputIterator(QualifiedValueType* ptr)     ///< Native pointer to wrap
     :
-        ptr(const_cast<typename RemoveQualifiers<QualifiedValueType>::Type *>(ptr))
+        ptr(reinterpret_cast<std::uintptr_t>(ptr))//const_cast<typename RemoveQualifiers<QualifiedValueType>::Type *>(ptr))
     {}
+
+    __host__ __device__ __forceinline__
+    CacheModifiedInputIterator(const CacheModifiedInputIterator& x)
+        : ptr{x.ptr}
+    {}
+
 
     /// Postfix increment
     __host__ __device__ __forceinline__ self_type operator++(int)
     {
         self_type retval = *this;
-        ptr++;
+        ptr += sizeof(ValueType);
         return retval;
     }
 
     /// Prefix increment
     __host__ __device__ __forceinline__ self_type operator++()
     {
-        ptr++;
+        ptr += sizeof(ValueType);
         return *this;
     }
 
     /// Indirection
-    __device__ __forceinline__ reference operator*() const
+   __host__  __device__ __forceinline__ reference operator*() const
     {
-        return ThreadLoad<MODIFIER>(ptr);
+        return ThreadLoad<MODIFIER>(reinterpret_cast<ValueType*>(ptr));
     }
 
     /// Addition
     template <typename Distance>
-    __host__ __device__ __forceinline__ self_type operator+(Distance n) const
+    __host__ __device__ __forceinline__
+    self_type operator+(Distance n) const
     {
-        self_type retval(ptr + n);
+        self_type retval(reinterpret_cast<ValueType*>(ptr) + n);
         return retval;
     }
 
     /// Addition assignment
     template <typename Distance>
-    __host__ __device__ __forceinline__ self_type& operator+=(Distance n)
+    __host__ __device__ __forceinline__
+    self_type& operator+=(Distance n)
     {
-        ptr += n;
+        ptr += n * sizeof(ValueType);
         return *this;
     }
 
     /// Subtraction
     template <typename Distance>
-    __host__ __device__ __forceinline__ self_type operator-(Distance n) const
+    __host__ __device__ __forceinline__
+    self_type operator-(Distance n) const
     {
-        self_type retval(ptr - n);
+        self_type retval(reinterpret_cast<ValueType*>(ptr) - n);
         return retval;
     }
 
     /// Subtraction assignment
     template <typename Distance>
-    __host__ __device__ __forceinline__ self_type& operator-=(Distance n)
+    __host__ __device__ __forceinline__
+    self_type& operator-=(Distance n)
     {
-        ptr -= n;
+        ptr -= n * sizeof(ValueType);
         return *this;
     }
 
     /// Distance
-    __host__ __device__ __forceinline__ difference_type operator-(self_type other) const
+    __host__ __device__ __forceinline__
+    difference_type operator-(self_type other) const
     {
-        return ptr - other.ptr;
+        return reinterpret_cast<ValueType*>(ptr) -
+               reinterpret_cast<ValueType*>(other.ptr);
     }
 
     /// Array subscript
     template <typename Distance>
-    __device__ __forceinline__ reference operator[](Distance n) const
+    __device__ __forceinline__
+    reference operator[](Distance n) const
     {
-        return ThreadLoad<MODIFIER>(ptr + n);
+        return ThreadLoad<MODIFIER>(reinterpret_cast<ValueType*>(ptr) + n);
     }
 
     /// Structure dereference
-    __device__ __forceinline__ pointer operator->()
+    __device__ __forceinline__
+    pointer operator->()
     {
-        return &ThreadLoad<MODIFIER>(ptr);
+        return &ThreadLoad<MODIFIER>(reinterpret_cast<ValueType*>(ptr));
     }
 
     /// Equal to
-    __host__ __device__ __forceinline__ bool operator==(const self_type& rhs)
+    __host__ __device__ __forceinline__
+    bool operator==(const self_type& rhs)
     {
         return (ptr == rhs.ptr);
     }
 
     /// Not equal to
-    __host__ __device__ __forceinline__ bool operator!=(const self_type& rhs)
+    __host__ __device__ __forceinline__
+    bool operator!=(const self_type& rhs)
     {
         return (ptr != rhs.ptr);
     }
@@ -230,6 +247,9 @@ public:
     {
         return os;
     }
+
+    __host__ __device__
+    ~CacheModifiedInputIterator() {}
 };
 
 

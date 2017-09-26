@@ -117,6 +117,8 @@ private:
 
         /// Constructor
         __host__ __device__ __forceinline__ Reference(ValueType* ptr) : ptr(ptr) {}
+        __host__ __device__ __forceinline__
+        Reference(const Reference& x) : ptr{x.ptr} {}
 
         /// Assignment
         __device__ __forceinline__ ValueType operator =(ValueType val)
@@ -161,6 +163,10 @@ public:
         ptr(const_cast<typename RemoveQualifiers<QualifiedValueType>::Type *>(ptr))
     {}
 
+    __host__ __device__ __forceinline__
+    CacheModifiedOutputIterator(const CacheModifiedOutputIterator& x)
+        : ptr{x.ptr}
+    {}
     /// Postfix increment
     __host__ __device__ __forceinline__ self_type operator++(int)
     {
@@ -245,6 +251,8 @@ public:
     {
         return os;
     }
+    __host__ __device__
+    ~CacheModifiedOutputIterator() {}
 };
 
 
