@@ -70,6 +70,7 @@ endif
 ifeq ($(HIP_PLATFORM), hcc)
 	# Includes
 	INC += -I$(CUB_DIR) -I$(CUB_DIR)test -I$(CUB_DIR)external/Thrust  -I${HIP_INC}
+	DEFINES += -DTEST_ARCH=$(TEST_ARCH)
 else
 	INC += -I$(CUB_DIR) -I$(CUB_DIR)test -I${HIP_INC} -std=c++11
 	# Define test arch
@@ -258,9 +259,9 @@ bin/test_warp_reduce_$(SUFFIX) : test_warp_reduce.cu.cpp $(DEPS)
 
 test_block_reduce_raking: bin/test_block_reduce_raking_$(SUFFIX)
 
-bin/test_block_reduce_raking_$(SUFFIX) : test_block_reduce.cu $(DEPS)
+bin/test_block_reduce_raking_$(SUFFIX) : test_block_reduce.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) -DTEST_RAKING $(SM_TARGETS) -o bin/test_block_reduce_raking_$(SUFFIX) test_block_reduce.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_RAKING $(SM_TARGETS) -o bin/test_block_reduce_raking_$(SUFFIX) test_block_reduce.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 
 
 #-------------------------------------------------------------------------------
@@ -269,9 +270,9 @@ bin/test_block_reduce_raking_$(SUFFIX) : test_block_reduce.cu $(DEPS)
 
 test_block_reduce_warp_reductions: bin/test_block_reduce_warp_reductions_$(SUFFIX)
 
-bin/test_block_reduce_warp_reductions_$(SUFFIX) : test_block_reduce.cu $(DEPS)
+bin/test_block_reduce_warp_reductions_$(SUFFIX) : test_block_reduce.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) -DTEST_WARP_REDUCTIONS $(SM_TARGETS) -o bin/test_block_reduce_warp_reductions_$(SUFFIX) test_block_reduce.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_WARP_REDUCTIONS $(SM_TARGETS) -o bin/test_block_reduce_warp_reductions_$(SUFFIX) test_block_reduce.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 
 
 #-------------------------------------------------------------------------------
