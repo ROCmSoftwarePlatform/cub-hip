@@ -247,9 +247,9 @@ bin/test_warp_scan_$(SUFFIX) : test_warp_scan.cu.cpp $(DEPS)
 
 test_warp_reduce: bin/test_warp_reduce_$(SUFFIX)
 
-bin/test_warp_reduce_$(SUFFIX) : test_warp_reduce.cu $(DEPS)
+bin/test_warp_reduce_$(SUFFIX) : test_warp_reduce.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_warp_reduce_$(SUFFIX) test_warp_reduce.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_warp_reduce_$(SUFFIX) test_warp_reduce.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 
 
 #-------------------------------------------------------------------------------
