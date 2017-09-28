@@ -339,9 +339,9 @@ bin/test_block_load_store_$(SUFFIX) : test_block_load_store.cu.cpp $(DEPS)
 
 test_block_radix_sort_keys: bin/test_block_radix_sort_keys_$(SUFFIX)
 
-bin/test_block_radix_sort_keys_$(SUFFIX) : test_block_radix_sort.cu $(DEPS)
+bin/test_block_radix_sort_keys_$(SUFFIX) : test_block_radix_sort.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) -DTEST_KEYS_ONLY $(SM_TARGETS) -o bin/test_block_radix_sort_keys_$(SUFFIX) test_block_radix_sort.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) -DTEST_KEYS_ONLY $(SM_TARGETS) -o bin/test_block_radix_sort_keys_$(SUFFIX) test_block_radix_sort.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 #-------------------------------------------------------------------------------
 # make test_block_radix_sort_pairs 
@@ -349,9 +349,9 @@ bin/test_block_radix_sort_keys_$(SUFFIX) : test_block_radix_sort.cu $(DEPS)
 
 test_block_radix_sort_pairs: bin/test_block_radix_sort_pairs_$(SUFFIX)
 
-bin/test_block_radix_sort_pairs_$(SUFFIX) : test_block_radix_sort.cu $(DEPS)
+bin/test_block_radix_sort_pairs_$(SUFFIX) : test_block_radix_sort.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_block_radix_sort_pairs_$(SUFFIX) test_block_radix_sort.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_block_radix_sort_pairs_$(SUFFIX) test_block_radix_sort.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
