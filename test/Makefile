@@ -288,9 +288,9 @@ test_block_reduce: $(BLOCK_REDUCE)
 
 test_block_scan_raking: bin/test_block_scan_raking_$(SUFFIX)
 
-bin/test_block_scan_raking_$(SUFFIX) : test_block_scan.cu $(DEPS)
+bin/test_block_scan_raking_$(SUFFIX) : test_block_scan.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) -DTEST_RAKING $(SM_TARGETS) -o bin/test_block_scan_raking_$(SUFFIX) test_block_scan.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_RAKING $(SM_TARGETS) -o bin/test_block_scan_raking_$(SUFFIX) test_block_scan.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 
 
 #-------------------------------------------------------------------------------
@@ -299,9 +299,9 @@ bin/test_block_scan_raking_$(SUFFIX) : test_block_scan.cu $(DEPS)
 
 test_block_scan_raking_memoize: bin/test_block_scan_raking_memoize_$(SUFFIX)
 
-bin/test_block_scan_raking_memoize_$(SUFFIX) : test_block_scan.cu $(DEPS)
+bin/test_block_scan_raking_memoize_$(SUFFIX) : test_block_scan.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) -DTEST_RAKING_MEMOIZE $(SM_TARGETS) -o bin/test_block_scan_raking_memoize_$(SUFFIX) test_block_scan.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_RAKING_MEMOIZE $(SM_TARGETS) -o bin/test_block_scan_raking_memoize_$(SUFFIX) test_block_scan.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 
 
 #-------------------------------------------------------------------------------
@@ -310,9 +310,9 @@ bin/test_block_scan_raking_memoize_$(SUFFIX) : test_block_scan.cu $(DEPS)
 
 test_block_scan_warp_scans: bin/test_block_scan_warp_scans_$(SUFFIX)
 
-bin/test_block_scan_warp_scans_$(SUFFIX) : test_block_scan.cu $(DEPS)
+bin/test_block_scan_warp_scans_$(SUFFIX) : test_block_scan.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) -DTEST_WARP_SCANS $(SM_TARGETS) -o bin/test_block_scan_warp_scans_$(SUFFIX) test_block_scan.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_WARP_SCANS $(SM_TARGETS) -o bin/test_block_scan_warp_scans_$(SUFFIX) test_block_scan.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
 
 
 #-------------------------------------------------------------------------------
@@ -328,9 +328,9 @@ test_block_scan: $(BLOCK_SCAN)
 
 test_block_load_store: bin/test_block_load_store_$(SUFFIX)
 
-bin/test_block_load_store_$(SUFFIX) : test_block_load_store.cu $(DEPS)
+bin/test_block_load_store_$(SUFFIX) : test_block_load_store.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_block_load_store_$(SUFFIX) test_block_load_store.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_block_load_store_$(SUFFIX) test_block_load_store.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 	
 	
 #-------------------------------------------------------------------------------

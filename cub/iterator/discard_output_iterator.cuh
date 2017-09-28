@@ -62,7 +62,7 @@ namespace cub {
 /**
  * \brief A discard iterator
  */
-template <typename OffsetT = ptrdiff_t>
+template <typename OffsetT = signed int>
 class DiscardOutputIterator
 {
 public:
@@ -96,12 +96,20 @@ private:
 #endif
 
 public:
-
+    // Default constructor
+    __host__ __device__ __forceinline__ DiscardOutputIterator() {offset = 0;}
+   
     /// Constructor
     __host__ __device__ __forceinline__ DiscardOutputIterator(
-        OffsetT offset = 0)     ///< Base offset
+        OffsetT offset)     ///< Base offset
     :
-        offset(offset)
+        offset{offset}
+    {}
+
+    // Copy constructor
+    __host__ __device__ __forceinline__
+    DiscardOutputIterator(const DiscardOutputIterator& x)
+        : offset{x.offset}
     {}
 
     /// Postfix increment
@@ -210,6 +218,11 @@ public:
         os << "[" << itr.offset << "]";
         return os;
     }
+
+#ifdef __HIP_PLATFORM_HCC__
+    // Explicit destructor
+    __host__ __device__ ~DiscardOutputIterator() {}
+#endif
 
 };
 

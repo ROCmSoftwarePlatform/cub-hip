@@ -240,6 +240,11 @@ struct BlockScanRaking
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
     {}
 
+#ifdef __HIP_PLATFORM_HCC__
+    /// compatible Destructor with right set of access specifiers
+    __host__ __device__ ~BlockScanRaking() {}
+#endif
+
 
     //---------------------------------------------------------------------
     // Exclusive scans
