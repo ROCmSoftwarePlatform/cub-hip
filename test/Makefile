@@ -367,9 +367,9 @@ test_block_radix_sort : $(BLOCK_RADIX_SORT)
 
 test_block_histogram: bin/test_block_histogram_$(SUFFIX)
 
-bin/test_block_histogram_$(SUFFIX) : test_block_histogram.cu $(DEPS)
+bin/test_block_histogram_$(SUFFIX) : test_block_histogram.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_block_histogram_$(SUFFIX) test_block_histogram.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_block_histogram_$(SUFFIX) test_block_histogram.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -378,9 +378,9 @@ bin/test_block_histogram_$(SUFFIX) : test_block_histogram.cu $(DEPS)
 
 test_device_reduce: bin/test_device_reduce_$(SUFFIX)
 
-bin/test_device_reduce_$(SUFFIX) : test_device_reduce.cu $(DEPS)
+bin/test_device_reduce_$(SUFFIX) : test_device_reduce.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_reduce_$(SUFFIX) test_device_reduce.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_reduce_$(SUFFIX) test_device_reduce.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------

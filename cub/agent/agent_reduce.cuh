@@ -377,6 +377,11 @@ struct AgentReduce
 
     }
 
+#ifdef __HIP_PLATFORM_HCC__
+    // Compatible destructor
+    __host__ __device__ __forceinline__ ~AgentReduce() {}
+#endif
+
 };
 
 

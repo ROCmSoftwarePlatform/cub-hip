@@ -712,6 +712,10 @@ struct KeyValuePair
     {
         return (value != b.value) || (key != b.key);
     }
+#ifdef __HIP_PLATFORM_HCC__
+    // Destructor
+    __host__ __device__ ~KeyValuePair() {}
+#endif
 };
 
 #if defined(_WIN32) && !defined(_WIN64)

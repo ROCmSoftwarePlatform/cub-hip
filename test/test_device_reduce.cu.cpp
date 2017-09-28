@@ -861,11 +861,13 @@ void Test(
     CubDebugExit(hipMemset(d_out, 0, sizeof(OutputT) * num_segments));
 
     // Run once with discard iterator
+#ifdef __HIP_PLATFORM_NVCC__
     DiscardOutputIterator<OffsetT> discard_itr;
     CubDebugExit(Dispatch(backend, 1,
         d_temp_storage_bytes, d_cdp_error, d_temp_storage, temp_storage_bytes,
         d_in, discard_itr, num_items, num_segments, d_segment_offsets,
         reduction_op, 0, true));
+#endif
 
     // Run warmup/correctness iteration
     CubDebugExit(Dispatch(backend, 1,
@@ -1298,8 +1300,10 @@ int main(int argc, char** argv)
     TestProblem<THRUST, long long, long long>( max_items / 2, 1, UNIFORM, Sum());
 
     printf("\n----------------------------\n");
+#ifdef __HIP_PLATFORM_NVCC__
     TestProblem<CUB, TestFoo, TestFoo>(      max_items / 4, 1, UNIFORM, Max());
     TestProblem<THRUST, TestFoo, TestFoo>(   max_items / 4, 1, UNIFORM, Max());
+#endif
 
 #else
 
