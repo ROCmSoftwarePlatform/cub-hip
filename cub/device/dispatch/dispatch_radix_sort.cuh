@@ -74,7 +74,7 @@ __launch_bounds__ (int((ALT_DIGIT_BITS) ?
 #elif defined(__HIP_PLATFORM_HCC__)
 __launch_bounds__(256)
 #endif
-__global__ void DeviceRadixSortUpsweepKernel(
+__global__ void DeviceRadixSortUpsweepKernel(hipLaunchParm lp,
     const KeyT              *d_keys,                        ///< [in] Input keys buffer
     OffsetT                 *d_spine,                       ///< [out] Privatized (per block) digit histograms (striped, i.e., 0s counts from each block, then 1s counts from each block, etc.)
     OffsetT                 /*num_items*/,                  ///< [in] Total number of input data items
@@ -405,7 +405,7 @@ __global__ void DeviceSegmentedRadixSortKernel(
     //
 
     // Shared memory storage
-    __shared__ union
+    __shared__ union TS
     {
         typename BlockUpsweepT::TempStorage     upsweep;
         typename BlockDownsweepT::TempStorage   downsweep;
@@ -415,6 +415,9 @@ __global__ void DeviceSegmentedRadixSortKernel(
             volatile OffsetT                        reverse_counts_out[RADIX_DIGITS];
             typename DigitScanT::TempStorage        scan;
         };
+
+        __host__ __device__
+        ~TS() {}
 
     } temp_storage;
 
@@ -1033,8 +1036,9 @@ struct DispatchRadixSort :
 
             // Invoke upsweep_kernel with same grid size as downsweep_kernel
 #ifdef __HIP_PLATFORM_HCC__
-            static const auto tmp = make_forwarder(pass_config.upsweep_kernel);
-            hipLaunchKernelGGL(tmp, pass_config.even_share.grid_size, pass_config.upsweep_config.block_threads, 0, stream,
+            auto kernel_ptr = pass_config.upsweep_kernel; 
+            static const auto tmp = make_forwarder(kernel_ptr);
+            hipLaunchKernel(tmp, pass_config.even_share.grid_size, pass_config.upsweep_config.block_threads, 0, stream,
 #elif defined (__HIP_PLATFORM_NVCC__)
             hipLaunchKernelGGL(pass_config.upsweep_kernel, pass_config.even_share.grid_size, pass_config.upsweep_config.block_threads, 0, stream,
 #endif

@@ -463,6 +463,11 @@ struct AgentScan
         }
     }
 
+#ifdef __HIP_PLATFORM_HCC__
+    // Mandatory compatible destructor needed by HCC
+    __host__ __device__ ~AgentScan() {}
+#endif
+
 };
 
 

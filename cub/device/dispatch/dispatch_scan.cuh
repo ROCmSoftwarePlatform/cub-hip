@@ -44,6 +44,9 @@
 #include "../../util_debug.cuh"
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
+#ifdef __HIP_PLATFORM_HCC__
+#include "../../../hip_helpers/forwarder.hpp"
+#endif
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -455,8 +458,13 @@ struct DispatchScan
             int init_grid_size = (num_tiles + INIT_KERNEL_THREADS - 1) / INIT_KERNEL_THREADS;
             if (debug_synchronous) _CubLog("Invoking init_kernel<<<%d, %d, 0, %lld>>>()\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
 
+#ifdef __HIP_PLATFORM_NVCC__
             // Invoke init_kernel to initialize tile descriptors
             hipLaunchKernelGGL(init_kernel, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
+#else
+            static const auto tmp = make_forwarder(init_kernel);
+            hipLaunchKernelGGL(tmp, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
+#endif
                 tile_state,
                 num_tiles);
 
@@ -485,7 +493,13 @@ struct DispatchScan
                     start_tile, scan_grid_size, scan_kernel_config.block_threads, (long long) stream, scan_kernel_config.items_per_thread, scan_sm_occupancy);
 
                 // Invoke scan_kernel
+#ifdef __HIP_PLATFORM_NVCC__
                 hipLaunchKernelGGL(scan_kernel, scan_grid_size, scan_kernel_config.block_threads, 0, stream, 
+#else
+                static const auto tmp1 = make_forwarder(scan_kernel);
+                hipLaunchKernelGGL(tmp1, scan_grid_size, scan_kernel_config.block_threads, 0, stream, 
+
+#endif
                     d_in,
                     d_out,
                     tile_state,

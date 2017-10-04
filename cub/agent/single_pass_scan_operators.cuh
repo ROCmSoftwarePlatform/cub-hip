@@ -267,7 +267,12 @@ struct ScanTileState<T, true>
         {
             __threadfence_block(); // prevent hoisting loads from loop
             TxnWord alias = ThreadLoad<LOAD_CG>(d_tile_descriptors + TILE_STATUS_PADDING + tile_idx);
+#ifdef __HIP_PLATFORM_NVCC__
             tile_descriptor = reinterpret_cast<TileDescriptor&>(alias);
+#else
+
+            tile_descriptor = (TileDescriptor)(alias);
+#endif
 
         } while (WARP_ANY((tile_descriptor.status == SCAN_TILE_INVALID), 0xffffffff));
 

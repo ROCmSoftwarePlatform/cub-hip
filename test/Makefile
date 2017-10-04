@@ -405,9 +405,9 @@ endif
 
 test_device_scan: bin/test_device_scan_$(SUFFIX)
 
-bin/test_device_scan_$(SUFFIX) : test_device_scan.cu $(DEPS)
+bin/test_device_scan_$(SUFFIX) : test_device_scan.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_scan_$(SUFFIX) test_device_scan.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_scan_$(SUFFIX) test_device_scan.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -416,9 +416,9 @@ bin/test_device_scan_$(SUFFIX) : test_device_scan.cu $(DEPS)
 
 test_device_radix_sort: bin/test_device_radix_sort_$(SUFFIX)
 
-bin/test_device_radix_sort_$(SUFFIX) : test_device_radix_sort.cu $(DEPS)
+bin/test_device_radix_sort_$(SUFFIX) : test_device_radix_sort.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_radix_sort_$(SUFFIX) test_device_radix_sort.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_radix_sort_$(SUFFIX) test_device_radix_sort.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
