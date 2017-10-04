@@ -807,6 +807,19 @@ struct ArrayWrapper
 
     /// Constructor
     __host__ __device__ __forceinline__ ArrayWrapper() {}
+
+#ifdef __HIP_PLATFORM_HCC__
+    __host__ __device__ __forceinline__ ArrayWrapper(const ArrayWrapper &obj) {
+    for (int i=0; i<COUNT; i++)
+       array[i] = obj.array[i];
+   }
+
+    __host__ __device__ __forceinline__ ArrayWrapper(const T *obj) {
+    for (int i=0; i<COUNT; i++)
+       array[i] = obj[i];
+    }
+
+#endif 
 };
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS

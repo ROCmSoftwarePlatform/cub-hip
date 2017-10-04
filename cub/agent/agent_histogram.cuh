@@ -670,7 +670,7 @@ struct AgentHistogram
         typename            _OffsetT>
     __device__ __forceinline__ SampleT* NativePointer(CacheModifiedInputIterator<_MODIFIER, _ValueT, _OffsetT> itr)
     {
-        return itr.ptr;
+        return (SampleT*)(itr.ptr);
     }
 
     // Return a native pixel pointer (specialized for other types)
@@ -775,6 +775,11 @@ struct AgentHistogram
         else
             StoreGmemOutput();
     }
+
+#ifdef __HIP_PLATFORM_HCC__
+    // Compatible destructor
+    __host__ __device__ __forceinline__ ~AgentHistogram() {}
+#endif
 
 
 };

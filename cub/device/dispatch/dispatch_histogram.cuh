@@ -44,7 +44,7 @@
 #include "../../thread/thread_search.cuh"
 #include "../../grid/grid_queue.cuh"
 #include "../../util_namespace.cuh"
-
+#include "../../../hip_helpers/forwarder.hpp"
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
 
@@ -660,7 +660,12 @@ struct DipatchHistogram
                 histogram_init_grid_dims, histogram_init_block_threads, (long long) stream);
 
             // Invoke histogram_init_kernel
+#ifdef __HIP_PLATFORM_HCC__
+            static const auto tmp = make_forwarder(histogram_init_kernel);
+            hipLaunchKernelGGL(tmp, histogram_init_grid_dims, histogram_init_block_threads, 0, stream,
+#else
             hipLaunchKernelGGL(histogram_init_kernel, histogram_init_grid_dims, histogram_init_block_threads, 0, stream,
+#endif
                 num_output_bins_wrapper,
                 d_output_histograms_wrapper,
                 tile_queue);
@@ -674,8 +679,13 @@ struct DipatchHistogram
                 sweep_grid_dims.x, sweep_grid_dims.y, sweep_grid_dims.z,
                 histogram_sweep_config.block_threads, (long long) stream, histogram_sweep_config.pixels_per_thread, histogram_sweep_sm_occupancy);
 
+#ifdef __HIP_PLATFORM_HCC__
+            static const auto tmp1 = make_forwarder(histogram_sweep_kernel);
+            hipLaunchKernelGGL(tmp1, sweep_grid_dims, histogram_sweep_config.block_threads, 0, stream,
+#else
             // Invoke histogram_sweep_kernel
             hipLaunchKernelGGL(histogram_sweep_kernel, sweep_grid_dims, histogram_sweep_config.block_threads, 0, stream,
+#endif
                 d_samples,
                 num_output_bins_wrapper,
                 num_privatized_bins_wrapper,
@@ -708,7 +718,11 @@ struct DipatchHistogram
     /**
      * Dispatch routine for HistogramRange, specialized for sample types larger than 8bit
      */
+#ifdef __HIP_PLATFORM_NVCC__
     CUB_RUNTIME_FUNCTION
+#else
+    __host__
+#endif
     static hipError_t DispatchRange(
         void*               d_temp_storage,                                ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&             temp_storage_bytes,                            ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
@@ -816,7 +830,11 @@ struct DipatchHistogram
     /**
      * Dispatch routine for HistogramRange, specialized for 8-bit sample types (computes 256-bin privatized histograms and then reduces to user-specified levels)
      */
+#ifdef __HIP_PLATFORM_NVCC__
     CUB_RUNTIME_FUNCTION
+#else
+    __host__
+#endif
     static hipError_t DispatchRange(
         void*               d_temp_storage,                             ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&             temp_storage_bytes,                         ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
@@ -898,7 +916,11 @@ struct DipatchHistogram
     /**
      * Dispatch routine for HistogramEven, specialized for sample types larger than 8-bit
      */
+#ifdef __HIP_PLATFORM_NVCC__
     CUB_RUNTIME_FUNCTION __forceinline__
+#else
+    __host__ __forceinline__
+#endif
     static hipError_t DispatchEven(
         void*               d_temp_storage,                            ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&             temp_storage_bytes,                        ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
@@ -1010,7 +1032,12 @@ struct DipatchHistogram
     /**
      * Dispatch routine for HistogramEven, specialized for 8-bit sample types (computes 256-bin privatized histograms and then reduces to user-specified levels)
      */
-    CUB_RUNTIME_FUNCTION __forceinline__
+#ifdef __HIP_PLATFORM_NVCC__
+    CUB_RUNTIME_FUNCTION 
+#else
+    __host__
+#endif
+    __forceinline__
     static hipError_t DispatchEven(
         void*               d_temp_storage,                            ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&             temp_storage_bytes,                        ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation

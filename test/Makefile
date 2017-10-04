@@ -389,14 +389,14 @@ bin/test_device_reduce_$(SUFFIX) : test_device_reduce.cu.cpp $(DEPS)
 
 ifeq ($(HIP_PLATFORM), nvcc)
 test_device_histogram: bin/test_device_histogram_$(SUFFIX)
-bin/test_device_histogram_$(SUFFIX) : test_device_histogram.cu $(DEPS)
+bin/test_device_histogram_$(SUFFIX) : test_device_histogram.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_histogram_$(SUFFIX) test_device_histogram.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) $(NPPI) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_histogram_$(SUFFIX) test_device_histogram.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) $(NPPI) -O3
 else
 test_device_histogram: bin/test_device_histogram_$(SUFFIX)
-bin/test_device_histogram_$(SUFFIX) : test_device_histogram.cu $(DEPS)
+bin/test_device_histogram_$(SUFFIX) : test_device_histogram.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_histogram_$(SUFFIX) test_device_histogram.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_histogram_$(SUFFIX) test_device_histogram.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 endif
 
 #-------------------------------------------------------------------------------

@@ -145,7 +145,12 @@ public:
         d_counters[DRAIN] = 0;
         return hipSuccess;
 #else
+        // TODO: NEEL Make hipMemsetAsync __device__ compatible
+#ifdef __HIP_PLATFORM_NVCC__
         return CubDebug(hipMemsetAsync(d_counters + DRAIN, 0, sizeof(OffsetT), stream));
+#else
+        return hipSuccess;
+#endif
 #endif
     }
 

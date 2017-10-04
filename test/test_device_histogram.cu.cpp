@@ -50,6 +50,9 @@
 
 using namespace cub;
 
+#undef CUB_RUNTIME_FUNCTION
+#define CUB_RUNTIME_FUNCTION __host__
+
 
 //---------------------------------------------------------------------
 // Globals, constants and typedefs

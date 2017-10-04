@@ -59,7 +59,8 @@ namespace cub {
 
 /// Whether or not the source targeted by the active compiler pass is allowed to  invoke device kernels or methods from the CUDA runtime API.
 #ifndef CUB_RUNTIME_FUNCTION
-    #if !defined(__CUDA_ARCH__) || (__CUDA_ARCH__>= 350 && defined(__CUDACC_RDC__))
+//    #if !defined(__HIP_DEVICE_COMPILE__) || (defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__) && defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__))
+    #if (__HIP_DEVICE_COMPILE__ == 0)
         #define CUB_RUNTIME_ENABLED
         #define CUB_RUNTIME_FUNCTION __host__ __device__
     #else
