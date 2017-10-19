@@ -66,7 +66,7 @@ struct WarpScanShfl
         STEPS = Log2<LOGICAL_WARP_THREADS>::VALUE,
 
         /// The 5-bit SHFL mask for logically splitting warps into sub-segments starts 8-bits up
-        SHFL_C = ((0xFFFFFFFFU << STEPS) & 31) << 8,
+        SHFL_C = ((-1 << STEPS) & 31) << 8,
     };
 
     template <typename S>
@@ -79,14 +79,14 @@ struct WarpScanShfl
     };
 
     /// Shared memory storage layout type
-    struct TempStorage {};
+    struct TempStorage { unsigned int dummy; };
 
 
     //---------------------------------------------------------------------
     // Thread fields
     //---------------------------------------------------------------------
 
-    unsigned int lane_id;
+    alignas(8) unsigned int lane_id;
 
     unsigned int member_mask;
 
@@ -122,6 +122,7 @@ struct WarpScanShfl
         int shfl_c = first_lane | SHFL_C;   // Shuffle control (mask and first-lane)
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
 #ifdef CUB_USE_COOPERATIVE_GROUPS
         asm volatile(
             "{"
@@ -142,7 +143,20 @@ struct WarpScanShfl
             "  mov.s32 %0, r0;"
             "}"
             : "=r"(output) : "r"(input), "r"(offset), "r"(shfl_c), "r"(input));
+#endif //CUB_USE_COOPERATIVE_GROUPS
+#elif defined(__HIP_PLATFORM_HCC__)
+	 int r0;
+         int lane_id;
+         bool pred = false ;
+        r0 = __shfl_up(input, offset, shfl_c);
+        lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
+	if (lane_id >=0)
+          pred = true;
+        if (pred == true)
+          r0 = r0 + input ;
+        output = r0;
 #endif
+
 
         return output;
     }
@@ -158,6 +172,7 @@ struct WarpScanShfl
         int shfl_c = first_lane | SHFL_C;   // Shuffle control (mask and first-lane)
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
 #ifdef CUB_USE_COOPERATIVE_GROUPS
         asm volatile(
             "{"
@@ -178,6 +193,18 @@ struct WarpScanShfl
             "  mov.u32 %0, r0;"
             "}"
             : "=r"(output) : "r"(input), "r"(offset), "r"(shfl_c), "r"(input));
+#endif //CUB_USE_COOPERATIVE_GROUPS
+#elif defined (__HIP_PLATFORM_HCC__)
+	 unsigned int r0;
+         int lane_id;
+         bool pred = false ;
+        r0 = __shfl_up((int)input, offset, shfl_c);
+        lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
+        if (lane_id >=0)
+          pred = true;
+        if (pred == true)
+          r0 = r0 + input ;
+        output = r0;
 #endif
 
         return output;
@@ -195,6 +222,7 @@ struct WarpScanShfl
         int shfl_c = first_lane | SHFL_C;   // Shuffle control (mask and first-lane)
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
 #ifdef CUB_USE_COOPERATIVE_GROUPS
         asm volatile(
             "{"
@@ -220,6 +248,19 @@ struct WarpScanShfl
      );
 #endif
 #endif
+#elif defined(__HIP_PLATFORM_HCC__)
+         float r0;
+         int lane_id;
+         bool pred = false;
+        r0 = __shfl_up(input, offset, shfl_c);
+        lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
+        if (lane_id >= 0 )//&& lane_id <= shfl_c)
+          pred = true;
+        if (pred == true)
+          r0 = r0 + input ;
+        output = r0;
+
+#endif
 
         return output;
     }
@@ -236,6 +277,7 @@ struct WarpScanShfl
         int shfl_c = first_lane | SHFL_C;   // Shuffle control (mask and first-lane)
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
 #ifdef CUB_USE_COOPERATIVE_GROUPS
         asm volatile(
             "{"
@@ -271,6 +313,24 @@ struct WarpScanShfl
      );
 #endif
 #endif
+#elif defined(__HIP_PLATFORM_HCC__)
+	 unsigned int hi, lo;
+        int lane_id;
+         bool pred = false;
+        lo = 0xFFFFFFFF & input;
+        hi = 0xFFFFFFFF & (input >> 32);
+        lo = __shfl_up((int)lo, offset, shfl_c);
+        hi = __shfl_up((int)hi, offset, shfl_c);
+         long long r0 = 0x0000;
+        r0 = ((r0 | hi) << 32) | lo;
+        lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
+        if (lane_id >= 0 )
+          pred = true;
+        if (pred == true)
+          r0 = input + r0;
+        output = r0;
+
+#endif
 
         return output;
     }
@@ -287,6 +347,7 @@ struct WarpScanShfl
         int shfl_c = first_lane | SHFL_C;   // Shuffle control (mask and first-lane)
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
 #ifdef CUB_USE_COOPERATIVE_GROUPS
         asm volatile(
             "{"
@@ -322,7 +383,24 @@ struct WarpScanShfl
      );
 #endif
 #endif
+#elif defined(__HIP_PLATFORM_HCC__)
+         unsigned int hi, lo;
+        int lane_id;
+         bool pred = false;
+        lo = 0xFFFFFFFF & input;
+        hi = 0xFFFFFFFF & (input >> 32);
+        lo = __shfl_up((int)lo, offset, shfl_c);
+        hi = __shfl_up((int)hi, offset, shfl_c);
+         long long r0 = 0x0000;
+        r0 = ((r0 | hi) << 32) | lo;
+        lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
+        if (lane_id >= 0 )
+          pred = true;
+        if (pred == true)
+          r0 = input + r0;
+        output = r0;
 
+#endif
         return output;
     }
 
@@ -338,6 +416,7 @@ struct WarpScanShfl
         int shfl_c = first_lane | SHFL_C;   // Shuffle control (mask and first-lane)
 
         // Use predicate set from SHFL to guard against invalid peers
+#ifdef __HIP_PLATFORM_NVCC__
 #ifdef CUB_USE_COOPERATIVE_GROUPS
         asm volatile(
             "{"
@@ -373,7 +452,32 @@ struct WarpScanShfl
      );
 #endif
 #endif
+#elif defined(__HIP_PLATFORM_HCC__)
+	union ld
+        {
+                long long l;
+                double d;
+        }s;
+        s.d = input;
+         unsigned int hi, lo;
+        int lane_id;
+         bool pred = false;
+        lo = 0xFFFFFFFF & s.l;
+        hi = 0xFFFFFFFF & (s.l >> 32);
+        lo = __shfl_up((int)lo, offset,shfl_c );
+        hi = __shfl_up((int)hi, offset, shfl_c);
+         long long r0 = 0x0000;
+        output = input ;
+        r0 = ((r0 | hi) << 32) | lo;
+        lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
+        if (lane_id >= 0 )
+          pred = true;
+        if (pred == true){
+          s.l = r0;
+          output = output + s.d;
+        }
 
+#endif
         return output;
     }
 
@@ -403,7 +507,7 @@ struct WarpScanShfl
     template <typename _T, typename ScanOpT>
     __device__ __forceinline__ _T InclusiveScanStep(
         _T              input,              ///< [in] Calling thread's input item.
-        ScanOpT          scan_op,            ///< [in] Binary scan operator
+        ScanOpT         scan_op,            ///< [in] Binary scan operator
         int             first_lane,         ///< [in] Index of first lane in segment
         int             offset)             ///< [in] Up-offset to pull from
     {
@@ -411,10 +515,11 @@ struct WarpScanShfl
 
         // Perform scan op if from a valid peer
         _T output = scan_op(temp, input);
-        if (static_cast<int>(lane_id) < first_lane + offset)
-            output = input;
+       // if (static_cast<int>(lane_id) < first_lane + offset)
+       //     output = input;
 
-        return output;
+        
+        return LaneId() < first_lane + offset ? input : output;
     }
 
 
@@ -422,12 +527,16 @@ struct WarpScanShfl
     template <typename _T, typename ScanOpT>
     __device__ __forceinline__ _T InclusiveScanStep(
         _T              input,              ///< [in] Calling thread's input item.
-        ScanOpT          scan_op,            ///< [in] Binary scan operator
+        ScanOpT         scan_op,           ///< [in] Binary scan operator
         int             first_lane,         ///< [in] Index of first lane in segment
         int             offset,             ///< [in] Up-offset to pull from
         Int2Type<true>  /*is_small_unsigned*/)  ///< [in] Marker type indicating whether T is a small integer
     {
-        return InclusiveScanStep(input, scan_op, first_lane, offset);
+        unsigned int temp = *reinterpret_cast<unsigned int*>(&input);//reinterpret_cast<unsigned int &>(input);
+
+        temp = InclusiveScanStep(temp, scan_op, first_lane, offset);
+
+        return *reinterpret_cast<_T*>(&temp);
     }
 
 
@@ -502,10 +611,10 @@ struct WarpScanShfl
         int segment_first_lane = 0;
 
         // Iterate scan steps
-//        InclusiveScanStep(inclusive_output, scan_op, segment_first_lane, Int2Type<0>());
+        InclusiveScanStep(inclusive_output, scan_op, segment_first_lane, Int2Type<0>());
 
         // Iterate scan steps
-        #pragma unroll
+/*        #pragma unroll
         for (int STEP = 0; STEP < STEPS; STEP++)
         {
             inclusive_output = InclusiveScanStep(
@@ -515,7 +624,7 @@ struct WarpScanShfl
                 (1 << STEP),
                 Int2Type<IntegerTraits<T>::IS_SMALL_UNSIGNED>());
         }
-
+*/
     }
 
     /// Inclusive scan, specialized for reduce-value-by-key
@@ -538,10 +647,10 @@ struct WarpScanShfl
         int segment_first_lane = CUB_MAX(0, 31 - __clz(ballot));
 
         // Iterate scan steps
-//        InclusiveScanStep(inclusive_output.value, scan_op.op, segment_first_lane, Int2Type<0>());
+        InclusiveScanStep(inclusive_output.value, scan_op.op, segment_first_lane, Int2Type<0>());
 
         // Iterate scan steps
-        #pragma unroll
+/*        #pragma unroll
         for (int STEP = 0; STEP < STEPS; STEP++)
         {
             inclusive_output.value = InclusiveScanStep(
@@ -550,7 +659,8 @@ struct WarpScanShfl
                 segment_first_lane,
                 (1 << STEP),
                 Int2Type<IntegerTraits<T>::IS_SMALL_UNSIGNED>());
-        }
+        }  
+*/
     }
 
 

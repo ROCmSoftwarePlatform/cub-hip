@@ -99,7 +99,7 @@ namespace cub {
  *     int thread_data = ...
  *
  *     // Compute warp-wide prefix sums
- *     int warp_id = threadIdx.x / 32;
+ *     int warp_id = hipThreadIdx_x / 32;
  *     WarpScan(temp_storage[warp_id]).ExclusiveSum(thread_data, thread_data);
  *
  * \endcode
@@ -125,7 +125,7 @@ namespace cub {
  *     ...
  *
  *     // Only the first warp performs a prefix sum
- *     if (threadIdx.x < 32)
+ *     if (hipThreadIdx_x < 32)
  *     {
  *         // Obtain one input item per thread
  *         int thread_data = ...
@@ -198,7 +198,7 @@ public:
     //@{
 
     /**
-     * \brief Collective constructor using the specified memory allocation as temporary storage.  Logical warp and lane identifiers are constructed from <tt>threadIdx.x</tt>.
+     * \brief Collective constructor using the specified memory allocation as temporary storage.  Logical warp and lane identifiers are constructed from <tt>hipThreadIdx_x</tt>.
      */
     __device__ __forceinline__ WarpScan(
         TempStorage &temp_storage)             ///< [in] Reference to memory allocation having layout type TempStorage
@@ -242,7 +242,7 @@ public:
      *     int thread_data = ...
      *
      *     // Compute inclusive warp-wide prefix sums
-     *     int warp_id = threadIdx.x / 32;
+     *     int warp_id = hipThreadIdx_x / 32;
      *     WarpScan(temp_storage[warp_id]).InclusiveSum(thread_data, thread_data);
      *
      * \endcode
@@ -285,7 +285,7 @@ public:
      *
      *     // Compute inclusive warp-wide prefix sums
      *     int warp_aggregate;
-     *     int warp_id = threadIdx.x / 32;
+     *     int warp_id = hipThreadIdx_x / 32;
      *     WarpScan(temp_storage[warp_id]).InclusiveSum(thread_data, thread_data, warp_aggregate);
      *
      * \endcode
@@ -336,7 +336,7 @@ public:
      *     int thread_data = ...
      *
      *     // Compute exclusive warp-wide prefix sums
-     *     int warp_id = threadIdx.x / 32;
+     *     int warp_id = hipThreadIdx_x / 32;
      *     WarpScan(temp_storage[warp_id]).ExclusiveSum(thread_data, thread_data);
      *
      * \endcode
@@ -382,7 +382,7 @@ public:
      *
      *     // Compute exclusive warp-wide prefix sums
      *     int warp_aggregate;
-     *     int warp_id = threadIdx.x / 32;
+     *     int warp_id = hipThreadIdx_x / 32;
      *     WarpScan(temp_storage[warp_id]).ExclusiveSum(thread_data, thread_data, warp_aggregate);
      *
      * \endcode
@@ -432,7 +432,7 @@ public:
      *     int thread_data = ...
      *
      *     // Compute inclusive warp-wide prefix max scans
-     *     int warp_id = threadIdx.x / 32;
+     *     int warp_id = hipThreadIdx_x / 32;
      *     WarpScan(temp_storage[warp_id]).InclusiveScan(thread_data, thread_data, cub::Max());
      *
      * \endcode
@@ -479,7 +479,7 @@ public:
      *
      *     // Compute inclusive warp-wide prefix max scans
      *     int warp_aggregate;
-     *     int warp_id = threadIdx.x / 32;
+     *     int warp_id = hipThreadIdx_x / 32;
      *     WarpScan(temp_storage[warp_id]).InclusiveScan(
      *         thread_data, thread_data, cub::Max(), warp_aggregate);
      *
@@ -535,7 +535,7 @@ public:
      *     int thread_data = ...
      *
      *     // Compute exclusive warp-wide prefix max scans
-     *     int warp_id = threadIdx.x / 32;
+     *     int warp_id = hipThreadIdx_x / 32;
      *     WarpScan(temp_storage[warp_id]).ExclusiveScan(thread_data, thread_data, cub::Max());
      *
      * \endcode
@@ -592,7 +592,7 @@ public:
      *     int thread_data = ...
      *
      *     // Compute exclusive warp-wide prefix max scans
-     *     int warp_id = threadIdx.x / 32;
+     *     int warp_id = hipThreadIdx_x / 32;
      *     WarpScan(temp_storage[warp_id]).ExclusiveScan(thread_data, thread_data, INT_MIN, cub::Max());
      *
      * \endcode
@@ -651,7 +651,7 @@ public:
      *
      *     // Compute exclusive warp-wide prefix max scans
      *     int warp_aggregate;
-     *     int warp_id = threadIdx.x / 32;
+     *     int warp_id = hipThreadIdx_x / 32;
      *     WarpScan(temp_storage[warp_id]).ExclusiveScan(thread_data, thread_data, cub::Max(), warp_aggregate);
      *
      * \endcode
@@ -712,7 +712,7 @@ public:
      *
      *     // Compute exclusive warp-wide prefix max scans
      *     int warp_aggregate;
-     *     int warp_id = threadIdx.x / 32;
+     *     int warp_id = hipThreadIdx_x / 32;
      *     WarpScan(temp_storage[warp_id]).ExclusiveScan(thread_data, thread_data, INT_MIN, cub::Max(), warp_aggregate);
      *
      * \endcode
@@ -840,7 +840,7 @@ public:
      *     int thread_data = ...
      *
      *     // Compute inclusive warp-wide prefix max scans
-     *     int warp_id = threadIdx.x / 32;
+     *     int warp_id = hipThreadIdx_x / 32;
      *     int inclusive_partial, exclusive_partial;
      *     WarpScan(temp_storage[warp_id]).Scan(thread_data, inclusive_partial, exclusive_partial, INT_MIN, cub::Max());
      *
@@ -908,7 +908,7 @@ public:
      *     int thread_data = ...
      *
      *     // Broadcast from lane0 in each warp to all other threads in the warp
-     *     int warp_id = threadIdx.x / 32;
+     *     int warp_id = hipThreadIdx_x / 32;
      *     thread_data = WarpScan(temp_storage[warp_id]).Broadcast(thread_data, 0);
      *
      * \endcode

@@ -506,15 +506,13 @@ enum GenMode
  * Initialize value
  */
 template <typename T>
-__host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, T &value, int index = 0)
+__forceinline__ void InitValue(GenMode gen_mode, T &value, int index = 0)
 {
     switch (gen_mode)
     {
 #if (CUB_PTX_ARCH == 0)
     case RANDOM:
-#ifdef __HIP_PLATFORM_NVCC__ //Not buildable on HCC
          RandomBits(value);
-#endif
          break;
 #endif
      case UNIFORM:
@@ -531,16 +529,14 @@ __host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, T &value, i
 /**
  * Initialize value (bool)
  */
-__host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, bool &value, int index = 0)
+/*__host__ __device__*/ __forceinline__ void InitValue(GenMode gen_mode, bool &value, int index = 0)
 {
     switch (gen_mode)
     {
 #if (CUB_PTX_ARCH == 0)
     case RANDOM:
         char c;
-#ifdef __HIP_PLATFORM_NVCC__ //Not buildable on HCC
         RandomBits(c, 0, 0, 1);
-#endif
         value = (c > 0);
         break;
 #endif
@@ -566,7 +562,7 @@ __host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, cub::NullTy
  * cub::KeyValuePair<OffsetT, ValueT>test initialization
  */
 template <typename KeyT, typename ValueT>
-__host__ __device__ __forceinline__ void InitValue(
+/*__host__ __device__*/ __forceinline__ void InitValue(
     GenMode                             gen_mode,
     cub::KeyValuePair<KeyT, ValueT>&    value,
     int                                 index = 0)
@@ -1085,7 +1081,7 @@ std::ostream& operator<<(std::ostream& os, const TestFoo& val)
 /**
  * TestFoo test initialization
  */
-__host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, TestFoo &value, int index = 0)
+__forceinline__ void InitValue(GenMode gen_mode, TestFoo &value, int index = 0)
 {
     InitValue(gen_mode, value.x, index);
     InitValue(gen_mode, value.y, index);
@@ -1207,7 +1203,7 @@ std::ostream& operator<<(std::ostream& os, const TestBar& val)
 /**
  * TestBar test initialization
  */
-__host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, TestBar &value, int index = 0)
+__forceinline__ void InitValue(GenMode gen_mode, TestBar &value, int index = 0)
 {
     InitValue(gen_mode, value.x, index);
     InitValue(gen_mode, value.y, index);
