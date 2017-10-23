@@ -89,7 +89,7 @@ namespace cub {
  *
  *     // Load a tile of data striped across threads
  *     int thread_data[4];
- *     cub::LoadDirectStriped<128>(threadIdx.x, d_data, thread_data);
+ *     cub::LoadDirectStriped<128>(hipThreadIdx_x, d_data, thread_data);
  *
  *     // Collectively exchange data into a blocked arrangement across threads
  *     BlockExchange(temp_storage).StripedToBlocked(thread_data);
@@ -154,14 +154,17 @@ private:
      ******************************************************************************/
 
     /// Shared memory storage layout type
-#ifdef __HIP_PLATFORM_NVCC__
+    #ifdef __HIP_PLATFORM_NVCC__
     struct __align__(16) _TempStorage
-#elif defined(__HIP_PLATFORM_HCC__)
-    struct __attribute__((aligned(16))) _TempStorage
-#endif
     {
         InputT buff[TIME_SLICED_ITEMS + PADDING_ITEMS];
     };
+    #elif defined(__HIP_PLATFORM_HCC__)
+    struct __attribute__((aligned(16))) _TempStorage
+    {
+        InputT buff[TIME_SLICED_ITEMS + PADDING_ITEMS];
+    };
+    #endif
 
 public:
 
@@ -303,7 +306,7 @@ private:
             temp_storage.buff[item_offset] = input_items[ITEM];
         }
 
-        WARP_SYNC(0xffffffff);
+        __threadfence_block();
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -333,7 +336,7 @@ private:
                 temp_storage.buff[item_offset] = input_items[ITEM];
             }
 
-            WARP_SYNC(0xffffffff);
+            __threadfence_block();
 
             #pragma unroll
             for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -359,7 +362,7 @@ private:
                     temp_storage.buff[item_offset] = input_items[ITEM];
                 }
 
-                WARP_SYNC(0xffffffff);
+                __threadfence_block();
 
                 #pragma unroll
                 for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -481,7 +484,7 @@ private:
             temp_storage.buff[item_offset] = input_items[ITEM];
         }
 
-        WARP_SYNC(0xffffffff);
+        __threadfence_block();
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -517,7 +520,7 @@ private:
                     temp_storage.buff[item_offset] = input_items[ITEM];
                 }
 
-                WARP_SYNC(0xffffffff);
+                __threadfence_block();
 
                 #pragma unroll
                 for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -767,7 +770,7 @@ public:
      *
      *     // Load a tile of ordered data into a striped arrangement across block threads
      *     int thread_data[4];
-     *     cub::LoadDirectStriped<128>(threadIdx.x, d_data, thread_data);
+     *     cub::LoadDirectStriped<128>(hipThreadIdx_x, d_data, thread_data);
      *
      *     // Collectively exchange data into a blocked arrangement across threads
      *     BlockExchange(temp_storage).StripedToBlocked(thread_data, thread_data);
@@ -818,7 +821,7 @@ public:
      *     BlockExchange(temp_storage).BlockedToStriped(thread_data, thread_data);
      *
      *     // Store data striped across block threads into an ordered tile
-     *     cub::StoreDirectStriped<STORE_DEFAULT, 128>(threadIdx.x, d_data, thread_data);
+     *     cub::StoreDirectStriped<STORE_DEFAULT, 128>(hipThreadIdx_x, d_data, thread_data);
      *
      * \endcode
      * \par
@@ -862,7 +865,7 @@ public:
      *
      *     // Load a tile of ordered data into a warp-striped arrangement across warp threads
      *     int thread_data[4];
-     *     cub::LoadSWarptriped<LOAD_DEFAULT>(threadIdx.x, d_data, thread_data);
+     *     cub::LoadSWarptriped<LOAD_DEFAULT>(hipThreadIdx_x, d_data, thread_data);
      *
      *     // Collectively exchange data into a blocked arrangement across threads
      *     BlockExchange(temp_storage).WarpStripedToBlocked(thread_data);
@@ -916,7 +919,7 @@ public:
      *     BlockExchange(temp_storage).BlockedToWarpStriped(thread_data, thread_data);
      *
      *     // Store data striped across warp threads into an ordered tile
-     *     cub::StoreDirectStriped<STORE_DEFAULT, 128>(threadIdx.x, d_data, thread_data);
+     *     cub::StoreDirectStriped<STORE_DEFAULT, 128>(hipThreadIdx_x, d_data, thread_data);
      *
      * \endcode
      * \par
@@ -1225,7 +1228,7 @@ public:
             temp_storage.buff[ranks[ITEM]] = items[ITEM];
         }
 
-        WARP_SYNC(0xffffffff);
+        __threadfence_block();
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)

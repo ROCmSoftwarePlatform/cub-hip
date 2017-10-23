@@ -70,10 +70,11 @@ template <
     typename                ReductionOpT>               ///< Binary reduction functor type having member <tt>T operator()(const T &a, const T &b)</tt>
 #ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS))
-#elif defined(__HIP_PLATFORM_HCC__)
-__launch_bounds__(256)
+
 #endif
-__global__ void DeviceReduceKernel(
+__global__
+__attribute__((weak))
+void DeviceReduceKernel(
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
     OffsetT                 num_items,                  ///< [in] Total number of input data items
@@ -118,10 +119,11 @@ template <
     typename                OuputT>                     ///< Data element type that is convertible to the \p value type of \p OutputIteratorT
 #ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::SingleTilePolicy::BLOCK_THREADS), 1)
-#elif defined(__HIP_PLATFORM_HCC__)
-__launch_bounds__(256)
+
 #endif
-__global__ void DeviceReduceSingleTileKernel(
+__global__
+__attribute__((weak))
+ void DeviceReduceSingleTileKernel(
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
     OffsetT                 num_items,                  ///< [in] Total number of input data items
@@ -194,8 +196,7 @@ template <
     typename                OutputT>                    ///< Data element type that is convertible to the \p value type of \p OutputIteratorT
 #ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS))
-#elif defined(__HIP_PLATFORM_HCC__)
-__launch_bounds__(256)
+
 #endif
 __global__ void DeviceSegmentedReduceKernel(
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items

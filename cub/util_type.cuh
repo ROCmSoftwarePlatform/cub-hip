@@ -695,10 +695,13 @@ struct KeyValuePair
 {
     typedef _Key    Key;                ///< Key data type
     typedef _Value  Value;              ///< Value data type
-
+#ifdef __HIP_PLATFORM_HCC__
+    alignas(8) Key     key;                        ///< Item key
+    alignas(8) Value   value;                      ///< Item value
+#elif defined(__HIP_PLATFORM_NVCC__)
     Key     key;                        ///< Item key
     Value   value;                      ///< Item value
-
+#endif
     /// Constructor
     __host__ __device__ __forceinline__
     KeyValuePair() {}
@@ -1030,7 +1033,7 @@ struct BaseTraits<UNSIGNED_INTEGER, true, false, _UnsignedBits, T>
 #ifdef __HIP_PLATFORM_NVCC__
         return reinterpret_cast<T&>(retval);
 #else
-        return (T)(retval);
+        return (T)retval;
 #endif
     }
 
@@ -1040,7 +1043,7 @@ struct BaseTraits<UNSIGNED_INTEGER, true, false, _UnsignedBits, T>
 #ifdef __HIP_PLATFORM_NVCC__
         return reinterpret_cast<T&>(retval);
 #else
-        return (T)(retval);
+        return (T)retval;
 #endif
     }
 };
@@ -1081,7 +1084,7 @@ struct BaseTraits<SIGNED_INTEGER, true, false, _UnsignedBits, T>
 #ifdef __HIP_PLATFORM_NVCC__
         return reinterpret_cast<T&>(retval);
 #else
-        return (T)(retval);
+        return (T)retval;
 #endif
     }
 
@@ -1091,7 +1094,7 @@ struct BaseTraits<SIGNED_INTEGER, true, false, _UnsignedBits, T>
 #ifdef __HIP_PLATFORM_NVCC__
         return reinterpret_cast<T&>(retval);
 #else
-        return (T)(retval);
+        return (T)retval;
 #endif
     }
 };

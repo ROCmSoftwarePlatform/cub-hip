@@ -83,7 +83,7 @@ __host__ __device__ __forceinline__ hipError_t Debug(
 #endif
     #elif (CUB_PTX_ARCH >= 200)
 #ifdef __HIP_PLATFORM_NVCC__
-        printf("CUDA error %d [block (%d,%d,%d) thread (%d,%d,%d), %s, %d]\n", error, blockIdx.z, blockIdx.y, blockIdx.x, threadIdx.z, threadIdx.y, threadIdx.x, filename, line);
+        printf("CUDA error %d [block (%d,%d,%d) thread (%d,%d,%d), %s, %d]\n", error, hipBlockIdx_z, hipBlockIdx_y, hipBlockIdx_x, hipThreadIdx_z, hipThreadIdx_y, hipThreadIdx_x, filename, line);
 #endif
     #endif
     }
@@ -116,7 +116,7 @@ __host__ __device__ __forceinline__ hipError_t Debug(
         #if (CUB_PTX_ARCH == 0)
             #define _CubLog(format, ...) printf(format,__VA_ARGS__);
         #elif (CUB_PTX_ARCH >= 200)
-            #define _CubLog(format, ...) printf("[block (%d,%d,%d), thread (%d,%d,%d)]: " format, blockIdx.z, blockIdx.y, blockIdx.x, threadIdx.z, threadIdx.y, threadIdx.x, __VA_ARGS__);
+            #define _CubLog(format, ...) printf("[block (%d,%d,%d), thread (%d,%d,%d)]: " format, hipBlockIdx_z, hipBlockIdx_y, hipBlockIdx_x, hipThreadIdx_z, hipThreadIdx_y, hipThreadIdx_x, __VA_ARGS__);
         #endif
     #else
         // XXX shameless hack for clang around variadic printf...
@@ -128,7 +128,7 @@ __host__ __device__ __forceinline__ hipError_t Debug(
             inline __host__ __device__ void va_printf(char const* format, Args const&... args)
             {
         #ifdef __CUDA_ARCH__
-              printf(format, blockIdx.z, blockIdx.y, blockIdx.x, threadIdx.z, threadIdx.y, threadIdx.x, args...);
+              printf(format, hipBlockIdx_z, hipBlockIdx_y, hipBlockIdx_x, hipThreadIdx_z, hipThreadIdx_y, hipThreadIdx_x, args...);
         #else
               printf(format, args...);
         #endif

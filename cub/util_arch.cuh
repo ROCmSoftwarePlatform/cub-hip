@@ -71,8 +71,14 @@ namespace cub {
 
 /// Number of threads per warp
 #ifndef CUB_LOG_WARP_THREADS
+    #ifdef __HIP_PLATFORM_NVCC__
     #define CUB_LOG_WARP_THREADS(arch)                      \
         (5)
+    #endif
+    #ifdef __HIP_PLATFORM_HCC__
+    #define CUB_LOG_WARP_THREADS(arch)                      \
+        (6)
+    #endif
     #define CUB_WARP_THREADS(arch)                          \
         (1 << CUB_LOG_WARP_THREADS(arch))
 

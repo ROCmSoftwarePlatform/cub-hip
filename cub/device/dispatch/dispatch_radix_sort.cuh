@@ -1004,6 +1004,7 @@ struct DispatchRadixSort :
     }
 
 
+
     //------------------------------------------------------------------------------
     // Normal problem size invocation
     //------------------------------------------------------------------------------
@@ -1012,16 +1013,15 @@ struct DispatchRadixSort :
      * Invoke a three-kernel sorting pass at the current bit.
      */
     template <typename PassConfigT>
-    __forceinline__
-    hipError_t InvokePass(
-        const KeyT      *d_keys_in,
+    hipError_t  InvokePass(
+        KeyT      *d_keys_in,
         KeyT            *d_keys_out,
-        const ValueT    *d_values_in,
+        ValueT    *d_values_in,
         ValueT          *d_values_out,
         OffsetT         *d_spine,
         int             spine_length,
-        int             &current_bit,
-        PassConfigT     &pass_config)
+        int             current_bit,
+        PassConfigT     pass_config)
     {
         hipError_t error = hipSuccess;
         do
@@ -1035,10 +1035,10 @@ struct DispatchRadixSort :
                 pass_config.upsweep_config.items_per_thread, pass_config.upsweep_config.sm_occupancy, current_bit, pass_bits);
 
             // Invoke upsweep_kernel with same grid size as downsweep_kernel
-#ifdef __HIP_PLATFORM_HCC__
+/*#ifdef __HIP_PLATFORM_HCC__
             auto kernel_ptr = pass_config.upsweep_kernel; 
             static const auto tmp = make_forwarder(kernel_ptr);
-            hipLaunchKernel(tmp, pass_config.even_share.grid_size, pass_config.upsweep_config.block_threads, 0, stream,
+            //hipLaunchKernel(tmp, 1, 1, 0, stream,
 #elif defined (__HIP_PLATFORM_NVCC__)
             hipLaunchKernelGGL(pass_config.upsweep_kernel, pass_config.even_share.grid_size, pass_config.upsweep_config.block_threads, 0, stream,
 #endif
@@ -1047,7 +1047,7 @@ struct DispatchRadixSort :
                 num_items,
                 current_bit,
                 pass_bits,
-                pass_config.even_share);
+                pass_config.even_share);*/
 
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;

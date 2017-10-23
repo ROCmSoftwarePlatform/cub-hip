@@ -295,7 +295,7 @@ struct CommandLineArgs
                     (unsigned long long) device_free_physmem / 1024 / 1024,
                     (unsigned long long) device_total_physmem / 1024 / 1024,
                     device_giga_bandwidth,
-                    deviceProp.memoryClockRate);
+                    deviceProp.memoryClockRate, "off");
                     //(deviceProp.ECCEnabled) ? "on" : "off"); Disabled by Neel
                 fflush(stdout);
             }

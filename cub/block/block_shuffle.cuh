@@ -197,7 +197,7 @@ public:
 
         CTA_SYNC();
 
-        unsigned int offset = threadIdx.x + distance;
+        unsigned int offset = hipThreadIdx_x + distance;
         if (offset >= BLOCK_THREADS)
             offset -= BLOCK_THREADS;
 

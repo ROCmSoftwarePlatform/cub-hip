@@ -110,10 +110,13 @@ struct Sum
 {
     /// Boolean sum operator, returns <tt>a + b</tt>
     template <typename T>
-    __host__ __device__ __forceinline__ T operator()(const T &a, const T &b) const
+    __host__ __device__ __forceinline__
+    T operator()(const T &a, const T &b) const
     {
         return a + b;
     }
+    uint8_t _dummyPad;
+    __device__ __host__ ~Sum(){};
 };
 
 
@@ -124,10 +127,13 @@ struct Max
 {
     /// Boolean max operator, returns <tt>(a > b) ? a : b</tt>
     template <typename T>
-    __host__ __device__ __forceinline__ T operator()(const T &a, const T &b) const
+    __host__ __device__ __forceinline__
+    T operator()(const T &a, const T &b) const
     {
         return CUB_MAX(a, b);
     }
+    uint8_t _dummyPad;
+    __device__ __host__ ~Max(){};
 };
 
 
@@ -229,6 +235,7 @@ public:
 
       return scan_op(_b, _a);
     }
+  __host__ __device__ ~SwizzleScanOp(){}
 };
 
 
@@ -273,6 +280,7 @@ struct ReduceBySegmentOp
                 op(first.value, second.value);          // The second partial reduction does not span a reset, so accumulate both into the running aggregate
         return retval;
     }
+  __host__ __device__ ~ReduceBySegmentOp(){}
 };
 
 
@@ -302,6 +310,7 @@ struct ReduceByKeyOp
 
         return retval;
     }
+   __host__ __device__ ~ReduceByKeyOp(){}
 };
 
 

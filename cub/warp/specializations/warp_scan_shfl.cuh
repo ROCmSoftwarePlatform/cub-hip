@@ -515,8 +515,8 @@ struct WarpScanShfl
 
         // Perform scan op if from a valid peer
         _T output = scan_op(temp, input);
-       // if (static_cast<int>(lane_id) < first_lane + offset)
-       //     output = input;
+        if (static_cast<int>(lane_id) < first_lane + offset)
+           output = input;
 
         
         return LaneId() < first_lane + offset ? input : output;
@@ -532,11 +532,7 @@ struct WarpScanShfl
         int             offset,             ///< [in] Up-offset to pull from
         Int2Type<true>  /*is_small_unsigned*/)  ///< [in] Marker type indicating whether T is a small integer
     {
-        unsigned int temp = *reinterpret_cast<unsigned int*>(&input);//reinterpret_cast<unsigned int &>(input);
-
-        temp = InclusiveScanStep(temp, scan_op, first_lane, offset);
-
-        return *reinterpret_cast<_T*>(&temp);
+        return InclusiveScanStep(input, scan_op, first_lane, offset);
     }
 
 
@@ -638,7 +634,7 @@ struct WarpScanShfl
 
         KeyT pred_key = ShuffleUp(inclusive_output.key, 1, 0, member_mask);
 
-        unsigned int ballot = WARP_BALLOT((pred_key != inclusive_output.key), member_mask);
+        unsigned int ballot = __ballot((pred_key != inclusive_output.key), member_mask);
 
         // Mask away all lanes greater than ours
         ballot = ballot & LaneMaskLe();
@@ -650,7 +646,7 @@ struct WarpScanShfl
         InclusiveScanStep(inclusive_output.value, scan_op.op, segment_first_lane, Int2Type<0>());
 
         // Iterate scan steps
-/*        #pragma unroll
+        #pragma unroll
         for (int STEP = 0; STEP < STEPS; STEP++)
         {
             inclusive_output.value = InclusiveScanStep(
@@ -660,7 +656,7 @@ struct WarpScanShfl
                 (1 << STEP),
                 Int2Type<IntegerTraits<T>::IS_SMALL_UNSIGNED>());
         }  
-*/
+
     }
 
 

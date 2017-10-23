@@ -801,8 +801,7 @@ int main(int argc, char** argv)
         Test<short>();
         Test<int>();
         Test<long long>();
-        if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
-            Test<double>();
+        Test<double>();
 
         Test<float>();
 

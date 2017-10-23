@@ -64,7 +64,7 @@ struct WarpReduceSmem
         IS_ARCH_WARP = (LOGICAL_WARP_THREADS == CUB_WARP_THREADS(PTX_ARCH)),
 
         /// Whether the logical warp size is a power-of-two
-        IS_POW_OF_TWO = ((LOGICAL_WARP_THREADS & (LOGICAL_WARP_THREADS - 1)) == 0),
+        IS_POW_OF_TWO = PowerOfTwo<LOGICAL_WARP_THREADS>::VALUE,
 
         /// The number of warp scan steps
         STEPS = Log2<LOGICAL_WARP_THREADS>::VALUE,
@@ -117,8 +117,8 @@ struct WarpReduceSmem
             LaneId() :
             LaneId() % LOGICAL_WARP_THREADS),
         member_mask(!IS_POW_OF_TWO ?
-            (0xffffffff >> (32 - LOGICAL_WARP_THREADS)) :                                       // non-power-of-two subwarps cannot be tiled
-            (0xffffffff >> (32 - LOGICAL_WARP_THREADS)) << (LaneId() / LOGICAL_WARP_THREADS))
+            (0xffffffff >> (64 - LOGICAL_WARP_THREADS)) :                                       // non-power-of-two subwarps cannot be tiled
+            (0xffffffff >> (64 - LOGICAL_WARP_THREADS)) << (LaneId() / LOGICAL_WARP_THREADS))
     {}
 
     /******************************************************************************
@@ -229,7 +229,7 @@ struct WarpReduceSmem
         #endif
 
         // Clip the next segment at the warp boundary if necessary
-        if (LOGICAL_WARP_THREADS != warpSize)
+        if (LOGICAL_WARP_THREADS != 32)
             next_flag = CUB_MIN(next_flag, LOGICAL_WARP_THREADS);
 
         #pragma unroll
