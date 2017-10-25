@@ -82,6 +82,8 @@ struct BlockScanRunningPrefixOp
         running_total(starting_prefix)
     {}
 
+    __host__ __device__ ~BlockScanRunningPrefixOp() {}
+
     /**
      * Prefix callback operator.  Returns the block-wide running_total in thread-0.
      */
