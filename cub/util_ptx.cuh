@@ -140,10 +140,9 @@ unsigned int BFE(
 #if CUB_PTX_ARCH >= 200 && defined(__HIP_PLATFORM_NVCC__)
     asm volatile("bfe.u32 %0, %1, %2, %3;" : "=r"(bits) : "r"((unsigned int) source), "r"(bit_start), "r"(num_bits));
 #else
-    const unsigned int MASK = (1 << num_bits) - 1;
-    bits = (source >> bit_start) & MASK;
+    const unsigned long long MASK = (1ull << num_bits) - 1;
+    return (source >> bit_start) & MASK;
 #endif
-    return bits;
 }
 
 
@@ -163,6 +162,7 @@ unsigned int BFE(
     const unsigned long long MASK = (1ull << num_bits) - 1;
     return (source >> bit_start) & MASK;
 }
+
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 

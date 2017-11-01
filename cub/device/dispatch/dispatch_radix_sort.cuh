@@ -71,10 +71,8 @@ template <
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltUpsweepPolicy::BLOCK_THREADS :
     ChainedPolicyT::ActivePolicy::UpsweepPolicy::BLOCK_THREADS))
-#elif defined(__HIP_PLATFORM_HCC__)
-__launch_bounds__(256)
 #endif
-__global__ void DeviceRadixSortUpsweepKernel(hipLaunchParm lp,
+__global__ void DeviceRadixSortUpsweepKernel(
     const KeyT              *d_keys,                        ///< [in] Input keys buffer
     OffsetT                 *d_spine,                       ///< [out] Privatized (per block) digit histograms (striped, i.e., 0s counts from each block, then 1s counts from each block, etc.)
     OffsetT                 /*num_items*/,                  ///< [in] Total number of input data items
@@ -123,8 +121,6 @@ template <
     typename                OffsetT>                        ///< Signed integer type for global offsets
 #ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ScanPolicy::BLOCK_THREADS), 1)
-#elif defined(__HIP_PLATFORM_HCC__)
-__launch_bounds__(256)
 #endif
 __global__ void RadixSortScanBinsKernel(
     OffsetT                 *d_spine,                       ///< [in,out] Privatized (per block) digit histograms (striped, i.e., 0s counts from each block, then 1s counts from each block, etc.)
@@ -171,8 +167,6 @@ template <
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltDownsweepPolicy::BLOCK_THREADS :
     ChainedPolicyT::ActivePolicy::DownsweepPolicy::BLOCK_THREADS))
-#elif defined(__HIP_PLATFORM_HCC__)
-__launch_bounds__(256)
 #endif
 __global__ void DeviceRadixSortDownsweepKernel(
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
@@ -225,8 +219,6 @@ template <
     typename                OffsetT>                        ///< Signed integer type for global offsets
 #ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::SingleTilePolicy::BLOCK_THREADS), 1)
-#elif defined(__HIP_PLATFORM_HCC__)
-__launch_bounds__(256)
 #endif
 __global__ void DeviceRadixSortSingleTileKernel(
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
@@ -349,8 +341,6 @@ template <
 __launch_bounds__ (int((ALT_DIGIT_BITS) ?
     ChainedPolicyT::ActivePolicy::AltSegmentedPolicy::BLOCK_THREADS :
     ChainedPolicyT::ActivePolicy::SegmentedPolicy::BLOCK_THREADS))
-#elif defined(__HIP_PLATFORM_HCC__)
-__launch_bounds__(256)
 #endif
 __global__ void DeviceSegmentedRadixSortKernel(
     const KeyT              *d_keys_in,                     ///< [in] Input keys buffer
@@ -504,6 +494,7 @@ __global__ void DeviceSegmentedRadixSortKernel(
     // Downsweep
     BlockDownsweepT downsweep(temp_storage.downsweep, bin_offset, num_items, d_keys_in, d_keys_out, d_values_in, d_values_out, current_bit, pass_bits);
     downsweep.ProcessRegion(segment_begin, segment_end);
+
 }
 
 
@@ -645,7 +636,7 @@ struct DeviceRadixSortPolicy
         typedef typename If<KEYS_ONLY, AltUpsweepPolicyKeys, AltUpsweepPolicyPairs>::Type   AltUpsweepPolicy;
 
         // Scan policy
-        typedef AgentScanPolicy <1024, 4, BLOCK_LOAD_VECTORIZE, LOAD_DEFAULT, BLOCK_STORE_VECTORIZE, BLOCK_SCAN_WARP_SCANS> ScanPolicy;
+        typedef AgentScanPolicy <256, 4, BLOCK_LOAD_VECTORIZE, LOAD_DEFAULT, BLOCK_STORE_VECTORIZE, BLOCK_SCAN_WARP_SCANS> ScanPolicy;
 
         // Keys-only downsweep policies
         typedef AgentRadixSortDownsweepPolicy <128, CUB_MAX(1, 14 / SCALE_FACTOR_4B), BLOCK_LOAD_WARP_TRANSPOSE, LOAD_DEFAULT, RADIX_RANK_BASIC, BLOCK_SCAN_WARP_SCANS, PRIMARY_RADIX_BITS>   DownsweepPolicyKeys;
@@ -676,7 +667,7 @@ struct DeviceRadixSortPolicy
         };
 
         // Scan policy
-        typedef AgentScanPolicy <1024, 4, BLOCK_LOAD_VECTORIZE, LOAD_DEFAULT, BLOCK_STORE_VECTORIZE, BLOCK_SCAN_WARP_SCANS> ScanPolicy;
+        typedef AgentScanPolicy <256, 4, BLOCK_LOAD_VECTORIZE, LOAD_DEFAULT, BLOCK_STORE_VECTORIZE, BLOCK_SCAN_WARP_SCANS> ScanPolicy;
 
         // Keys-only downsweep policies
         typedef AgentRadixSortDownsweepPolicy <128,   CUB_MAX(1, 9 / SCALE_FACTOR_4B), BLOCK_LOAD_WARP_TRANSPOSE, LOAD_LDG, RADIX_RANK_MATCH, BLOCK_SCAN_WARP_SCANS, PRIMARY_RADIX_BITS> DownsweepPolicyKeys;
@@ -973,8 +964,8 @@ struct DispatchRadixSort :
 
             // Invoke upsweep_kernel with same grid size as downsweep_kernel
 #ifdef __HIP_PLATFORM_HCC__
-            static const auto tmp = make_forwarder(single_tile_kernel);
-            hipLaunchKernelGGL(tmp, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream, 
+            typedef typename DispatchRadixSort::MaxPolicy       MaxPolicyT;
+            hipLaunchKernelGGL((DeviceRadixSortSingleTileKernel<MaxPolicyT, IS_DESCENDING, KeyT, ValueT, OffsetT>), 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream, 
 #elif defined (__HIP_PLATFORM_NVCC__)
             hipLaunchKernelGGL(single_tile_kernel, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream, 
 #endif
@@ -1021,6 +1012,7 @@ struct DispatchRadixSort :
         OffsetT         *d_spine,
         int             spine_length,
         int             current_bit,
+        bool            alt_sweep,
         PassConfigT     pass_config)
     {
         hipError_t error = hipSuccess;
@@ -1035,19 +1027,36 @@ struct DispatchRadixSort :
                 pass_config.upsweep_config.items_per_thread, pass_config.upsweep_config.sm_occupancy, current_bit, pass_bits);
 
             // Invoke upsweep_kernel with same grid size as downsweep_kernel
-/*#ifdef __HIP_PLATFORM_HCC__
-            auto kernel_ptr = pass_config.upsweep_kernel; 
-            static const auto tmp = make_forwarder(kernel_ptr);
-            //hipLaunchKernel(tmp, 1, 1, 0, stream,
-#elif defined (__HIP_PLATFORM_NVCC__)
-            hipLaunchKernelGGL(pass_config.upsweep_kernel, pass_config.even_share.grid_size, pass_config.upsweep_config.block_threads, 0, stream,
-#endif
+#if defined (__HIP_PLATFORM_HCC__)
+            typedef typename DispatchRadixSort::MaxPolicy       MaxPolicyT;
+            if(alt_sweep == true) {
+                hipLaunchKernelGGL((DeviceRadixSortUpsweepKernel<MaxPolicyT, true, IS_DESCENDING, KeyT, OffsetT>),
+                pass_config.even_share.grid_size, pass_config.upsweep_config.block_threads, 0, stream,
                 d_keys_in,
                 d_spine,
                 num_items,
                 current_bit,
                 pass_bits,
-                pass_config.even_share);*/
+                pass_config.even_share);
+           }else {
+                hipLaunchKernelGGL((DeviceRadixSortUpsweepKernel<MaxPolicyT, false,   IS_DESCENDING, KeyT, OffsetT>),
+                pass_config.even_share.grid_size, pass_config.upsweep_config.block_threads, 0, stream,
+                d_keys_in,
+                d_spine,
+                num_items,
+                current_bit,
+                pass_bits,
+                pass_config.even_share);
+            }
+#elif defined (__HIP_PLATFORM_NVCC__)
+            hipLaunchKernelGGL(pass_config.upsweep_kernel, pass_config.even_share.grid_size, pass_config.upsweep_config.block_threads, 0, stream,
+                d_keys_in,
+                d_spine,
+                num_items,
+                current_bit,
+                pass_bits,
+                pass_config.even_share);
+#endif
 
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;
@@ -1061,8 +1070,8 @@ struct DispatchRadixSort :
 
             // Invoke scan_kernel
 #ifdef __HIP_PLATFORM_HCC__
-            static const auto tmp1 = make_forwarder(pass_config.scan_kernel);
-            hipLaunchKernelGGL(tmp1, 1, pass_config.scan_config.block_threads, 0, stream,
+            typedef typename DispatchRadixSort::MaxPolicy       MaxPolicyT;
+            hipLaunchKernelGGL((RadixSortScanBinsKernel<MaxPolicyT, OffsetT>), 1, pass_config.scan_config.block_threads, 0, stream,
 #elif defined (__HIP_PLATFORM_NVCC__)
             hipLaunchKernelGGL(pass_config.scan_kernel, 1, pass_config.scan_config.block_threads, 0, stream,
 #endif
@@ -1082,11 +1091,9 @@ struct DispatchRadixSort :
 
             // Invoke downsweep_kernel
 #ifdef __HIP_PLATFORM_HCC__
-            static const auto tmp2 = make_forwarder(pass_config.downsweep_kernel);
-            hipLaunchKernelGGL(tmp2, pass_config.even_share.grid_size, pass_config.downsweep_config.block_threads, 0, stream,
-#elif defined (__HIP_PLATFORM_NVCC__)
-            hipLaunchKernelGGL(pass_config.downsweep_kernel, pass_config.even_share.grid_size, pass_config.downsweep_config.block_threads, 0, stream,
-#endif
+        typedef typename DispatchRadixSort::MaxPolicy       MaxPolicyT;
+       if(alt_sweep) {
+            hipLaunchKernelGGL((DeviceRadixSortDownsweepKernel<MaxPolicyT, true,   IS_DESCENDING, KeyT, ValueT, OffsetT>), pass_config.even_share.grid_size, pass_config.downsweep_config.block_threads, 0, stream,
                 d_keys_in,
                 d_keys_out,
                 d_values_in,
@@ -1096,6 +1103,32 @@ struct DispatchRadixSort :
                 current_bit,
                 pass_bits,
                 pass_config.even_share);
+       }else {
+             hipLaunchKernelGGL((DeviceRadixSortDownsweepKernel<MaxPolicyT, false,   IS_DESCENDING, KeyT, ValueT, OffsetT>), pass_config.even_share.grid_size, pass_config.downsweep_config.block_threads, 0, stream,
+                d_keys_in,
+                d_keys_out,
+                d_values_in,
+                d_values_out,
+                d_spine,
+                num_items,
+                current_bit,
+                pass_bits,
+                pass_config.even_share);
+       }
+
+   
+#elif defined (__HIP_PLATFORM_NVCC__)
+            hipLaunchKernelGGL(pass_config.downsweep_kernel, pass_config.even_share.grid_size, pass_config.downsweep_config.block_threads, 0, stream,
+                d_keys_in,
+                d_keys_out,
+                d_values_in,
+                d_values_out,
+                d_spine,
+                num_items,
+                current_bit,
+                pass_bits,
+                pass_config.even_share);
+#endif
 
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;
@@ -1267,7 +1300,7 @@ struct DispatchRadixSort :
                 d_keys.Current(), d_keys_remaining_passes.Current(),
                 d_values.Current(), d_values_remaining_passes.Current(),
                 d_spine, spine_length, current_bit,
-                (current_bit < alt_end_bit) ? alt_pass_config : pass_config))) break;
+               (current_bit < alt_end_bit), (current_bit < alt_end_bit) ? alt_pass_config : pass_config))) break;
 
             // Run remaining passes
             while (current_bit < end_bit)
@@ -1276,7 +1309,7 @@ struct DispatchRadixSort :
                     d_keys_remaining_passes.d_buffers[d_keys_remaining_passes.selector],    d_keys_remaining_passes.d_buffers[d_keys_remaining_passes.selector ^ 1],
                     d_values_remaining_passes.d_buffers[d_keys_remaining_passes.selector],  d_values_remaining_passes.d_buffers[d_keys_remaining_passes.selector ^ 1],
                     d_spine, spine_length, current_bit,
-                    (current_bit < alt_end_bit) ? alt_pass_config : pass_config))) break;;
+                    (current_bit < alt_end_bit), (current_bit < alt_end_bit) ? alt_pass_config : pass_config))) break;;
 
                 // Invert selectors
                 d_keys_remaining_passes.selector ^= 1;
@@ -1477,6 +1510,7 @@ struct DispatchSegmentedRadixSort :
         const ValueT    *d_values_in,
         ValueT          *d_values_out,
         int             &current_bit,
+        bool            alt_segment,
         PassConfigT     &pass_config)
     {
         hipError_t error = hipSuccess;
@@ -1490,17 +1524,33 @@ struct DispatchSegmentedRadixSort :
                     num_segments, pass_config.segmented_config.block_threads, (long long) stream,
                 pass_config.segmented_config.items_per_thread, pass_config.segmented_config.sm_occupancy, current_bit, pass_bits);
 
-#ifdef __HIP_PLATFORM_HCC__
-            static const auto tmp = make_forwarder(pass_config.segmented_kernel);
-            hipLaunchKernelGGL(tmp, num_segments, pass_config.segmented_config.block_threads, 0, stream,
-#elif defined(__HIP_PLATFORM_NVCC__)
+#if defined(__HIP_PLATFORM_NVCC__)
             hipLaunchKernelGGL(pass_config.segmented_kernel, num_segments, pass_config.segmented_config.block_threads, 0, stream,
+                d_keys_in, d_keys_out,
+                d_values_in,  d_values_out,
+                d_begin_offsets, d_end_offsets, num_segments,
+                current_bit, pass_bits);
 #endif
+
+#if defined(__HIP_PLATFORM_HCC__)
+
+            typedef typename DispatchSegmentedRadixSort::MaxPolicy MaxPolicyT;
+            if (alt_segment) {
+                hipLaunchKernelGGL((DeviceSegmentedRadixSortKernel<MaxPolicyT, true,   IS_DESCENDING, KeyT, ValueT, OffsetIteratorT, OffsetT>), num_segments, pass_config.segmented_config.block_threads, 0, stream,
+                d_keys_in, d_keys_out,
+                d_values_in,  d_values_out,
+                d_begin_offsets, d_end_offsets, num_segments,
+                current_bit, pass_bits);
+            } else {
+
+                hipLaunchKernelGGL((DeviceSegmentedRadixSortKernel<MaxPolicyT, false,   IS_DESCENDING, KeyT, ValueT, OffsetIteratorT, OffsetT>), num_segments, pass_config.segmented_config.block_threads, 0, stream,
                 d_keys_in, d_keys_out,
                 d_values_in,  d_values_out,
                 d_begin_offsets, d_end_offsets, num_segments,
                 current_bit, pass_bits);
 
+            }
+#endif
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;
 
@@ -1605,7 +1655,7 @@ struct DispatchSegmentedRadixSort :
                 d_keys.Current(), d_keys_remaining_passes.Current(),
                 d_values.Current(), d_values_remaining_passes.Current(),
                 current_bit,
-                (current_bit < alt_end_bit) ? alt_pass_config : pass_config))) break;
+                (current_bit < alt_end_bit), (current_bit < alt_end_bit) ? alt_pass_config : pass_config))) break;
 
             // Run remaining passes
             while (current_bit < end_bit)
@@ -1614,7 +1664,7 @@ struct DispatchSegmentedRadixSort :
                     d_keys_remaining_passes.d_buffers[d_keys_remaining_passes.selector],    d_keys_remaining_passes.d_buffers[d_keys_remaining_passes.selector ^ 1],
                     d_values_remaining_passes.d_buffers[d_keys_remaining_passes.selector],  d_values_remaining_passes.d_buffers[d_keys_remaining_passes.selector ^ 1],
                     current_bit,
-                    (current_bit < alt_end_bit) ? alt_pass_config : pass_config))) break;
+                   (current_bit < alt_end_bit), (current_bit < alt_end_bit) ? alt_pass_config : pass_config))) break;
 
                 // Invert selectors and update current bit
                 d_keys_remaining_passes.selector ^= 1;
