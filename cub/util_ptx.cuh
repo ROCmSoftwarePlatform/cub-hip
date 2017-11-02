@@ -504,7 +504,6 @@ int RowMajorTid(int block_dim_x, int block_dim_y, int block_dim_z)
  */
 __device__
 __forceinline__
-inline
 unsigned int LaneId()
 {
     unsigned int ret;
@@ -523,7 +522,6 @@ unsigned int LaneId()
  */
 __device__
 __forceinline__
-inline
 unsigned int WarpId()
 {
     unsigned int ret;
@@ -864,7 +862,7 @@ T ShuffleIndex(
  * LABEL_BITS of \p label as the calling thread.
  */
 template <int LABEL_BITS>
-inline __device__ static unsigned int MatchAny(unsigned int label)
+__forceinline__ __device__ static unsigned int MatchAny(unsigned int label)
 {
     unsigned int retval;
 
