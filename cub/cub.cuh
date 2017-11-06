@@ -59,7 +59,7 @@
 #include "device/device_spmv.cuh"
 
 // Grid
-//#include "grid/grid_barrier.cuh"
+#include "grid/grid_barrier.cuh"
 #include "grid/grid_even_share.cuh"
 #include "grid/grid_mapping.cuh"
 #include "grid/grid_queue.cuh"
@@ -86,6 +86,7 @@
 #include "iterator/transform_input_iterator.cuh"
 
 // Util
+#include "util_allocator.cuh"
 #include "util_arch.cuh"
 #include "util_debug.cuh"
 #include "util_device.cuh"
