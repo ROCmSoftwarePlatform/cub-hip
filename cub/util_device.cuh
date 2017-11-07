@@ -244,7 +244,7 @@ static hipError_t SyncStream(hipStream_t stream)
  *
  */
 template <typename KernelPtr>
-CUB_RUNTIME_FUNCTION __forceinline__
+ __forceinline__
 hipError_t MaxSmOccupancy(
     int                 &max_sm_occupancy,          ///< [out] maximum number of thread blocks that can reside on a single SM
     KernelPtr           kernel_ptr,                 ///< [in] Kernel pointer for which to compute SM occupancy
@@ -261,15 +261,19 @@ hipError_t MaxSmOccupancy(
     return CubDebug(hipErrorInvalidConfiguration);
 
 #else
-
-   /* hipError_t err = hipOccupancyMaxActiveBlocksPerMultiprocessor (
+#ifdef __HIP_PLATFORM_NVCC__
+    return hipOccupancyMaxActiveBlocksPerMultiprocessor (
         &max_sm_occupancy,
-        (const void *)kernel_ptr,
+        kernel_ptr,
         block_threads,
         dynamic_smem_bytes);
-    return err;*/
-    max_sm_occupancy = 4;
+#elif defined(__HIP_PLATFORM_HCC__)
+    //TODO: not supported by HIP in hccbackend currently
+    hipDeviceProp_t props;
+    if (hipGetDeviceProperties(&props, 0) != hipSuccess) return hipErrorTbd;
+    max_sm_occupancy = (int)(props.maxThreadsPerMultiProcessor / block_threads);
     return hipSuccess;
+#endif
 
 #endif  // CUB_RUNTIME_ENABLED
 }
@@ -293,7 +297,7 @@ struct KernelConfig
     KernelConfig() : block_threads(0), items_per_thread(0), tile_size(0), sm_occupancy(0) {}
 
     template <typename AgentPolicyT, typename KernelPtrT>
-    CUB_RUNTIME_FUNCTION __forceinline__
+     __forceinline__
     hipError_t Init(KernelPtrT kernel_ptr)
     {
         block_threads        = AgentPolicyT::BLOCK_THREADS;

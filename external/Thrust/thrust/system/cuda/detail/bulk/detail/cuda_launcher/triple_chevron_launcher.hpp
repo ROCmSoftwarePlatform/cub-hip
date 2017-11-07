@@ -60,7 +60,9 @@ template<unsigned int block_size, typename Function, bool by_value = (sizeof(Fun
 
 template<unsigned int block_size, typename Function>
 __global__
+#ifdef __HIP_PLATFORM_NVCC__   // HCC doesn't accomodate launch bounds with variable paramters. It demands integer constants
 __bulk_launch_bounds__(block_size, 0)
+#endif
 void launch_by_value(Function f)
 {
   f();
@@ -82,7 +84,9 @@ struct triple_chevron_launcher_base<block_size,Function,true>
 
 template<unsigned int block_size, typename Function>
 __global__
+#ifdef __HIP_PLATFORM_NVCC__   // HCC doesn't accomodate launch bounds with variable paramters. It demands integer constants
 __bulk_launch_bounds__(block_size, 0)
+#endif
 void launch_by_pointer(hipLaunchParm lp, const Function *f)
 {
   // copy to registers
