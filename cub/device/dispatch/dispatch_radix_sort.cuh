@@ -107,8 +107,10 @@ __global__ void DeviceRadixSortUpsweepKernel(
     CTA_SYNC();
 
     // Write out digit counts (striped)
-#ifdef __HIP_PLATFORM_NVCC__ // TODO:NEEL Enable by Neel after verification
+#ifdef __HIP_PLATFORM_NVCC__
     upsweep.ExtractCounts<IS_DESCENDING>(d_spine, hipGridDim_x, hipBlockIdx_x);
+#else
+    upsweep.ExtractCounts(IS_DESCENDING, d_spine, hipGridDim_x, hipBlockIdx_x);
 #endif
 }
 

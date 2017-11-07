@@ -399,6 +399,17 @@ struct AgentRadixSortUpsweep
         UnpackDigitCounts();
     }
 
+#ifdef __HIP_PLATFORM_HCC__
+    __device__ __forceinline__ void ExtractCounts(bool IS_DESCENDING,
+        OffsetT     *counters,
+        int         bin_stride = 1,
+        int         bin_offset = 0) {
+      if(IS_DESCENDING == true)
+        this->ExtractCounts<true>(counters, bin_stride, bin_offset);
+      else
+        this->ExtractCounts<false>(counters, bin_stride, bin_offset);
+    }
+#endif
 
     /**
      * Extract counts (saving them to the external array)
