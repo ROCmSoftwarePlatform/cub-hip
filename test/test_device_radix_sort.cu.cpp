@@ -940,7 +940,7 @@ void TestValueTypes(
     if (!Equals<KeyT, unsigned long long>::VALUE)
         TestBackend<IS_DESCENDING, KeyT, unsigned long long>(h_keys, num_items, num_segments, h_segment_offsets, begin_bit, end_bit, h_reference_keys, h_reference_ranks);
 
-    TestBackend<IS_DESCENDING, KeyT, TestFoo>               (h_keys, num_items, num_segments, h_segment_offsets, begin_bit, end_bit, h_reference_keys, h_reference_ranks);
+   // TestBackend<IS_DESCENDING, KeyT, TestFoo>               (h_keys, num_items, num_segments, h_segment_offsets, begin_bit, end_bit, h_reference_keys, h_reference_ranks);
 
     // Cleanup
     if (h_reference_ranks) delete[] h_reference_ranks;

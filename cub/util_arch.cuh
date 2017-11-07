@@ -49,19 +49,26 @@ namespace cub {
 
 /// CUB_PTX_ARCH reflects the PTX version targeted by the active compiler pass (or zero during the host pass).
 #ifndef CUB_PTX_ARCH
-    #ifndef __CUDA_ARCH__
+    #if (__HIP_DEVICE_COMPILE__ == 0) //For the host usage ptx arch will be zero
         #define CUB_PTX_ARCH 0
     #else
+#ifdef __HIP_PLATFORM_NVCC__
         #define CUB_PTX_ARCH __CUDA_ARCH__
+#elif defined(__HIP_PLATFORM_HCC__)
+       #define CUB_PTX_ARCH 520
+#endif
     #endif
 #endif
 
-
 /// Whether or not the source targeted by the active compiler pass is allowed to  invoke device kernels or methods from the CUDA runtime API.
 #ifndef CUB_RUNTIME_FUNCTION
-   #if (__HIP_DEVICE_COMPILE__!=1) || (defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__) && defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__))
+   #if !defined(__HIP_DEVICE_COMPILE__) || (defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__) && defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__))
         #define CUB_RUNTIME_ENABLED
+#ifdef __HIP_PLATFORM_NVCC__
         #define CUB_RUNTIME_FUNCTION __host__ __device__
+#else
+        #define CUB_RUNTIME_FUNCTION __host__ __device__ 
+#endif
     #else
         #define CUB_RUNTIME_FUNCTION __host__
     #endif
