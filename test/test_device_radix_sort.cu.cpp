@@ -466,6 +466,7 @@ hipError_t Dispatch(
 /**
  * Simple wrapper kernel to invoke DeviceRadixSort
  */
+#ifdef __HIP_PLATFORM_NVCC__
 template <int IS_DESCENDING, typename KeyT, typename ValueT>
 __global__ void CnpDispatchKernel(
     Int2Type<IS_DESCENDING> is_descending,
@@ -496,6 +497,7 @@ __global__ void CnpDispatchKernel(
     *d_selector             = d_keys.selector;
 #endif
 }
+#endif
 
 
 /**
@@ -521,6 +523,7 @@ hipError_t Dispatch(
     hipStream_t            stream,
     bool                    debug_synchronous)
 {
+#ifdef __HIP_PLATFORM_NVCC__
     // Invoke kernel to invoke device-side dispatch
     hipLaunchKernelGGL(CnpDispatchKernel, 1, 1, 0, stream, 
         is_descending, d_selector, d_temp_storage_bytes, d_cdp_error,
@@ -539,6 +542,7 @@ hipError_t Dispatch(
     hipError_t retval;
     CubDebugExit(hipMemcpy(&retval, d_cdp_error, sizeof(hipError_t) * 1, hipMemcpyDeviceToHost));
     return retval;
+#endif
 }
 
 

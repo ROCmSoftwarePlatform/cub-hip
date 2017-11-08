@@ -343,8 +343,8 @@ void TestModified()
     //thrust::copy_if(d_in_itr, d_in_itr + TEST_VALUES, d_out_itr, SelectOp());
 
     int compare = CompareDeviceResults(h_data, d_copy, TEST_VALUES, g_verbose, g_verbose);
-    printf("\tthrust::copy_if(): %s\n", (compare) ? "FAIL" : "PASS");
-    AssertEquals(0, compare);
+    //printf("\tthrust::copy_if(): %s\n", (compare) ? "FAIL" : "PASS");
+    //AssertEquals(0, compare);
 
     // Cleanup
     if (d_copy) CubDebugExit(g_allocator.DeviceFree(d_copy));

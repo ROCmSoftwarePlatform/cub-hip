@@ -427,9 +427,9 @@ bin/test_device_radix_sort_$(SUFFIX) : test_device_radix_sort.cu.cpp $(DEPS)
 
 test_device_select_unique: bin/test_device_select_unique_$(SUFFIX)
 
-bin/test_device_select_unique_$(SUFFIX) : test_device_select_unique.cu $(DEPS)
+bin/test_device_select_unique_$(SUFFIX) : test_device_select_unique.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_select_unique_$(SUFFIX) test_device_select_unique.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_select_unique_$(SUFFIX) test_device_select_unique.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -438,9 +438,9 @@ bin/test_device_select_unique_$(SUFFIX) : test_device_select_unique.cu $(DEPS)
 
 test_device_select_if: bin/test_device_select_if_$(SUFFIX)
 
-bin/test_device_select_if_$(SUFFIX) : test_device_select_if.cu $(DEPS)
+bin/test_device_select_if_$(SUFFIX) : test_device_select_if.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_select_if_$(SUFFIX) test_device_select_if.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_select_if_$(SUFFIX) test_device_select_if.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 #-------------------------------------------------------------------------------
 # make test_device_reduce_by_key
@@ -448,9 +448,9 @@ bin/test_device_select_if_$(SUFFIX) : test_device_select_if.cu $(DEPS)
 
 test_device_reduce_by_key: bin/test_device_reduce_by_key_$(SUFFIX)
 
-bin/test_device_reduce_by_key_$(SUFFIX) : test_device_reduce_by_key.cu $(DEPS)
+bin/test_device_reduce_by_key_$(SUFFIX) : test_device_reduce_by_key.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_reduce_by_key_$(SUFFIX) test_device_reduce_by_key.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_reduce_by_key_$(SUFFIX) test_device_reduce_by_key.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 #-------------------------------------------------------------------------------
 # make test_device_run_length_encode
@@ -458,9 +458,9 @@ bin/test_device_reduce_by_key_$(SUFFIX) : test_device_reduce_by_key.cu $(DEPS)
 
 test_device_run_length_encode: bin/test_device_run_length_encode_$(SUFFIX)
 
-bin/test_device_run_length_encode_$(SUFFIX) : test_device_run_length_encode.cu $(DEPS)
+bin/test_device_run_length_encode_$(SUFFIX) : test_device_run_length_encode.cu.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_run_length_encode_$(SUFFIX) test_device_run_length_encode.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_device_run_length_encode_$(SUFFIX) test_device_run_length_encode.cu.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 

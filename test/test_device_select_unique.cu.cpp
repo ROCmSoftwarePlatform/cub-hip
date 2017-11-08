@@ -79,7 +79,7 @@ enum Backend
  * Dispatch to unique entrypoint
  */
 template <typename InputIteratorT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
-CUB_RUNTIME_FUNCTION __forceinline__
+ __forceinline__
 hipError_t Dispatch(
     Int2Type<CUB>               dispatch_to,
     int                         timing_timing_iterations,

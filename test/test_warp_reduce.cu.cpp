@@ -65,6 +65,12 @@ struct WrapperFunctor
 
     inline __host__ __device__ WrapperFunctor(OpT op, int num_valid) : op(op), num_valid(num_valid) {}
 
+#ifdef __HIP_PLATFORM_HCC__
+     // Explicit compatible destructor defintion demanded by HCC path
+     __host__ __device__ ~WrapperFunctor() {}
+#endif
+
+
     template <typename T>
     inline __host__ __device__ T operator()(const T &a, const T &b) const
     {

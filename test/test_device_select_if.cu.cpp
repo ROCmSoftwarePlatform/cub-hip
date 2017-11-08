@@ -83,6 +83,11 @@ struct LessThan
     bool operator()(const T &a) const {
         return (a < compare);
     }
+
+#ifdef __HIP_PLATFORM_HCC__
+    // Explicit compatible destructor demands of HCC
+    __host__ __device__ ~LessThan() {}
+#endif
 };
 
 //---------------------------------------------------------------------
@@ -94,7 +99,7 @@ struct LessThan
  * Dispatch to select if entrypoint
  */
 template <typename InputIteratorT, typename FlagIteratorT, typename SelectOpT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
-CUB_RUNTIME_FUNCTION __forceinline__
+__forceinline__
 hipError_t Dispatch(
     Int2Type<CUB>               dispatch_to,
     Int2Type<false>             is_flagged,
@@ -127,7 +132,7 @@ hipError_t Dispatch(
  * Dispatch to partition if entrypoint
  */
 template <typename InputIteratorT, typename FlagIteratorT, typename SelectOpT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
-CUB_RUNTIME_FUNCTION __forceinline__
+__forceinline__
 hipError_t Dispatch(
     Int2Type<CUB>               dispatch_to,
     Int2Type<false>             is_flagged,
@@ -160,7 +165,7 @@ hipError_t Dispatch(
  * Dispatch to select flagged entrypoint
  */
 template <typename InputIteratorT, typename FlagIteratorT, typename SelectOpT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
-CUB_RUNTIME_FUNCTION __forceinline__
+__forceinline__
 hipError_t Dispatch(
     Int2Type<CUB>               dispatch_to,
     Int2Type<true>              is_flagged,
@@ -193,7 +198,7 @@ hipError_t Dispatch(
  * Dispatch to partition flagged entrypoint
  */
 template <typename InputIteratorT, typename FlagIteratorT, typename SelectOpT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
-CUB_RUNTIME_FUNCTION __forceinline__
+__forceinline__
 hipError_t Dispatch(
     Int2Type<CUB>               dispatch_to,
     Int2Type<true>              is_flagged,
@@ -749,7 +754,7 @@ void TestPointer(
     LessThan<T> select_op(compare);
     int num_selected = Solve(h_in, select_op, h_reference, h_flags, num_items);
 
-    if (g_verbose) std::cout << "\nComparison item: " << compare << "\n";
+    //if (g_verbose) std::cout << "\nComparison item: " << compare << "\n";
     printf("\nPointer %s cub::%s::%s %d items, %d selected (select ratio %.3f), %s %d-byte elements\n",
         (IS_PARTITION) ? "DevicePartition" : "DeviceSelect",
         (IS_FLAGGED) ? "Flagged" : "If",
