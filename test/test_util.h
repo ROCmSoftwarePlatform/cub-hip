@@ -314,10 +314,10 @@ int g_num_rand_samples = 0;
 
 
 template <typename T>
-bool IsNaN(T val) { return false; }
+__host__ __device__ bool IsNaN(T val) { return false; }
 
 template<>
-__noinline__ bool IsNaN<float>(float val)
+__host__ __device__ __noinline__ bool IsNaN<float>(float val)
 {
     volatile unsigned int bits = reinterpret_cast<unsigned int &>(val);
 
@@ -326,31 +326,31 @@ __noinline__ bool IsNaN<float>(float val)
 }
 
 template<>
-__noinline__ bool IsNaN<float1>(float1 val)
+__host__ __device__ __noinline__ bool IsNaN<float1>(float1 val)
 {
     return (IsNaN(val.x));
 }
 
 template<>
-__noinline__ bool IsNaN<float2>(float2 val)
+__host__ __device__ __noinline__ bool IsNaN<float2>(float2 val)
 {
     return (IsNaN(val.y) || IsNaN(val.x));
 }
 
 template<>
-__noinline__ bool IsNaN<float3>(float3 val)
+__host__ __device__ __noinline__ bool IsNaN<float3>(float3 val)
 {
     return (IsNaN(val.z) || IsNaN(val.y) || IsNaN(val.x));
 }
 
 template<>
-__noinline__ bool IsNaN<float4>(float4 val)
+__host__ __device__ __noinline__ bool IsNaN<float4>(float4 val)
 {
     return (IsNaN(val.y) || IsNaN(val.x) || IsNaN(val.w) || IsNaN(val.z));
 }
 
 template<>
-__noinline__ bool IsNaN<double>(double val)
+__host__ __device__ __noinline__ bool IsNaN<double>(double val)
 {
     volatile unsigned long long bits = *reinterpret_cast<unsigned long long *>(&val);
 
@@ -359,25 +359,25 @@ __noinline__ bool IsNaN<double>(double val)
 }
 
 template<>
-__noinline__ bool IsNaN<double1>(double1 val)
+__host__ __device__ __noinline__ bool IsNaN<double1>(double1 val)
 {
     return (IsNaN(val.x));
 }
 
 template<>
-__noinline__ bool IsNaN<double2>(double2 val)
+__host__ __device__ __noinline__ bool IsNaN<double2>(double2 val)
 {
     return (IsNaN(val.y) || IsNaN(val.x));
 }
 
 template<>
-__noinline__ bool IsNaN<double3>(double3 val)
+__host__ __device__ __noinline__ bool IsNaN<double3>(double3 val)
 {
     return (IsNaN(val.z) || IsNaN(val.y) || IsNaN(val.x));
 }
 
 template<>
-__noinline__ bool IsNaN<double4>(double4 val)
+__host__ __device__ __noinline__ bool IsNaN<double4>(double4 val)
 {
     return (IsNaN(val.y) || IsNaN(val.x) || IsNaN(val.w) || IsNaN(val.z));
 }
@@ -405,6 +405,67 @@ __noinline__ bool IsNaN<double4>(double4 val)
  * ...                  | ...
  *
  */
+
+#ifdef __HIP_PLATFORM_HCC__
+template <typename K>
+__device__ void RandomBits(
+    K &key,
+    int entropy_reduction = 0,
+    int begin_bit = 0,
+    int end_bit = sizeof(K) * 8)
+{
+    const int NUM_BYTES = sizeof(K);
+    const int WORD_BYTES = sizeof(unsigned int);
+    const int NUM_WORDS = (NUM_BYTES + WORD_BYTES - 1) / WORD_BYTES;
+
+    unsigned int word_buff[NUM_WORDS];
+
+    if (entropy_reduction == -1)
+    {
+        memset((void *) &key, 0, sizeof(key));
+        return;
+    }
+
+    if (end_bit < 0)
+        end_bit = sizeof(K) * 8;
+
+    while (true) 
+    {
+        // Generate random word_buff
+        for (int j = 0; j < NUM_WORDS; j++)
+        {
+            int current_bit = j * WORD_BYTES * 8;
+
+            unsigned int word = 0xffffffff;
+            word &= 0xffffffff << CUB_MAX(0, begin_bit - current_bit);
+            word &= 0xffffffff >> CUB_MAX(0, (current_bit + (WORD_BYTES * 8)) - end_bit);
+
+            for (int i = 0; i <= entropy_reduction; i++)
+            {
+                // Grab some of the higher bits from rand (better entropy, supposedly)
+                word &= mersenne::genrand_int32();
+                g_num_rand_samples++;                
+            }
+
+            word_buff[j] = word;
+        }
+
+        memcpy(&key, word_buff, sizeof(K));
+
+        K copy = key;
+        if (!IsNaN((copy)))
+            break;          // avoids NaNs when generating random floating point numbers
+    }
+}
+
+
+#endif
+
+
+
+
+
+
 template <typename K>
 void RandomBits(
     K &key,
@@ -506,7 +567,7 @@ enum GenMode
  * Initialize value
  */
 template <typename T>
-__forceinline__ void InitValue(GenMode gen_mode, T &value, int index = 0)
+__host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, T &value, int index = 0)
 {
     switch (gen_mode)
     {
@@ -529,7 +590,7 @@ __forceinline__ void InitValue(GenMode gen_mode, T &value, int index = 0)
 /**
  * Initialize value (bool)
  */
-/*__host__ __device__*/ __forceinline__ void InitValue(GenMode gen_mode, bool &value, int index = 0)
+__host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, bool &value, int index = 0)
 {
     switch (gen_mode)
     {
@@ -562,7 +623,7 @@ __host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, cub::NullTy
  * cub::KeyValuePair<OffsetT, ValueT>test initialization
  */
 template <typename KeyT, typename ValueT>
-/*__host__ __device__*/ __forceinline__ void InitValue(
+__host__ __device__ __forceinline__ void InitValue(
     GenMode                             gen_mode,
     cub::KeyValuePair<KeyT, ValueT>&    value,
     int                                 index = 0)
@@ -1081,7 +1142,7 @@ std::ostream& operator<<(std::ostream& os, const TestFoo& val)
 /**
  * TestFoo test initialization
  */
-__forceinline__ void InitValue(GenMode gen_mode, TestFoo &value, int index = 0)
+__host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, TestFoo &value, int index = 0)
 {
     InitValue(gen_mode, value.x, index);
     InitValue(gen_mode, value.y, index);
@@ -1203,7 +1264,7 @@ std::ostream& operator<<(std::ostream& os, const TestBar& val)
 /**
  * TestBar test initialization
  */
-__forceinline__ void InitValue(GenMode gen_mode, TestBar &value, int index = 0)
+__host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, TestBar &value, int index = 0)
 {
     InitValue(gen_mode, value.x, index);
     InitValue(gen_mode, value.y, index);

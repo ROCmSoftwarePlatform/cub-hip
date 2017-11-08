@@ -80,15 +80,24 @@ namespace cub {
     #ifdef __HIP_PLATFORM_NVCC__
     #define CUB_LOG_WARP_THREADS(arch)                      \
         (5)
+    #define CUB_WARP_THREADS(arch)                          \
+        (1 << CUB_LOG_WARP_THREADS(arch))
     #endif
     #ifdef __HIP_PLATFORM_HCC__
     #define CUB_LOG_WARP_THREADS(arch)                      \
         (6)
-    #endif
     #define CUB_WARP_THREADS(arch)                          \
         (1 << CUB_LOG_WARP_THREADS(arch))
+    #endif
 
-    #define CUB_PTX_WARP_THREADS        CUB_WARP_THREADS(CUB_PTX_ARCH)
+#ifdef __HIP_PLATFORM_HCC__
+    #define CUB_PTX_WARP_THREADS        64
+    #define CUB_WARP_THREADS(arch)        64
+#else
+    #define CUB_PTX_WARP_THREADS        32
+    #define CUB_WARP_THREADS(arch)        32
+#endif
+
     #define CUB_PTX_LOG_WARP_THREADS    CUB_LOG_WARP_THREADS(CUB_PTX_ARCH)
 #endif
 
