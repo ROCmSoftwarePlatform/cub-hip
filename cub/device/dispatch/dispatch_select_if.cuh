@@ -43,7 +43,7 @@
 #include "../../grid/grid_queue.cuh"
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
-
+#include "../../hip_helpers/forwarder.hpp"
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
 
@@ -420,7 +420,8 @@ struct DispatchSelectIf
             if (debug_synchronous) _CubLog("Invoking scan_init_kernel<<<%d, %d, 0, %lld>>>()\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
 
             // Invoke scan_init_kernel to initialize tile descriptors
-            hipLaunchKernelGGL(scan_init_kernel, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
+            static auto const tmp = make_forwarder(scan_init_kernel);
+            hipLaunchKernelGGL(tmp, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
                 tile_status,
                 num_tiles,
                 d_num_selected_out);
@@ -457,7 +458,8 @@ struct DispatchSelectIf
                 scan_grid_size.x, scan_grid_size.y, scan_grid_size.z, select_if_config.block_threads, (long long) stream, select_if_config.items_per_thread, range_select_sm_occupancy);
 
             // Invoke select_if_kernel
-            hipLaunchKernelGGL(select_if_kernel, scan_grid_size, select_if_config.block_threads, 0, stream,
+            static const auto tmp1 = make_forwarder(select_if_kernel);
+            hipLaunchKernelGGL(tmp1, scan_grid_size, select_if_config.block_threads, 0, stream,
                 d_in,
                 d_flags,
                 d_selected_out,
@@ -485,7 +487,7 @@ struct DispatchSelectIf
     /**
      * Internal dispatch routine
      */
-    CUB_RUNTIME_FUNCTION __forceinline__
+    __forceinline__
     static hipError_t Dispatch(
         void*                       d_temp_storage,                 ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&                     temp_storage_bytes,             ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation

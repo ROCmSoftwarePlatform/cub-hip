@@ -829,6 +829,11 @@ struct AgentRle
             }
         }
     }
+
+#ifdef __HIP_PLATFORM_HCC__ 
+    // Explicit compatible destructor demands of HCC
+    __host__ __device__ ~AgentRle() {}
+#endif
 };
 
 

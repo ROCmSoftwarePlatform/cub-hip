@@ -541,6 +541,11 @@ struct AgentReduceByKey
         }
     }
 
+#ifdef __HIP_PLATFORM_HCC__
+      // Explicit compatible destructor defintion demands of HCC
+      __host__ __device__ ~AgentReduceByKey() {}
+#endif
+
 };
 
 

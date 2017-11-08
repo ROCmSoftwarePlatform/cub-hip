@@ -694,6 +694,11 @@ struct AgentSelectIf
         }
     }
 
+#ifdef __HIP_PLATFORM_HCC__
+    // Explicit destructor demands of HCC
+    __host__ __device__ ~AgentSelectIf() {} 
+#endif
+
 };
 
 

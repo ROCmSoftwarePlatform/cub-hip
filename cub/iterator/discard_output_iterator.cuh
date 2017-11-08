@@ -95,10 +95,11 @@ private:
     OffsetT pad[CUB_MAX(1, (16 / sizeof(OffsetT) - 1))];
 #endif
 
+
 public:
     // Default constructor
-    __host__ __device__ __forceinline__ DiscardOutputIterator() {offset = 0;}
-   
+    __host__ __device__ __forceinline__ DiscardOutputIterator() {offset =0;}
+  
     /// Constructor
     __host__ __device__ __forceinline__ DiscardOutputIterator(
         OffsetT offset)     ///< Base offset

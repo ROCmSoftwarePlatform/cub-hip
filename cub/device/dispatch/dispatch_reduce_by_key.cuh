@@ -43,6 +43,7 @@
 #include "../../grid/grid_queue.cuh"
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
+#include "../../hip_helpers/forwarder.hpp"
 
 #undef CUB_RUNTIME_FUNCTION
 #define CUB_RUNTIME_FUNCTION  __host__
@@ -435,7 +436,8 @@ struct DispatchReduceByKey
             if (debug_synchronous) _CubLog("Invoking init_kernel<<<%d, %d, 0, %lld>>>()\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
 
             // Invoke init_kernel to initialize tile descriptors
-            hipLaunchKernelGGL(init_kernel, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
+            static auto const tmp = make_forwarder(init_kernel);
+            hipLaunchKernelGGL(tmp, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
                 tile_state,
                 num_tiles,
                 d_num_runs_out);
@@ -470,7 +472,8 @@ struct DispatchReduceByKey
                     start_tile, scan_grid_size, reduce_by_key_config.block_threads, (long long) stream, reduce_by_key_config.items_per_thread, reduce_by_key_sm_occupancy);
 
                 // Invoke reduce_by_key_kernel
-                hipLaunchKernelGGL(reduce_by_key_kernel, scan_grid_size, reduce_by_key_config.block_threads, 0, stream, 
+                static auto const tmp = make_forwarder(reduce_by_key_kernel);
+                hipLaunchKernelGGL(tmp, scan_grid_size, reduce_by_key_config.block_threads, 0, stream, 
                     d_keys_in,
                     d_unique_out,
                     d_values_in,

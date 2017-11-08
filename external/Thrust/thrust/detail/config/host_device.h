@@ -33,11 +33,15 @@
 // XXX this will break if the client does #include <host_defines.h> later
 
 #ifndef __host__
+#ifdef __HIP_PLATFORM_NVCC__
 #define __host__
+#endif
 #endif // __host__
 
 #ifndef __device__
+#ifdef __HIP_PLATFORM_NVCC__
 #define __device__
+#endif
 #endif // __device__
 
 #endif

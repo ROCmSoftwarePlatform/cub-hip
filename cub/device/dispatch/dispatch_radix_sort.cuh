@@ -1561,6 +1561,8 @@ struct DispatchSegmentedRadixSort :
 
             // Update current bit
             current_bit += pass_bits;
+
+            hipDeviceSynchronize();
         }
         while (0);
 
