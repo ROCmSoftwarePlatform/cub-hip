@@ -1011,7 +1011,7 @@ void TestSegments(
 {
     int *h_segment_offsets = new int[max_segments + 1];
 
-    for (int num_segments = max_segments; num_segments > 1; num_segments = (num_segments + 32 - 1) / 32)
+    for (int num_segments = max_segments; num_segments > 1; num_segments = (num_segments + 64 - 1) / 64)
     {
         if (num_items / num_segments < 128 * 1000) {
             // Right now we assign a single thread block to each segment, so lets keep it to under 128K items per segment
@@ -1040,7 +1040,7 @@ void TestSizes(
     int     max_items,
     int     max_segments)
 {
-    for (int num_items = max_items; num_items > 1; num_items = (num_items + 32 - 1) / 32)
+    for (int num_items = max_items; num_items > 1; num_items = (num_items + 64 - 1) / 64)
     {
         TestSegments(h_keys, num_items, max_segments);
     }
@@ -1247,7 +1247,7 @@ int main(int argc, char** argv)
     {
         TestGen<bool>                 (num_items, num_segments);
 
-/*        TestGen<char>                 (num_items, num_segments);
+        TestGen<char>                 (num_items, num_segments);
         TestGen<signed char>          (num_items, num_segments);
         TestGen<unsigned char>        (num_items, num_segments);
 
@@ -1266,7 +1266,7 @@ int main(int argc, char** argv)
         TestGen<float>                (num_items, num_segments);
 
         if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
-            TestGen<double>           (num_items, num_segments);*/
+            TestGen<double>           (num_items, num_segments);
 
     }
 
