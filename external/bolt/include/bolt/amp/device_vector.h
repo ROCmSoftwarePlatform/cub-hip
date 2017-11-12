@@ -65,9 +65,9 @@ namespace amp
     {
     public:
         // Create an AV on the CPU
-        static concurrency::array<T>& getav() restrict(cpu)
+        static hc::array<T>& getav() restrict(cpu)
         {
-            static concurrency::array<T> t{1};
+            static hc::array<T> t{1};
             return t;
         }
     };
@@ -81,7 +81,7 @@ namespace amp
 */
 
 
-template< typename T, template < typename, int RANK = 1 > class CONT= concurrency::array_view >
+template< typename T, template < typename, int RANK = 1 > class CONT= hc::array_view >
 class device_vector
 {
     typedef T* naked_pointer;
@@ -95,8 +95,8 @@ public:
     typedef int size_type;
 
     // These typedefs help define the template template parameter that represents our AMP container
-    typedef concurrency::array_view< T > arrayview_type;
-    typedef concurrency::array< T > array_type;
+    typedef hc::array_view< T > arrayview_type;
+    typedef hc::array< T > array_type;
 
     typedef CONT< T > container_type;
 
@@ -515,7 +515,7 @@ private:
             if( init )
             {
                 //arrayview_type m_devMemoryAV( m_devMemory );
-                Concurrency::parallel_for_each(m_devMemory.get_extent(), [=](Concurrency::index<1> idx) restrict(amp) {
+                hc::parallel_for_each(m_devMemory.get_extent(), [=](hc::index<1> idx) restrict(amp) {
                     m_devMemory[idx] = initValue;
                 });
             }
@@ -537,7 +537,7 @@ private:
     {
 		if( m_Size > 0 )
         {
-			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+			hc::extent<1> ext( static_cast< int >( m_Size ) );
             arrayview_type tmp{ext, (T*)&begin[0]};
             m_devMemory = tmp;
 		}
@@ -561,8 +561,8 @@ private:
     {
 		if( m_Size > 0 )
         {
-			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
-			concurrency::array<value_type> tmp = array_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
+			hc::extent<1> ext( static_cast< int >( m_Size ) );
+			hc::array<value_type> tmp = array_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
 			m_devMemory = tmp.view_as(tmp.get_extent());
 		}
     };
@@ -581,7 +581,7 @@ private:
 			return;
 		if( m_Size > 0 )
         {
-			concurrency::array<value_type> tmp = array_type( m_devMemory );
+			hc::array<value_type> tmp = array_type( m_devMemory );
 			m_devMemory = tmp.view_as(tmp.get_extent());
 		}
     };
@@ -620,8 +620,8 @@ private:
 
 		if( m_Size > 0 )
         {
-			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
-			concurrency::array_view<value_type> tmp = arrayview_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
+			hc::extent<1> ext( static_cast< int >( m_Size ) );
+			hc::array_view<value_type> tmp = arrayview_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
 	        m_devMemory = tmp;
 		}
 		if(discard)
@@ -647,8 +647,8 @@ private:
 
 		if( m_Size > 0 )
         {
-			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
-			concurrency::array<value_type> tmp = array_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
+			hc::extent<1> ext( static_cast< int >( m_Size ) );
+			hc::array<value_type> tmp = array_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
 			m_devMemory = tmp.view_as(tmp.get_extent());
 		}
     };
@@ -670,7 +670,7 @@ private:
     */
     arrayview_type getBuffer( ) const restrict(cpu, amp)
     {
-        concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+        hc::extent<1> ext( static_cast< int >( m_Size ) );
         return m_devMemory.view_as( ext );
     }
 
@@ -687,13 +687,13 @@ private:
     {
 		if(size == static_cast<unsigned int>(m_Size))
 		{
-			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+			hc::extent<1> ext( static_cast< int >( m_Size ) );
 			return m_devMemory.view_as( ext );
 		}
 		else
 		{
 			size_type offset = itr.getIndex();
-			concurrency::extent<1> ext( static_cast< int >( size ) );
+			hc::extent<1> ext( static_cast< int >( size ) );
 			return m_devMemory.section( Concurrency::index<1>(offset), ext );
 		}
     }
@@ -703,13 +703,13 @@ private:
     {
 		if(size == static_cast<unsigned int>(m_Size))
 		{
-			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+			hc::extent<1> ext( static_cast< int >( m_Size ) );
 			return m_devMemory.view_as( ext );
 		}
 		else
 		{
 			size_type offset = itr.getIndex();
-			concurrency::extent<1> ext( static_cast< int >( size ) );
+			hc::extent<1> ext( static_cast< int >( size ) );
 			return m_devMemory.section( Concurrency::index<1>(offset), ext );
 		}
     }
@@ -747,7 +747,7 @@ private:
                 m_devMemory.copy_to(l_tmpBuffer.section( 0, m_devMemory.get_extent().size() ) );
                 arrayview_type l_tmpBufferSectionAV =
                 l_tmpBuffer.section(m_Size, (reqSize - m_Size));
-                concurrency::parallel_for_each(l_tmpBufferSectionAV.extent, [=](Concurrency::index<1> idx) restrict(amp)
+                hc::parallel_for_each(l_tmpBufferSectionAV.extent, [=](hc::index<1> idx) restrict(amp)
                 {
                     l_tmpBufferSectionAV[idx] = val;
                 });
@@ -761,7 +761,7 @@ private:
         else
         {
             arrayview_type l_tmpBufferAV(l_tmpBuffer);
-            Concurrency::parallel_for_each(l_tmpBufferAV.extent, [=](Concurrency::index<1> idx) restrict(amp)
+            hc::parallel_for_each(l_tmpBufferAV.extent, [=](hc::index<1> idx) restrict(amp)
             {
                 l_tmpBufferAV[idx] = val;
             });
@@ -799,7 +799,7 @@ private:
        if( reqSize <= capacity( ) )
            return;
 
-		concurrency::array<value_type> tmp =  array_type( static_cast< int >( reqSize ) );
+		hc::array<value_type> tmp =  array_type( static_cast< int >( reqSize ) );
 		arrayview_type l_tmpBuffer = arrayview_type( tmp );
 		if( m_Size > 0 )
         {
@@ -820,7 +820,7 @@ private:
     */
     size_type capacity( void ) const restrict(cpu, amp)
     {
-        Concurrency::extent<1> ext = m_devMemory.get_extent();
+        hc::extent<1> ext = m_devMemory.get_extent();
         return ext.size();
     }
 
@@ -1312,16 +1312,16 @@ private:
     //  reflected back in the host memory.  However, the complication is that the concurrency::array object
     //  does not expose a synchronize method, whereas the concurrency::array_view does.  These routines
     //  differentiate between the two different containers
-    void synchronize( device_vector< T, concurrency::array >& rhs )
+    void synchronize( device_vector< T, hc::array >& rhs )
     {
     };
-    void synchronize( device_vector< T, concurrency::array_view >& rhs )
+    void synchronize( device_vector< T, hc::array_view >& rhs )
     {
         rhs.m_devMemory.synchronize( );
     };
 
     int m_Size;
-    concurrency::array_view<T, 1> m_devMemory;
+    hc::array_view<T, 1> m_devMemory;
 };
 
 }

@@ -1,8 +1,7 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -39,6 +38,8 @@
 #include "../util_macro.cuh"
 #include "../util_type.cuh"
 #include "../util_namespace.cuh"
+
+#include <hip/hip_runtime.h>
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -155,17 +156,10 @@ private:
      ******************************************************************************/
 
     /// Shared memory storage layout type
-    #ifdef __HIP_PLATFORM_NVCC__
-    struct __align__(16) _TempStorage
+    struct alignas(CUB_MAX(16, alignof(InputT[TIME_SLICED_ITEMS + PADDING_ITEMS]))) _TempStorage
     {
         InputT buff[TIME_SLICED_ITEMS + PADDING_ITEMS];
     };
-    #elif defined(__HIP_PLATFORM_HCC__)
-    struct __attribute__((aligned(16))) _TempStorage
-    {
-        InputT buff[TIME_SLICED_ITEMS + PADDING_ITEMS];
-    };
-    #endif
 
 public:
 
@@ -218,7 +212,7 @@ private:
             temp_storage.buff[item_offset] = input_items[ITEM];
         }
 
-        __syncthreads();
+        CTA_SYNC();
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -247,7 +241,7 @@ private:
             const int SLICE_OFFSET  = SLICE * TIME_SLICED_ITEMS;
             const int SLICE_OOB     = SLICE_OFFSET + TIME_SLICED_ITEMS;
 
-            __syncthreads();
+            CTA_SYNC();
 
             if (warp_id == SLICE)
             {
@@ -260,7 +254,7 @@ private:
                 }
             }
 
-            __syncthreads();
+            CTA_SYNC();
 
             #pragma unroll
             for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -307,7 +301,7 @@ private:
             temp_storage.buff[item_offset] = input_items[ITEM];
         }
 
-        __threadfence_block();
+        WARP_SYNC(0xffffffff);
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -337,7 +331,7 @@ private:
                 temp_storage.buff[item_offset] = input_items[ITEM];
             }
 
-            __threadfence_block();
+            WARP_SYNC(0xffffffff);
 
             #pragma unroll
             for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -351,7 +345,7 @@ private:
         #pragma unroll
         for (unsigned int SLICE = 1; SLICE < TIME_SLICES; ++SLICE)
         {
-            __syncthreads();
+            CTA_SYNC();
 
             if (warp_id == SLICE)
             {
@@ -363,7 +357,7 @@ private:
                     temp_storage.buff[item_offset] = input_items[ITEM];
                 }
 
-                __threadfence_block();
+                WARP_SYNC(0xffffffff);
 
                 #pragma unroll
                 for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -394,7 +388,7 @@ private:
             temp_storage.buff[item_offset] = input_items[ITEM];
         }
 
-        __syncthreads();
+        CTA_SYNC();
 
         // No timeslicing
         #pragma unroll
@@ -425,7 +419,7 @@ private:
             const int SLICE_OFFSET  = SLICE * TIME_SLICED_ITEMS;
             const int SLICE_OOB     = SLICE_OFFSET + TIME_SLICED_ITEMS;
 
-            __syncthreads();
+            CTA_SYNC();
 
             #pragma unroll
             for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -445,7 +439,7 @@ private:
                 }
             }
 
-            __syncthreads();
+            CTA_SYNC();
 
             if (warp_id == SLICE)
             {
@@ -485,7 +479,7 @@ private:
             temp_storage.buff[item_offset] = input_items[ITEM];
         }
 
-        __threadfence_block();
+        WARP_SYNC(0xffffffff);
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -509,7 +503,7 @@ private:
         #pragma unroll
         for (unsigned int SLICE = 0; SLICE < TIME_SLICES; ++SLICE)
         {
-            __syncthreads();
+            CTA_SYNC();
 
             if (warp_id == SLICE)
             {
@@ -521,7 +515,7 @@ private:
                     temp_storage.buff[item_offset] = input_items[ITEM];
                 }
 
-                __threadfence_block();
+                WARP_SYNC(0xffffffff);
 
                 #pragma unroll
                 for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -553,7 +547,7 @@ private:
             temp_storage.buff[item_offset] = input_items[ITEM];
         }
 
-        __syncthreads();
+        CTA_SYNC();
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -579,7 +573,7 @@ private:
         #pragma unroll
         for (int SLICE = 0; SLICE < TIME_SLICES; SLICE++)
         {
-            __syncthreads();
+            CTA_SYNC();
 
             const int SLICE_OFFSET = TIME_SLICED_ITEMS * SLICE;
 
@@ -594,7 +588,7 @@ private:
                 }
             }
 
-            __syncthreads();
+            CTA_SYNC();
 
             if (warp_id == SLICE)
             {
@@ -635,7 +629,7 @@ private:
             temp_storage.buff[item_offset] = input_items[ITEM];
         }
 
-        __syncthreads();
+        CTA_SYNC();
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -665,7 +659,7 @@ private:
             const int SLICE_OFFSET  = SLICE * TIME_SLICED_ITEMS;
             const int SLICE_OOB     = SLICE_OFFSET + TIME_SLICED_ITEMS;
 
-            __syncthreads();
+            CTA_SYNC();
 
             #pragma unroll
             for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -678,7 +672,7 @@ private:
                 }
             }
 
-            __syncthreads();
+            CTA_SYNC();
 
             #pragma unroll
             for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -736,8 +730,8 @@ public:
     :
         temp_storage(temp_storage.Alias()),
         linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z)),
-        warp_id((WARPS == 1) ? 0 : linear_tid / WARP_THREADS),
         lane_id(LaneId()),
+        warp_id((WARPS == 1) ? 0 : linear_tid / WARP_THREADS),
         warp_offset(warp_id * WARP_TIME_SLICED_ITEMS)
     {}
 
@@ -1010,7 +1004,7 @@ public:
                 temp_storage.buff[item_offset] = input_items[ITEM];
         }
 
-        __syncthreads();
+        CTA_SYNC();
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -1049,7 +1043,7 @@ public:
                 temp_storage.buff[item_offset] = input_items[ITEM];
         }
 
-        __syncthreads();
+        CTA_SYNC();
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)
@@ -1229,7 +1223,7 @@ public:
             temp_storage.buff[ranks[ITEM]] = items[ITEM];
         }
 
-        __threadfence_block();
+        WARP_SYNC(0xffffffff);
 
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ITEM++)

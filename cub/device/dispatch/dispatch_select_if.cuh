@@ -1,6 +1,7 @@
+
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,8 +34,6 @@
 
 #pragma once
 
-#include "hip/hip_runtime.h"
-
 #include <stdio.h>
 #include <iterator>
 
@@ -45,57 +44,7 @@
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
 
-#define Dispatch_if(d_temp_storage, temp_storage_bytes, d_in, d_flags, d_selected_out, d_num_selected_out, select_op, equality_op, num_items, stream, debug_synchronous, ptx_version, scan_init_kernel, select_if_kernel, select_if_config)\
-        hipError_t error = hipSuccess;\
-            int device_ordinal;\
-            if (CubDebug(error = hipGetDevice(&device_ordinal))) break;\
-            int sm_count;\
-            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;\
-            int tile_size = select_if_config.block_threads * select_if_config.items_per_thread;\
-            int num_tiles = (num_items + tile_size - 1) / tile_size;\
-            size_t  allocation_sizes[1];\
-            if (CubDebug(error = ScanTileStateT::AllocationSize(num_tiles, allocation_sizes[0]))) break;\
-            void* allocations[1];\
-            if (CubDebug(error = AliasTemporaries(d_temp_storage, temp_storage_bytes, allocations, allocation_sizes))) break;\
-            if (d_temp_storage == NULL)\
-            {\
-                break;\
-            }\
-            ScanTileStateT tile_status;\
-            if (CubDebug(error = tile_status.Init(num_tiles, allocations[0], allocation_sizes[0]))) break;\
-            int init_grid_size = CUB_MAX(1, (num_tiles + INIT_KERNEL_THREADS - 1) / INIT_KERNEL_THREADS);\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(scan_init_kernel), dim3(%d), dim3(%d), 0, %lld, )\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);\
-            hipLaunchKernel(HIP_KERNEL_NAME(scan_init_kernel), dim3(init_grid_size), dim3(INIT_KERNEL_THREADS), 0, stream,\
-                tile_status,\
-                num_tiles,\
-                d_num_selected_out);\
-            if (CubDebug(error = hipPeekAtLastError())) break;\
-            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
-            if (num_items == 0)\
-                break;\
-            int range_select_sm_occupancy;\
-            if (CubDebug(error = MaxSmOccupancy(range_select_sm_occupancy, (const void *)select_if_kernel, select_if_config.block_threads))) break;\
-            int max_dim_x;\
-            if (CubDebug(error = hipDeviceGetAttribute(&max_dim_x, hipDeviceAttributeMaxGridDimX, device_ordinal))) break;\
-            dim3 scan_grid_size;\
-            scan_grid_size.z = 1;\
-            scan_grid_size.y = ((unsigned int) num_tiles + max_dim_x - 1) / max_dim_x;\
-            scan_grid_size.x = CUB_MIN(num_tiles, max_dim_x);\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(select_if_kernel), dim3({%d,%d,%d}), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
-                scan_grid_size.x, scan_grid_size.y, scan_grid_size.z, select_if_config.block_threads, (long long) stream, select_if_config.items_per_thread, range_select_sm_occupancy);\
-            hipLaunchKernel(HIP_KERNEL_NAME(select_if_kernel), dim3(scan_grid_size), dim3(select_if_config.block_threads), 0, stream,\
-                d_in,\
-                d_flags,\
-                d_selected_out,\
-                d_num_selected_out,\
-                tile_status,\
-                select_op,\
-                equality_op,\
-                num_items,\
-                num_tiles);\
-            if (CubDebug(error = hipPeekAtLastError())) break;\
-            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
-        return error
+#include <hip/hip_runtime.h>
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -125,13 +74,8 @@ template <
     typename            EqualityOpT,                ///< Equality operator type (NullType if selection functor or selection flags is to be used for selection)
     typename            OffsetT,                    ///< Signed integer type for global offsets
     bool                KEEP_REJECTS>               ///< Whether or not we push rejected items to the back of the output
-#if !defined(__HIP_PLATFORM_HCC__)
-    __launch_bounds__ (int(AgentSelectIfPolicyT::BLOCK_THREADS), 1)
-#endif
-__global__
-__attribute__((weak))
-void DeviceSelectSweepKernel(
-    hipLaunchParm           lp,
+__launch_bounds__ (int(AgentSelectIfPolicyT::BLOCK_THREADS))
+__global__ void DeviceSelectSweepKernel(
     InputIteratorT          d_in,                   ///< [in] Pointer to the input sequence of data items
     FlagsInputIteratorT     d_flags,                ///< [in] Pointer to the input sequence of selection flags (if applicable)
     SelectedOutputIteratorT d_selected_out,         ///< [out] Pointer to the output sequence of selected data items
@@ -142,6 +86,7 @@ void DeviceSelectSweepKernel(
     OffsetT                 num_items,              ///< [in] Total number of input items (i.e., length of \p d_in)
     int                     num_tiles)              ///< [in] Total number of tiles for the entire problem
 {
+    static_assert(AgentSelectIfPolicyT::BLOCK_THREADS > 0, "");
     // Thread block type for selecting data from input tiles
     typedef AgentSelectIf<
         AgentSelectIfPolicyT,
@@ -395,6 +340,157 @@ struct DispatchSelectIf
      * Internal dispatch routine for computing a device-wide selection using the
      * specified kernel functions.
      */
+    template <
+        typename                    ScanInitKernelPtrT,             ///< Function type of cub::DeviceScanInitKernel
+        typename                    SelectIfKernelPtrT>             ///< Function type of cub::SelectIfKernelPtrT
+    CUB_RUNTIME_FUNCTION __forceinline__
+    static hipError_t Dispatch(
+        void*                       d_temp_storage,                 ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
+        size_t&                     temp_storage_bytes,             ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
+        InputIteratorT              d_in,                           ///< [in] Pointer to the input sequence of data items
+        FlagsInputIteratorT         d_flags,                        ///< [in] Pointer to the input sequence of selection flags (if applicable)
+        SelectedOutputIteratorT     d_selected_out,                 ///< [in] Pointer to the output sequence of selected data items
+        NumSelectedIteratorT        d_num_selected_out,             ///< [in] Pointer to the total number of items selected (i.e., length of \p d_selected_out)
+        SelectOpT                   select_op,                      ///< [in] Selection operator
+        EqualityOpT                 equality_op,                    ///< [in] Equality operator
+        OffsetT                     num_items,                      ///< [in] Total number of input items (i.e., length of \p d_in)
+        hipStream_t                 stream,                         ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        bool                        debug_synchronous,              ///< [in] Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
+        int                         /*ptx_version*/,                ///< [in] PTX version of dispatch kernels
+        ScanInitKernelPtrT          scan_init_kernel,               ///< [in] Kernel function pointer to parameterization of cub::DeviceScanInitKernel
+        SelectIfKernelPtrT          select_if_kernel,               ///< [in] Kernel function pointer to parameterization of cub::DeviceSelectSweepKernel
+        KernelConfig                select_if_config)               ///< [in] Dispatch parameters that match the policy that \p select_if_kernel was compiled for
+    {
+
+#ifndef CUB_RUNTIME_ENABLED
+        (void)d_temp_storage;
+        (void)temp_storage_bytes;
+        (void)d_in;
+        (void)d_flags;
+        (void)d_selected_out;
+        (void)d_num_selected_out;
+        (void)select_op;
+        (void)equality_op;
+        (void)num_items;
+        (void)stream;
+        (void)debug_synchronous;
+        (void)scan_init_kernel;
+        (void)select_if_kernel;
+        (void)select_if_config;
+
+        // Kernel launch not supported from this device
+        return CubDebug(hipErrorNotMapped);
+
+#else
+
+        hipError_t error = hipSuccess;
+        do
+        {
+            // Get device ordinal
+            int device_ordinal;
+            if (CubDebug(error = hipGetDevice(&device_ordinal))) break;
+
+            // Get SM count
+            int sm_count;
+            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;
+
+            // Number of input tiles
+            int tile_size = select_if_config.block_threads * select_if_config.items_per_thread;
+            int num_tiles = (num_items + tile_size - 1) / tile_size;
+
+            // Specify temporary storage allocation requirements
+            size_t  allocation_sizes[1];
+            if (CubDebug(error = ScanTileStateT::AllocationSize(num_tiles, allocation_sizes[0]))) break;    // bytes needed for tile status descriptors
+
+            // Compute allocation pointers into the single storage blob (or compute the necessary size of the blob)
+            void* allocations[1];
+            if (CubDebug(error = AliasTemporaries(d_temp_storage, temp_storage_bytes, allocations, allocation_sizes))) break;
+            if (d_temp_storage == NULL)
+            {
+                // Return if the caller is simply requesting the size of the storage allocation
+                break;
+            }
+
+            // Construct the tile status interface
+            ScanTileStateT tile_status;
+            if (CubDebug(error = tile_status.Init(num_tiles, allocations[0], allocation_sizes[0]))) break;
+
+            // Log scan_init_kernel configuration
+            int init_grid_size = CUB_MAX(1, (num_tiles + INIT_KERNEL_THREADS - 1) / INIT_KERNEL_THREADS);
+            if (debug_synchronous) _CubLog("Invoking scan_init_kernel<<<%d, %d, 0, %lld>>>()\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
+
+            // Invoke scan_init_kernel to initialize tile descriptors
+            hipLaunchKernelGGL(
+                scan_init_kernel,
+                dim3(init_grid_size),
+                dim3(INIT_KERNEL_THREADS),
+                0,
+                stream,
+                tile_status,
+                num_tiles,
+                d_num_selected_out);
+
+            // Check for failure to launch
+            if (CubDebug(error = hipPeekAtLastError())) break;
+
+            // Sync the stream if specified to flush runtime errors
+            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
+
+            // Return if empty problem
+            if (num_items == 0)
+                break;
+
+            // Get SM occupancy for select_if_kernel
+            int range_select_sm_occupancy;
+            if (CubDebug(error = MaxSmOccupancy(
+                range_select_sm_occupancy,            // out
+                select_if_kernel,
+                select_if_config.block_threads))) break;
+
+            // Get max x-dimension of grid
+            int max_dim_x;
+            if (CubDebug(error = hipDeviceGetAttribute(&max_dim_x, hipDeviceAttributeMaxGridDimX, device_ordinal))) break;;
+
+            // Get grid size for scanning tiles
+            dim3 scan_grid_size;
+            scan_grid_size.z = 1;
+            scan_grid_size.y = ((unsigned int) num_tiles + max_dim_x - 1) / max_dim_x;
+            scan_grid_size.x = CUB_MIN(num_tiles, max_dim_x);
+
+            // Log select_if_kernel configuration
+            if (debug_synchronous) _CubLog("Invoking select_if_kernel<<<{%d,%d,%d}, %d, 0, %lld>>>(), %d items per thread, %d SM occupancy\n",
+                scan_grid_size.x, scan_grid_size.y, scan_grid_size.z, select_if_config.block_threads, (long long) stream, select_if_config.items_per_thread, range_select_sm_occupancy);
+
+            // Invoke select_if_kernel
+            hipLaunchKernelGGL(
+                select_if_kernel,
+                dim3(scan_grid_size),
+                dim3(select_if_config.block_threads),
+                0,
+                stream,
+                d_in,
+                d_flags,
+                d_selected_out,
+                d_num_selected_out,
+                tile_status,
+                select_op,
+                equality_op,
+                num_items,
+                num_tiles);
+
+            // Check for failure to launch
+            if (CubDebug(error = hipPeekAtLastError())) break;
+
+            // Sync the stream if specified to flush runtime errors
+            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
+        }
+        while (0);
+
+        return error;
+
+#endif  // CUB_RUNTIME_ENABLED
+    }
+
 
     /**
      * Internal dispatch routine
@@ -427,7 +523,6 @@ struct DispatchSelectIf
             // Get kernel kernel dispatch configurations
             KernelConfig select_if_config;
             InitConfigs(ptx_version, select_if_config);
-/*
             // Dispatch
             if (CubDebug(error = Dispatch(
                 d_temp_storage,
@@ -444,24 +539,7 @@ struct DispatchSelectIf
                 ptx_version,
                 DeviceCompactInitKernel<ScanTileStateT, NumSelectedIteratorT>,
                 DeviceSelectSweepKernel<PtxSelectIfPolicyT, InputIteratorT, FlagsInputIteratorT, SelectedOutputIteratorT, NumSelectedIteratorT, ScanTileStateT, SelectOpT, EqualityOpT, OffsetT, KEEP_REJECTS>,
-                select_if_config))) break;*/
-
-            Dispatch_if(
-                d_temp_storage,
-                temp_storage_bytes,
-                d_in,
-                d_flags,
-                d_selected_out,
-                d_num_selected_out,
-                select_op,
-                equality_op,
-                num_items,
-                stream,
-                debug_synchronous,
-                ptx_version,
-                (DeviceCompactInitKernel<ScanTileStateT, NumSelectedIteratorT>),
-                (DeviceSelectSweepKernel<PtxSelectIfPolicyT, InputIteratorT, FlagsInputIteratorT, SelectedOutputIteratorT, NumSelectedIteratorT, ScanTileStateT, SelectOpT, EqualityOpT, OffsetT, KEEP_REJECTS>),
-                select_if_config);
+                select_if_config))) break;
         }
         while (0);
 

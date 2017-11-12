@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -47,6 +46,8 @@
 
 #include "../../test/test_util.h"
 
+#include <hip/hip_runtime.h>
+
 using namespace cub;
 
 //---------------------------------------------------------------------
@@ -76,7 +77,6 @@ template <
     int                     ITEMS_PER_THREAD,
     BlockScanAlgorithm      ALGORITHM>
 __global__ void BlockPrefixSumKernel(
-    hipLaunchParm lp,
     int         *d_in,          // Tile of input
     int         *d_out,         // Tile of output
     clock_t     *d_elapsed)     // Elapsed cycle count of block scan
@@ -91,14 +91,13 @@ __global__ void BlockPrefixSumKernel(
     typedef BlockScan<int, BLOCK_THREADS, ALGORITHM> BlockScanT;
 
     // Shared memory
-    __shared__ union foo
+    __shared__ union TempStorage
     {
         typename BlockLoadT::TempStorage    load;
         typename BlockStoreT::TempStorage   store;
         typename BlockScanT::TempStorage    scan;
 
-        __host__ __device__
-        ~foo() {}
+        __host__ __device__ ~TempStorage() {}
     } temp_storage;
 
     // Per-thread tile data
@@ -211,7 +210,12 @@ void Test()
         TILE_SIZE, g_timing_iterations, g_grid_size, BLOCK_THREADS, ITEMS_PER_THREAD, max_sm_occupancy);
 
     // Run aggregate/prefix kernel
-    hipLaunchKernel(HIP_KERNEL_NAME(BlockPrefixSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0,
+    hipLaunchKernelGGL(
+        BlockPrefixSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>,
+        dim3(g_grid_size),
+        dim3(BLOCK_THREADS),
+        0,
+        0,
         d_in,
         d_out,
         d_elapsed);
@@ -241,7 +245,12 @@ void Test()
         timer.Start();
 
         // Run aggregate/prefix kernel
-        hipLaunchKernel(HIP_KERNEL_NAME(BlockPrefixSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0,
+        hipLaunchKernelGGL(
+            BlockPrefixSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>,
+            dim3(g_grid_size),
+            dim3(BLOCK_THREADS),
+            0,
+            0,
             d_in,
             d_out,
             d_elapsed);
@@ -313,9 +322,7 @@ int main(int argc, char** argv)
     Test<256, 4, BLOCK_SCAN_RAKING>();
     Test<128, 8, BLOCK_SCAN_RAKING>();
     Test<64, 16, BLOCK_SCAN_RAKING>();
-    #if !defined(__HIP_PLATFORM_HCC__)
-        Test<32, 32, BLOCK_SCAN_RAKING>();
-    #endif
+    Test<32, 32, BLOCK_SCAN_RAKING>();
 
     printf("-------------\n");
 
@@ -324,9 +331,7 @@ int main(int argc, char** argv)
     Test<256, 4, BLOCK_SCAN_RAKING_MEMOIZE>();
     Test<128, 8, BLOCK_SCAN_RAKING_MEMOIZE>();
     Test<64, 16, BLOCK_SCAN_RAKING_MEMOIZE>();
-    #if !defined(__HIP_PLATFORM_HCC__)
-        Test<32, 32, BLOCK_SCAN_RAKING_MEMOIZE>();
-    #endif
+    Test<32, 32, BLOCK_SCAN_RAKING_MEMOIZE>();
 
     printf("-------------\n");
 
@@ -335,9 +340,7 @@ int main(int argc, char** argv)
     Test<256, 4, BLOCK_SCAN_WARP_SCANS>();
     Test<128, 8, BLOCK_SCAN_WARP_SCANS>();
     Test<64, 16, BLOCK_SCAN_WARP_SCANS>();
-    #if !defined(__HIP_PLATFORM_HCC__)
-        Test<32, 32, BLOCK_SCAN_WARP_SCANS>();
-    #endif
+    Test<32, 32, BLOCK_SCAN_WARP_SCANS>();
 
 
     return 0;

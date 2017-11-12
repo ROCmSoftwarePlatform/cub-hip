@@ -1,7 +1,7 @@
 
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,6 +40,8 @@
 
 #include "dispatch/dispatch_histogram.cuh"
 #include "../util_namespace.cuh"
+
+#include <hip/hip_runtime.h>
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -130,7 +132,7 @@ struct DeviceHistogram
         LevelT              lower_level,                                ///< [in] The lower sample value bound (inclusive) for the lowest histogram bin.
         LevelT              upper_level,                                ///< [in] The upper sample value bound (exclusive) for the highest histogram bin.
         OffsetT             num_samples,                                ///< [in] The number of input samples (i.e., the length of \p d_samples)
-        hipStream_t        stream                  = 0,                ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t         stream                  = 0,                ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                debug_synchronous       = false)            ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  May cause significant slowdown.  Default is \p false.
     {
         /// The sample value type of the input iterator
@@ -231,7 +233,7 @@ struct DeviceHistogram
         OffsetT             num_row_samples,                            ///< [in] The number of data samples per row in the region of interest
         OffsetT             num_rows,                                   ///< [in] The number of rows in the region of interest
         size_t              row_stride_bytes,                           ///< [in] The number of bytes between starts of consecutive rows in the region of interest
-        hipStream_t        stream                  = 0,                ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t         stream                  = 0,                ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                debug_synchronous       = false)            ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  May cause significant slowdown.  Default is \p false.
     {
         CounterT*           d_histogram1[1]     = {d_histogram};
@@ -331,7 +333,7 @@ struct DeviceHistogram
         LevelT              lower_level[NUM_ACTIVE_CHANNELS],           ///< [in] The lower sample value bound (inclusive) for the lowest histogram bin in each active channel.
         LevelT              upper_level[NUM_ACTIVE_CHANNELS],           ///< [in] The upper sample value bound (exclusive) for the highest histogram bin in each active channel.
         OffsetT             num_pixels,                                 ///< [in] The number of multi-channel pixels (i.e., the length of \p d_samples / NUM_CHANNELS)
-        hipStream_t        stream                  = 0,                ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t         stream                  = 0,                ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                debug_synchronous       = false)            ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  May cause significant slowdown.  Default is \p false.
     {
         /// The sample value type of the input iterator
@@ -440,7 +442,7 @@ struct DeviceHistogram
         OffsetT             num_row_pixels,                             ///< [in] The number of multi-channel pixels per row in the region of interest
         OffsetT             num_rows,                                   ///< [in] The number of rows in the region of interest
         size_t              row_stride_bytes,                           ///< [in] The number of bytes between starts of consecutive rows in the region of interest
-        hipStream_t        stream                  = 0,                ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t         stream                  = 0,                ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                debug_synchronous       = false)            ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  May cause significant slowdown.  Default is \p false.
     {
         /// The sample value type of the input iterator
@@ -832,7 +834,7 @@ struct DeviceHistogram
         OffsetT             num_row_pixels,                         ///< [in] The number of multi-channel pixels per row in the region of interest
         OffsetT             num_rows,                               ///< [in] The number of rows in the region of interest
         size_t              row_stride_bytes,                       ///< [in] The number of bytes between starts of consecutive rows in the region of interest
-        hipStream_t        stream              = 0,                ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t         stream              = 0,                ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                debug_synchronous   = false)            ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  May cause significant slowdown.  Default is \p false.
     {
         /// The sample value type of the input iterator

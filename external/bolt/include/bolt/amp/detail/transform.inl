@@ -976,8 +976,8 @@ namespace amp{
 		template<typename UnaryFunction, typename Predicate, typename iType, typename oType, typename S>
         struct unary_transform_if_functor
         {
-          alignas(int) UnaryFunction unary_op;
-          alignas(int) Predicate pred;
+          UnaryFunction unary_op;
+          Predicate pred;
 
           unary_transform_if_functor(UnaryFunction unary_op, Predicate pred) restrict(cpu, amp)
             : unary_op(unary_op), pred(pred)

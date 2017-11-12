@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -93,17 +93,14 @@ struct BlockReduceRakingCommutativeOnly
     typedef BlockRakingLayout<T, SHARING_THREADS, PTX_ARCH> BlockRakingLayout;
 
     /// Shared memory storage layout type
-    struct _TempStorage
+    union _TempStorage
     {
-        union
+        struct
         {
-            struct
-            {
-                typename WarpReduce::TempStorage        warp_storage;        ///< Storage for warp-synchronous reduction
-                typename BlockRakingLayout::TempStorage raking_grid;         ///< Padded threadblock raking grid
-            };
-            typename FallBack::TempStorage              fallback_storage;    ///< Fall-back storage for non-commutative block scan
+            typename WarpReduce::TempStorage        warp_storage;        ///< Storage for warp-synchronous reduction
+            typename BlockRakingLayout::TempStorage raking_grid;         ///< Padded thread block raking grid
         };
+        typename FallBack::TempStorage              fallback_storage;    ///< Fall-back storage for non-commutative block scan
     };
 
 
@@ -125,7 +122,7 @@ struct BlockReduceRakingCommutativeOnly
     {}
 
 
-    /// Computes a threadblock-wide reduction using addition (+) as the reduction operator. The first num_valid threads each contribute one reduction partial.  The return value is only valid for thread<sub>0</sub>.
+    /// Computes a thread block-wide reduction using addition (+) as the reduction operator. The first num_valid threads each contribute one reduction partial.  The return value is only valid for thread<sub>0</sub>.
     template <bool FULL_TILE>
     __device__ __forceinline__ T Sum(
         T                   partial,            ///< [in] Calling thread's input partial reductions
@@ -141,14 +138,14 @@ struct BlockReduceRakingCommutativeOnly
             if (linear_tid >= RAKING_THREADS)
                 *BlockRakingLayout::PlacementPtr(temp_storage.raking_grid, linear_tid - RAKING_THREADS) = partial;
 
-            __syncthreads();
+            CTA_SYNC();
 
             // Reduce parallelism to one warp
             if (linear_tid < RAKING_THREADS)
             {
                 // Raking reduction in grid
                 T *raking_segment = BlockRakingLayout::RakingPtr(temp_storage.raking_grid, linear_tid);
-                partial = ThreadReduce<SEGMENT_LENGTH>(raking_segment, cub::Sum(), partial);
+                partial = internal::ThreadReduce<SEGMENT_LENGTH>(raking_segment, cub::Sum(), partial);
 
                 // Warpscan
                 partial = WarpReduce(temp_storage.warp_storage).Sum(partial);
@@ -159,7 +156,7 @@ struct BlockReduceRakingCommutativeOnly
     }
 
 
-    /// Computes a threadblock-wide reduction using the specified reduction operator. The first num_valid threads each contribute one reduction partial.  The return value is only valid for thread<sub>0</sub>.
+    /// Computes a thread block-wide reduction using the specified reduction operator. The first num_valid threads each contribute one reduction partial.  The return value is only valid for thread<sub>0</sub>.
     template <
         bool                FULL_TILE,
         typename            ReductionOp>
@@ -178,14 +175,14 @@ struct BlockReduceRakingCommutativeOnly
             if (linear_tid >= RAKING_THREADS)
                 *BlockRakingLayout::PlacementPtr(temp_storage.raking_grid, linear_tid - RAKING_THREADS) = partial;
 
-            __syncthreads();
+            CTA_SYNC();
 
             // Reduce parallelism to one warp
             if (linear_tid < RAKING_THREADS)
             {
                 // Raking reduction in grid
                 T *raking_segment = BlockRakingLayout::RakingPtr(temp_storage.raking_grid, linear_tid);
-                partial = ThreadReduce<SEGMENT_LENGTH>(raking_segment, reduction_op, partial);
+                partial = internal::ThreadReduce<SEGMENT_LENGTH>(raking_segment, reduction_op, partial);
 
                 // Warpscan
                 partial = WarpReduce(temp_storage.warp_storage).Reduce(partial, reduction_op);

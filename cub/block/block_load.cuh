@@ -1,8 +1,7 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -42,6 +41,8 @@
 #include "../util_macro.cuh"
 #include "../util_type.cuh"
 #include "../util_namespace.cuh"
+
+#include <hip/hip_runtime.h>
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -763,7 +764,7 @@ private:
             CacheModifiedInputIterator<MODIFIER, ValueType, OffsetT>    block_itr,                      ///< [in] The thread block's base input iterator for loading from
             InputT                                                     (&items)[ITEMS_PER_THREAD])     ///< [out] Data to load
         {
-            InternalLoadDirectBlockedVectorized<MODIFIER>(linear_tid, reinterpret_cast<ValueType*>(block_itr.ptr), items);
+            InternalLoadDirectBlockedVectorized<MODIFIER>(linear_tid, block_itr.ptr, items);
         }
 
         /// Load a linear segment of items from memory, specialized for opaque input iterators (skips vectorization)
@@ -850,7 +851,9 @@ private:
             InputT          (&items)[ITEMS_PER_THREAD],     ///< [out] Data to load
             int             valid_items)                    ///< [in] Number of valid items to load
         {
-            temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            if (linear_tid == 0)
+                temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            CTA_SYNC();
             LoadDirectStriped<BLOCK_THREADS>(linear_tid, block_itr, items, temp_storage.valid_items);
             BlockExchange(temp_storage).StripedToBlocked(items, items);
         }
@@ -863,7 +866,9 @@ private:
             int             valid_items,                    ///< [in] Number of valid items to load
             DefaultT        oob_default)                    ///< [in] Default value to assign out-of-bound items
         {
-            temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            if (linear_tid == 0)
+                temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            CTA_SYNC();
             LoadDirectStriped<BLOCK_THREADS>(linear_tid, block_itr, items, temp_storage.valid_items, oob_default);
             BlockExchange(temp_storage).StripedToBlocked(items, items);
         }
@@ -930,7 +935,9 @@ private:
             InputT          (&items)[ITEMS_PER_THREAD],     ///< [out] Data to load
             int             valid_items)                    ///< [in] Number of valid items to load
         {
-            temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            if (linear_tid == 0)
+                temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            CTA_SYNC();
             LoadDirectWarpStriped(linear_tid, block_itr, items, temp_storage.valid_items);
             BlockExchange(temp_storage).WarpStripedToBlocked(items, items);
         }
@@ -944,7 +951,9 @@ private:
             int             valid_items,                    ///< [in] Number of valid items to load
             DefaultT        oob_default)                    ///< [in] Default value to assign out-of-bound items
         {
-            temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            if (linear_tid == 0)
+                temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            CTA_SYNC();
             LoadDirectWarpStriped(linear_tid, block_itr, items, temp_storage.valid_items, oob_default);
             BlockExchange(temp_storage).WarpStripedToBlocked(items, items);
         }
@@ -1010,7 +1019,9 @@ private:
             InputT          (&items)[ITEMS_PER_THREAD],     ///< [out] Data to load
             int             valid_items)                    ///< [in] Number of valid items to load
         {
-            temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            if (linear_tid == 0)
+                temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            CTA_SYNC();
             LoadDirectWarpStriped(linear_tid, block_itr, items, temp_storage.valid_items);
             BlockExchange(temp_storage).WarpStripedToBlocked(items, items);
         }
@@ -1024,7 +1035,9 @@ private:
             int             valid_items,                    ///< [in] Number of valid items to load
             DefaultT        oob_default)                    ///< [in] Default value to assign out-of-bound items
         {
-            temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            if (linear_tid == 0)
+                temp_storage.valid_items = valid_items;     // Move through volatile smem as a workaround to prevent RF spilling on subsequent loads
+            CTA_SYNC();
             LoadDirectWarpStriped(linear_tid, block_itr, items, temp_storage.valid_items, oob_default);
             BlockExchange(temp_storage).WarpStripedToBlocked(items, items);
         }

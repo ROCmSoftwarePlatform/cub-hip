@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -38,7 +38,7 @@ double run_cub_histogram(
     PixelType *d_image,
     int width,
     int height,
-    unsigned int *d_hist, 
+    unsigned int *d_hist,
     bool is_warmup)
 {
     enum {
@@ -77,7 +77,7 @@ double run_cub_histogram(
         num_levels,
         lower_level,
         upper_level,
-        width * height, 
+        width * height,
         (hipStream_t) 0,
         is_warmup);
 
@@ -95,7 +95,7 @@ double run_cub_histogram(
         num_levels,
         lower_level,
         upper_level,
-        width * height, 
+        width * height,
         (hipStream_t) 0,
         is_warmup);
 

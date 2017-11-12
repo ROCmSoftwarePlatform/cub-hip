@@ -1,0 +1,5 @@
+.idea/*
+.settings/*
+.vscode/*
+build/*
+cmake-build*/*

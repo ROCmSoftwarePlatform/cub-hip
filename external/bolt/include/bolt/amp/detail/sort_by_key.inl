@@ -464,7 +464,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 	concurrency::accelerator_view av = ctl.getAccelerator().get_default_view();
 
 	device_vector< Keys, concurrency::array_view > dvSwapInputKeys(static_cast<int>(orig_szElements), 0, false, ctl);
-    device_vector< Values, concurrency::array_view > dvSwapInputValues(static_cast<int>(orig_szElements), 0, false, ctl);
+    device_vector< Values, hc::array_view > dvSwapInputValues(static_cast<int>(orig_szElements), 0, false, ctl);
 
 	bool Asc_sort = 0;
 	if(comp(2,3))
@@ -490,7 +490,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 		numGroups = nBlocks;
         cdata.m_nWGs = numGroups;
 	}
-	device_vector< int, concurrency::array_view > dvHistogramBins(static_cast<int>(numGroups * RADICES), 0, false, ctl );
+	device_vector< int, hc::array_view > dvHistogramBins(static_cast<int>(numGroups * RADICES), 0, false, ctl );
 
 	concurrency::extent< 1 > inputExtent( numGroups*localSize );
 	concurrency::tiled_extent< localSize > tileK0 = inputExtent.tile< localSize >();

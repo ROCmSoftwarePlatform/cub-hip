@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -48,6 +47,8 @@
 
 #include "../../test/test_util.h"
 
+#include <hip/hip_runtime.h>
+
 using namespace cub;
 
 //---------------------------------------------------------------------
@@ -78,13 +79,8 @@ template <
     typename    Key,
     int         BLOCK_THREADS,
     int         ITEMS_PER_THREAD>
-#if !defined(__HIP_PLATFORM_HCC__)
-    __launch_bounds__ (BLOCK_THREADS)
-#endif
-__global__
-inline
-void BlockSortKernel(
-    hipLaunchParm lp,
+__launch_bounds__ (BLOCK_THREADS)
+__global__ void BlockSortKernel(
     Key         *d_in,          // Tile of input
     Key         *d_out,         // Tile of output
     clock_t     *d_elapsed)     // Elapsed cycle count of block scan
@@ -98,13 +94,12 @@ void BlockSortKernel(
     typedef BlockRadixSort<Key, BLOCK_THREADS, ITEMS_PER_THREAD> BlockRadixSortT;
 
     // Shared memory
-    __shared__ union foo
+    __shared__ union TempStorage
     {
         typename BlockLoadT::TempStorage        load;
         typename BlockRadixSortT::TempStorage   sort;
 
-        __host__ __device__
-        ~foo() {}
+        __host__ __device__ ~TempStorage() {}
     } temp_storage;
 
     // Per-thread tile items

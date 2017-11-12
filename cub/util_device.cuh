@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,6 +39,7 @@
 #include "util_namespace.cuh"
 #include "util_macro.cuh"
 
+#include "hip/hip_runtime.h"
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -108,10 +108,8 @@ hipError_t AliasTemporaries(
 /**
  * Empty kernel for querying PTX manifest metadata (e.g., version) for the current device
  */
-template <typename T = void>
-__global__
-__attribute__((weak))
-void EmptyKernel(hipLaunchParm lp, int x) { }
+template <typename T>
+__global__ void EmptyKernel(void) { }
 
 
 #endif  // DOXYGEN_SHOULD_SKIP_THIS
@@ -124,7 +122,7 @@ CUB_RUNTIME_FUNCTION __forceinline__ hipError_t PtxVersion(int &ptx_version)
     struct Dummy
     {
         /// Type definition of the EmptyKernel kernel entry point
-        typedef void (*EmptyKernelPtr)(hipLaunchParm, int);
+        typedef void (*EmptyKernelPtr)();
 
         /// Force EmptyKernel<void> to be generated if this class is used
         CUB_RUNTIME_FUNCTION __forceinline__
@@ -156,11 +154,11 @@ CUB_RUNTIME_FUNCTION __forceinline__ hipError_t PtxVersion(int &ptx_version)
     hipDeviceProp_t deviceProp;
     error = hipGetDeviceProperties(&deviceProp, 0);
     if(error == hipSuccess)
-      #ifdef __HIP_PLATFORM_HCC__
-      ptx_version = 520;
-      #elif defined(__HIP_PLATFORM_NVCC__)
-      ptx_version = deviceProp.major * 100 + deviceProp.minor * 10;
-      #endif
+        #ifdef __HIP_PLATFORM_HCC__
+            ptx_version = 520;
+        #elif defined(__HIP_PLATFORM_NVCC__)
+            ptx_version = deviceProp.major * 100 + deviceProp.minor * 10;
+        #endif
     return error;
 
 #endif
@@ -324,10 +322,8 @@ struct ChainedPolicy
    /// Specializes and dispatches op in accordance to the first policy in the chain of adequate PTX version
    template <typename FunctorT>
    CUB_RUNTIME_FUNCTION __forceinline__
-   static
-   hipError_t Invoke(int ptx_version, FunctorT &op)
+   static hipError_t Invoke(int ptx_version, FunctorT &op)
    {
-       //return hipError_t{};
        if (ptx_version < PTX_VERSION) {
            return PrevPolicyT::Invoke(ptx_version, op);
        }

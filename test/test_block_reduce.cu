@@ -1,6 +1,6 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -32,15 +32,11 @@
 
 // Ensure printing of CUDA runtime errors to console
 #define CUB_STDERR
-#include "test_util.h"
 
+#include <stdio.h>
 
-
-#if defined(__HIP_PLATFORM_HCC__)
-    #include <hip/device_functions.h>
-#else
-    #include <device_functions.h>
-#endif
+#include <device_functions.h>
+#include <typeinfo>
 
 #include <cub/block/block_reduce.cuh>
 #include <cub/block/block_load.cuh>
@@ -48,10 +44,7 @@
 #include <cub/util_allocator.cuh>
 #include <cub/util_debug.cuh>
 
-#include "hip/hip_runtime.h"
-
-#include <stdio.h>
-#include <typeinfo>
+#include "test_util.h"
 
 using namespace cub;
 
@@ -73,58 +66,48 @@ CachingDeviceAllocator  g_allocator(true);
 
 /// Generic reduction (full, 1)
 template <typename BlockReduceT, typename T, typename ReductionOp>
-__device__ __forceinline__
-T DeviceTest(BlockReduceT &block_reduce, T (&data)[1], ReductionOp &reduction_op)
+__device__ __forceinline__ T DeviceTest(
+    BlockReduceT &block_reduce, T (&data)[1], ReductionOp &reduction_op)
 {
     return block_reduce.Reduce(data[0], reduction_op);
 }
 
 /// Generic reduction (full, ITEMS_PER_THREAD)
 template <typename BlockReduceT, typename T, int ITEMS_PER_THREAD, typename ReductionOp>
-__device__ __forceinline__
-T DeviceTest(BlockReduceT &block_reduce,
-             T (&data)[ITEMS_PER_THREAD],
-             ReductionOp &reduction_op)
+__device__ __forceinline__ T DeviceTest(
+    BlockReduceT &block_reduce, T (&data)[ITEMS_PER_THREAD], ReductionOp &reduction_op)
 {
     return block_reduce.Reduce(data, reduction_op);
 }
 
 /// Generic reduction (partial, 1)
 template <typename BlockReduceT, typename T, typename ReductionOp>
-__device__ __forceinline__
-T DeviceTest(BlockReduceT &block_reduce,
-             T &data,
-             ReductionOp &reduction_op,
-             int valid_threads)
+__device__ __forceinline__ T DeviceTest(
+    BlockReduceT &block_reduce, T &data, ReductionOp &reduction_op, int valid_threads)
 {
     return block_reduce.Reduce(data, reduction_op, valid_threads);
 }
 
 /// Sum reduction (full, 1)
 template <typename BlockReduceT, typename T>
-__device__ __forceinline__
-T DeviceTest(BlockReduceT &block_reduce, T (&data)[1], Sum &reduction_op)
+__device__ __forceinline__ T DeviceTest(
+    BlockReduceT &block_reduce, T (&data)[1], Sum &reduction_op)
 {
     return block_reduce.Sum(data[0]);
 }
 
 /// Sum reduction (full, ITEMS_PER_THREAD)
 template <typename BlockReduceT, typename T, int ITEMS_PER_THREAD>
-__device__ __forceinline__
-T DeviceTest(BlockReduceT &block_reduce,
-             T (&data)[ITEMS_PER_THREAD],
-             Sum &reduction_op)
+__device__ __forceinline__ T DeviceTest(
+    BlockReduceT &block_reduce, T (&data)[ITEMS_PER_THREAD], Sum &reduction_op)
 {
     return block_reduce.Sum(data);
 }
 
 /// Sum reduction (partial, 1)
 template <typename BlockReduceT, typename T>
-__device__ __forceinline__
-T DeviceTest(BlockReduceT &block_reduce,
-             T &data,
-             Sum &reduction_op,
-             int valid_threads)
+__device__ __forceinline__ T DeviceTest(
+    BlockReduceT &block_reduce, T &data, Sum &reduction_op, int valid_threads)
 {
     return block_reduce.Sum(data, valid_threads);
 }
@@ -142,12 +125,8 @@ template <
     int                     ITEMS_PER_THREAD,
     typename                T,
     typename                ReductionOp>
-#if !defined(__HIP_PLATFORM_HCC__)
-    __launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
-#endif
-__global__
-void FullTileReduceKernel(
-    hipLaunchParm           lp,
+__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z)
+__global__ void FullTileReduceKernel(
     T                       *d_in,
     T                       *d_out,
     ReductionOp             reduction_op,
@@ -157,7 +136,7 @@ void FullTileReduceKernel(
     const int BLOCK_THREADS     = BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z;
     const int TILE_SIZE         = BLOCK_THREADS * ITEMS_PER_THREAD;
 
-    // Cooperative threadblock reduction utility type (returns aggregate in thread 0)
+    // Cooperative thread block reduction utility type (returns aggregate in thread 0)
     typedef BlockReduce<T, BLOCK_DIM_X, ALGORITHM, BLOCK_DIM_Y, BLOCK_DIM_Z> BlockReduceT;
 
     // Allocate temp storage in shared memory
@@ -195,7 +174,7 @@ void FullTileReduceKernel(
         // Loop over input tiles
         while (block_offset < TILE_SIZE * tiles)
         {
-            // TestBarrier between threadblock reductions
+            // TestBarrier between thread block reductions
             __syncthreads();
 
             // Load tile of data
@@ -218,7 +197,7 @@ void FullTileReduceKernel(
 #endif // CUB_PTX_ARCH == 100
             elapsed += (start > stop) ? start - stop : stop - start;
 
-            // Reduce threadblock aggregate
+            // Reduce thread block aggregate
             block_aggregate = reduction_op(block_aggregate, tile_aggregate);
         }
 
@@ -243,19 +222,15 @@ template <
     int                     BLOCK_DIM_Z,
     typename                T,
     typename                ReductionOp>
-#if !defined(__HIP_PLATFORM_HCC__)
-    __launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z, 0)
-#endif
-__global__
-void PartialTileReduceKernel(
-    hipLaunchParm            lp,
+__launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z)
+__global__ void PartialTileReduceKernel(
     T                       *d_in,
     T                       *d_out,
     int                     num_items,
     ReductionOp             reduction_op,
     clock_t                 *d_elapsed)
 {
-    // Cooperative threadblock reduction utility type (returns aggregate only in thread-0)
+    // Cooperative thread block reduction utility type (returns aggregate only in thread-0)
     typedef BlockReduce<T, BLOCK_DIM_X, ALGORITHM, BLOCK_DIM_Y, BLOCK_DIM_Z> BlockReduceT;
 
     // Allocate temp storage in shared memory
@@ -391,20 +366,17 @@ void TestFullTile(
     fflush(stdout);
 
     dim3 block_dims(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z);
-    hipLaunchKernel(HIP_KERNEL_NAME(FullTileReduceKernel<ALGORITHM,
-                                                         BLOCK_DIM_X,
-                                                         BLOCK_DIM_Y,
-                                                         BLOCK_DIM_Z,
-                                                         ITEMS_PER_THREAD>),
-                    dim3(1),
-                    dim3(block_dims),
-                    0,
-                    0,
-                    d_in,
-                    d_out,
-                    reduction_op,
-                    tiles,
-                    d_elapsed);
+    hipLaunchKernelGGL(
+        FullTileReduceKernel<ALGORITHM, BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z, ITEMS_PER_THREAD>,
+        dim3(1),
+        dim3(block_dims),
+        0,
+        0,
+        d_in,
+        d_out,
+        reduction_op,
+        tiles,
+        d_elapsed);
 
     CubDebugExit(hipPeekAtLastError());
     CubDebugExit(hipDeviceSynchronize());
@@ -462,11 +434,8 @@ void TestFullTile(
     ReductionOp             reduction_op)
 {
     // Check size of smem storage for the target arch to make sure it will fit
-#ifdef __HIP_PLATFORM_NVCC__
     typedef BlockReduce<T, BLOCK_DIM_X, ALGORITHM, BLOCK_DIM_Y, BLOCK_DIM_Z, TEST_ARCH> BlockReduceT;
-#elif defined(__HIP_PLATFORM_HCC__)
-    typedef BlockReduce<T, BLOCK_DIM_X, ALGORITHM, BLOCK_DIM_Y, BLOCK_DIM_Z, 520> BlockReduceT;
-#endif
+
     enum
     {
 #if defined(SM100) || defined(SM110) || defined(SM130)
@@ -478,20 +447,12 @@ void TestFullTile(
 #endif
     };
 
-    TestFullTile<ALGORITHM,
-                 BLOCK_DIM_X,
-                 BLOCK_DIM_Y,
-                 BLOCK_DIM_Z,
-                 ITEMS_PER_THREAD,
-                 T>(gen_mode,
-                    tiles,
-                    reduction_op,
-                    Int2Type<sufficient_smem && sufficient_threads>());
+    TestFullTile<ALGORITHM, BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z, ITEMS_PER_THREAD, T>(gen_mode, tiles, reduction_op, Int2Type<sufficient_smem && sufficient_threads>());
 }
 
 
 /**
- * Run battery of tests for different threadblock dimensions
+ * Run battery of tests for different thread block dimensions
  */
 template <
     BlockReduceAlgorithm    ALGORITHM,
@@ -595,19 +556,17 @@ void TestPartialTile(
     fflush(stdout);
 
     dim3 block_dims(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z);
-    hipLaunchKernel(HIP_KERNEL_NAME(PartialTileReduceKernel<ALGORITHM,
-                                                            BLOCK_DIM_X,
-                                                            BLOCK_DIM_Y,
-                                                            BLOCK_DIM_Z>),
-                    dim3(1),
-                    dim3(block_dims),
-                    0,
-                    0,
-                    d_in,
-                    d_out,
-                    num_items,
-                    reduction_op,
-                    d_elapsed);
+    hipLaunchKernelGGL(
+        PartialTileReduceKernel<ALGORITHM, BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z>,
+        dim3(1),
+        dim3(block_dims),
+        0,
+        0,
+        d_in,
+        d_out,
+        num_items,
+        reduction_op,
+        d_elapsed);
 
     CubDebugExit(hipPeekAtLastError());
     CubDebugExit(hipDeviceSynchronize());
@@ -664,11 +623,7 @@ void TestPartialTile(
     ReductionOp             reduction_op)
 {
     // Check size of smem storage for the target arch to make sure it will fit
-#ifdef __HIP_PLATFORM_NVCC__
     typedef BlockReduce<T, BLOCK_DIM_X, ALGORITHM, BLOCK_DIM_Y, BLOCK_DIM_Z, TEST_ARCH> BlockReduceT;
-#elif defined(__HIP_PLATFORM_HCC__)
-    typedef BlockReduce<T, BLOCK_DIM_X, ALGORITHM, BLOCK_DIM_Y, BLOCK_DIM_Z, 520> BlockReduceT;
-#endif
 
     enum
     {
@@ -750,11 +705,11 @@ template <
 void Test(
     ReductionOp     reduction_op)
 {
-#if TEST_RAKING
+#ifdef TEST_RAKING
     Test<BLOCK_REDUCE_RAKING, BLOCK_THREADS, T>(reduction_op);
     Test<BLOCK_REDUCE_RAKING_COMMUTATIVE_ONLY, BLOCK_THREADS, T>(reduction_op);
 #endif
-#if TEST_WARP_REDUCTIONS
+#ifdef TEST_WARP_REDUCTIONS
     Test<BLOCK_REDUCE_WARP_REDUCTIONS, BLOCK_THREADS, T>(reduction_op);
 #endif
 }
@@ -844,6 +799,8 @@ int main(int argc, char** argv)
     for (int i = 0; i <= g_repeat; ++i)
     {
         // primitives
+        Test<char>();
+        Test<short>();
         Test<int>();
         Test<long long>();
         if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
@@ -851,21 +808,19 @@ int main(int argc, char** argv)
 
         Test<float>();
 
-        Test<char>();
-        Test<short>();
         // vector types
-        //Test<char2>();
-        //Test<short2>();
+        Test<char2>();
+        Test<short2>();
         Test<int2>();
         Test<longlong2>();
 
-        //Test<char4>();
-        //Test<short4>();
+        Test<char4>();
+        Test<short4>();
         Test<int4>();
         Test<longlong4>();
 
         // Complex types
-//        Test<TestFoo>();
+        Test<TestFoo>();
         Test<TestBar>();
     }
 

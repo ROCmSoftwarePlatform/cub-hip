@@ -1,6 +1,6 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -36,10 +36,13 @@
 #include <iostream>
 #include <limits>
 #include <cfloat>
+#include <type_traits>
 
 #include "util_macro.cuh"
 #include "util_arch.cuh"
 #include "util_namespace.cuh"
+
+#include <hip/hip_runtime.h>
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -244,12 +247,13 @@ struct RemoveQualifiers<Tp, const volatile Up>
  * Marker types
  ******************************************************************************/
 
+/**
+ * \brief A simple "NULL" marker type
+ */
 struct NullType
 {
 #ifndef DOXYGEN_SHOULD_SKIP_THIS    // Do not document
-    #if defined(__HIP_PLATFORM_HCC__)
-        int dummy_for_hcc_;
-    #endif
+
     template <typename T>
     __host__ __device__ __forceinline__ NullType& operator =(const T&) { return *this; }
 
@@ -303,13 +307,14 @@ struct AlignBytes
 // kernel functions
 
 #ifdef __HIP_PLATFORM_NVCC__
-#define __CUB_ALIGN_BYTES(t, b)         \
-    template <> struct AlignBytes<t>    \
-    { enum { ALIGN_BYTES = b }; typedef __align__(b) t Type; };
+    #define __CUB_ALIGN_BYTES(t, b)         \
+        template <> struct AlignBytes<t>    \
+        { enum { ALIGN_BYTES = b }; typedef __align__(b) t Type; };
 #elif defined(__HIP_PLATFORM_HCC__)
 #define __CUB_ALIGN_BYTES(t, b)         \
     template <> struct AlignBytes<t>    \
-    { enum { ALIGN_BYTES = b }; typedef __attribute__((aligned(b))) t Type; };
+    { enum { ALIGN_BYTES = b };         \
+      using Type = typename std::aligned_storage<sizeof(t), b>::type; };
 #endif
 
 __CUB_ALIGN_BYTES(short4, 8)
@@ -472,8 +477,7 @@ struct CubVector<T, 1>
     typedef T BaseType;
     typedef CubVector<T, 1> Type;
 
-    __host__ __device__
-    ~CubVector() {}
+    __host__ __device__ ~CubVector() {}
 };
 
 /**
@@ -488,8 +492,7 @@ struct CubVector<T, 2>
     typedef T BaseType;
     typedef CubVector<T, 2> Type;
 
-    __host__ __device__
-    ~CubVector() {}
+    __host__ __device__ ~CubVector() {}
 };
 
 /**
@@ -505,8 +508,7 @@ struct CubVector<T, 3>
     typedef T BaseType;
     typedef CubVector<T, 3> Type;
 
-    __host__ __device__
-    ~CubVector() {}
+    __host__ __device__ ~CubVector() {}
 };
 
 /**
@@ -523,8 +525,7 @@ struct CubVector<T, 4>
     typedef T BaseType;
     typedef CubVector<T, 4> Type;
 
-    __host__ __device__
-    ~CubVector() {}
+    __host__ __device__ ~CubVector() {}
 };
 
 
@@ -678,13 +679,10 @@ struct KeyValuePair
 {
     typedef _Key    Key;                ///< Key data type
     typedef _Value  Value;              ///< Value data type
-#ifdef __HIP_PLATFORM_HCC__
-    alignas(8) Key     key;                        ///< Item key
-    alignas(8) Value   value;                      ///< Item value
-#elif defined(__HIP_PLATFORM_NVCC__)
+
     Key     key;                        ///< Item key
     Value   value;                      ///< Item value
-#endif
+
     /// Constructor
     __host__ __device__ __forceinline__
     KeyValuePair() {}
@@ -698,9 +696,6 @@ struct KeyValuePair
     {
         return (value != b.value) || (key != b.key);
     }
-
-    __host__ __device__
-    ~KeyValuePair() {}
 };
 
 #if defined(_WIN32) && !defined(_WIN64)
@@ -791,17 +786,7 @@ struct ArrayWrapper
     T array[COUNT];
 
     /// Constructor
-    __host__ __device__ __forceinline__ ArrayWrapper() { }
-
-    __host__ __device__ __forceinline__ ArrayWrapper(const ArrayWrapper &obj) {
-    for (int i=0; i<COUNT; i++)
-       array[i] = obj.array[i];
-   }
-
-    __host__ __device__ __forceinline__ ArrayWrapper(const T *obj) {
-    for (int i=0; i<COUNT; i++)
-       array[i] = obj[i];
-   }
+    __host__ __device__ __forceinline__ ArrayWrapper() {}
 };
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS
@@ -1009,13 +994,13 @@ struct BaseTraits<UNSIGNED_INTEGER, true, false, _UnsignedBits, T>
     static __host__ __device__ __forceinline__ T Max()
     {
         UnsignedBits retval = MAX_KEY;
-        return (T)retval;//reinterpret_cast<T&>(retval);
+        return reinterpret_cast<T&>(retval);
     }
 
     static __host__ __device__ __forceinline__ T Lowest()
     {
         UnsignedBits retval = LOWEST_KEY;
-        return (T)retval;//reinterpret_cast<T&>(retval);
+        return reinterpret_cast<T&>(retval);
     }
 };
 
@@ -1052,13 +1037,13 @@ struct BaseTraits<SIGNED_INTEGER, true, false, _UnsignedBits, T>
     static __host__ __device__ __forceinline__ T Max()
     {
         UnsignedBits retval = MAX_KEY;
-        return (T)retval;
+        return reinterpret_cast<T&>(retval);
     }
 
     static __host__ __device__ __forceinline__ T Lowest()
     {
         UnsignedBits retval = LOWEST_KEY;
-        return (T)retval;
+        return reinterpret_cast<T&>(retval);
     }
 };
 

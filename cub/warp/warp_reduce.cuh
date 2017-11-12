@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,6 +39,8 @@
 #include "../util_arch.cuh"
 #include "../util_type.cuh"
 #include "../util_namespace.cuh"
+
+#include <hip/hip_runtime.h>
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -159,10 +160,12 @@ private:
 public:
 
     #ifndef DOXYGEN_SHOULD_SKIP_THIS    // Do not document
-        /// Internal specialization.  Use SHFL-based reduction if (architecture is >= SM30) and (LOGICAL_WARP_THREADS is a power-of-two)
-            typedef typename If<(PTX_ARCH >= 300) && (IS_POW_OF_TWO),
-                WarpReduceShfl<T, LOGICAL_WARP_THREADS, PTX_ARCH>,
-                WarpReduceSmem<T, LOGICAL_WARP_THREADS, PTX_ARCH> >::Type InternalWarpReduce;
+
+    /// Internal specialization.  Use SHFL-based reduction if (architecture is >= SM30) and (LOGICAL_WARP_THREADS is a power-of-two)
+    typedef typename If<(PTX_ARCH >= 300) && (IS_POW_OF_TWO),
+        WarpReduceShfl<T, LOGICAL_WARP_THREADS, PTX_ARCH>,
+        WarpReduceSmem<T, LOGICAL_WARP_THREADS, PTX_ARCH> >::Type InternalWarpReduce;
+
     #endif // DOXYGEN_SHOULD_SKIP_THIS
 
 
@@ -177,8 +180,7 @@ private:
      ******************************************************************************/
 
     /// Shared storage reference
-    //_TempStorage &temp_storage;
-    std::uintptr_t temp_storage;
+    _TempStorage &temp_storage;
 
 
     /******************************************************************************
@@ -203,8 +205,7 @@ public:
     __device__ __forceinline__ WarpReduce(
         TempStorage &temp_storage)             ///< [in] Reference to memory allocation having layout type TempStorage
     :
-        //temp_storage(temp_storage.Alias())
-        temp_storage{reinterpret_cast<std::uintptr_t>(&temp_storage.Alias())}
+        temp_storage(temp_storage.Alias())
     {}
 
 
@@ -249,9 +250,10 @@ public:
      * \p 2544, and \p 3568, respectively (and is undefined in other threads).
      *
      */
-    __device__ __forceinline__ T Sum(T input)              ///< [in] Calling thread's input
+    __device__ __forceinline__ T Sum(
+        T                   input)              ///< [in] Calling thread's input
     {
-        return InternalWarpReduce(*reinterpret_cast<_TempStorage*>(temp_storage)).template Reduce<true, 1>(input, LOGICAL_WARP_THREADS, cub::Sum());
+        return InternalWarpReduce(temp_storage).template Reduce<true, 1>(input, LOGICAL_WARP_THREADS, cub::Sum());
     }
 
     /**
@@ -297,7 +299,7 @@ public:
         int                 valid_items)        ///< [in] Total number of valid items in the calling thread's logical warp (may be less than \p LOGICAL_WARP_THREADS)
     {
         // Determine if we don't need bounds checking
-        return InternalWarpReduce(*reinterpret_cast<_TempStorage*>(temp_storage)).template Reduce<false, 1>(input, valid_items, cub::Sum());
+        return InternalWarpReduce(temp_storage).template Reduce<false, 1>(input, valid_items, cub::Sum());
     }
 
 
@@ -446,7 +448,7 @@ public:
         T                   input,              ///< [in] Calling thread's input
         ReductionOp         reduction_op)       ///< [in] Binary reduction operator
     {
-        return InternalWarpReduce(*reinterpret_cast<_TempStorage*>(temp_storage)).template Reduce<true, 1>(input, LOGICAL_WARP_THREADS, reduction_op);
+        return InternalWarpReduce(temp_storage).template Reduce<true, 1>(input, LOGICAL_WARP_THREADS, reduction_op);
     }
 
     /**
@@ -496,7 +498,7 @@ public:
         ReductionOp         reduction_op,       ///< [in] Binary reduction operator
         int                 valid_items)        ///< [in] Total number of valid items in the calling thread's logical warp (may be less than \p LOGICAL_WARP_THREADS)
     {
-        return InternalWarpReduce(*reinterpret_cast<_TempStorage*>(temp_storage)).template Reduce<false, 1>(input, valid_items, reduction_op);
+        return InternalWarpReduce(temp_storage).template Reduce<false, 1>(input, valid_items, reduction_op);
     }
 
 
@@ -547,7 +549,7 @@ public:
         FlagT                head_flag,          ///< [in] Head flag denoting whether or not \p input is the start of a new segment
         ReductionOp         reduction_op)       ///< [in] Reduction operator
     {
-        return InternalWarpReduce(*reinterpret_cast<_TempStorage*>(temp_storage)).template SegmentedReduce<true>(input, head_flag, reduction_op);
+        return InternalWarpReduce(temp_storage).template SegmentedReduce<true>(input, head_flag, reduction_op);
     }
 
 
@@ -598,7 +600,7 @@ public:
         FlagT                tail_flag,          ///< [in] Tail flag denoting whether or not \p input is the end of the current segment
         ReductionOp         reduction_op)       ///< [in] Reduction operator
     {
-        return InternalWarpReduce(*reinterpret_cast<_TempStorage*>(temp_storage)).template SegmentedReduce<false>(input, tail_flag, reduction_op);
+        return InternalWarpReduce(temp_storage).template SegmentedReduce<false>(input, tail_flag, reduction_op);
     }
 
 
@@ -610,4 +612,3 @@ public:
 
 }               // CUB namespace
 CUB_NS_POSTFIX  // Optional outer namespace(s)
-

@@ -1,6 +1,6 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -442,7 +442,7 @@ struct CooMatrix
                     {
                         // No value specified
                         val = default_value;
-                        
+
                     }
                     else if (nparsed != 3)
                     {
@@ -759,7 +759,7 @@ struct CsrMatrix
     /**
      * Constructor
      */
-    CsrMatrix() : num_rows(0), num_cols(0), num_nonzeros(0), row_offsets(NULL), column_indices(NULL), values(NULL) 
+    CsrMatrix() : num_rows(0), num_cols(0), num_nonzeros(0), row_offsets(NULL), column_indices(NULL), values(NULL)
     {
 #ifdef CUB_MKL
         numa_malloc = ((numa_available() >= 0) && (numa_num_task_nodes() > 1));
@@ -775,7 +775,7 @@ struct CsrMatrix
     void Clear()
     {
 #ifdef CUB_MKL
-        if (numa_malloc) 
+        if (numa_malloc)
         {
             numa_free(row_offsets, sizeof(OffsetT) * (num_rows + 1));
             numa_free(values, sizeof(ValueT) * num_nonzeros);
@@ -1129,7 +1129,7 @@ void RcmRelabel(
         row_degrees_in[matrix.column_indices[nonzero]]++;
     }
 
-    // Initialize unlabeled set 
+    // Initialize unlabeled set
     typedef std::set<OffsetT, OrderByLow<OffsetT> > UnlabeledSet;
     typename UnlabeledSet::key_compare  unlabeled_comp(row_degrees_in);
     UnlabeledSet                        unlabeled(unlabeled_comp);

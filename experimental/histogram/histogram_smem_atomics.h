@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,7 +28,7 @@
 
 #include <test/test_util.h>
 
-#include "hip/hip_runtime.h"
+#include <hip/hip_runtime.h>
 
 namespace histogram_smem_atomics
 {
@@ -67,10 +67,7 @@ namespace histogram_smem_atomics
         int         ACTIVE_CHANNELS,
         int         NUM_BINS,
         typename    PixelType>
-    __global__
-    inline
-    void histogram_smem_atomics(
-        hipLaunchParm lp,
+    __global__ void histogram_smem_atomics(
         const PixelType *in,
         int width,
         int height,
@@ -131,10 +128,7 @@ namespace histogram_smem_atomics
         int         NUM_PARTS,
         int         ACTIVE_CHANNELS,
         int         NUM_BINS>
-    __global__
-    inline
-    void histogram_smem_accum(
-        hipLaunchParm lp,
+    __global__ void histogram_smem_accum(
         const unsigned int *in,
         int n,
         unsigned int *out)
@@ -183,7 +177,7 @@ double run_smem_atomics(
     GpuTimer gpu_timer;
     gpu_timer.Start();
 
-    hipLaunchKernel(
+    hipLaunchKernelGGL(
         HIP_KERNEL_NAME(
             histogram_smem_atomics::histogram_smem_atomics<
                 NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>),
@@ -191,12 +185,12 @@ double run_smem_atomics(
         dim3(block),
         0,
         0,
-        d_image,
+        static_cast<const PixelType*>(d_image),
         width,
         height,
         d_part_hist);
 
-    hipLaunchKernel(
+    hipLaunchKernelGGL(
         HIP_KERNEL_NAME(
             histogram_smem_atomics::histogram_smem_accum<
                 NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>),
@@ -204,7 +198,7 @@ double run_smem_atomics(
         dim3(block2),
         0,
         0,
-        d_part_hist,
+        static_cast<const unsigned int*>(d_part_hist),
         total_blocks,
         d_hist);
 

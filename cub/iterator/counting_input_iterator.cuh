@@ -1,6 +1,6 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -106,19 +106,17 @@ public:
     typedef ValueType*                          pointer;                ///< The type of a pointer to an element the iterator can point to
     typedef ValueType                           reference;              ///< The type of a reference to an element the iterator can point to
 
-    #if defined(__HIP_PLATFORM_HCC__)
-        typedef std::random_access_iterator_tag     iterator_category;  ///< The iterator category
-    #else
-        #if (THRUST_VERSION >= 100700)
-            // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
-            typedef typename thrust::detail::iterator_facade_category<
-                thrust::device_system_tag,
-                thrust::random_access_traversal_tag,
-                value_type,
-                reference
-            >::type iterator_category;                                  ///< The iterator category
-        #endif // THRUST_VERSION
-    #endif
+#if (THRUST_VERSION >= 100700)
+    // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
+    typedef typename thrust::detail::iterator_facade_category<
+        thrust::any_system_tag,
+        thrust::random_access_traversal_tag,
+        value_type,
+        reference
+      >::type iterator_category;                                        ///< The iterator category
+#else
+    typedef std::random_access_iterator_tag     iterator_category;      ///< The iterator category
+#endif  // THRUST_VERSION
 
 private:
 
@@ -132,9 +130,6 @@ public:
     :
         val(val)
     {}
-
-    __host__ __device__ __forceinline__
-    CountingInputIterator(const CountingInputIterator& x) : val{x.val} {}
 
     /// Postfix increment
     __host__ __device__ __forceinline__ self_type operator++(int)
@@ -227,8 +222,6 @@ public:
         return os;
     }
 
-    __host__ __device__
-    ~CountingInputIterator() {}
 };
 
 

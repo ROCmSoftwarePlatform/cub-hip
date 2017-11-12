@@ -1,8 +1,7 @@
-#include "hip/hip_runtime.h"
 
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -45,68 +44,7 @@
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
 
-
-    /******************************************************************************
-     * Dispatch entrypoints
-     ******************************************************************************/
-#define Dispatch_rle(d_temp_storage, temp_storage_bytes, d_in, d_offsets_out, d_lengths_out, d_num_runs_out, equality_op, num_items, stream, debug_synchronous, ptx_version, device_scan_init_kernel, device_rle_sweep_kernel, device_rle_config)\
-        hipError_t error = hipSuccess;\
-            int device_ordinal;\
-            if (CubDebug(error = hipGetDevice(&device_ordinal))) break;\
-            int sm_count;\
-            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;\
-            int tile_size = device_rle_config.block_threads * device_rle_config.items_per_thread;\
-            int num_tiles = (num_items + tile_size - 1) / tile_size;\
-            size_t  allocation_sizes[1];\
-            if (CubDebug(error = ScanTileStateT::AllocationSize(num_tiles, allocation_sizes[0]))) break;\
-            void* allocations[1];\
-            if (CubDebug(error = AliasTemporaries(d_temp_storage, temp_storage_bytes, allocations, allocation_sizes))) break;\
-            if (d_temp_storage == NULL)\
-            {\
-                break;\
-            }\
-            ScanTileStateT tile_status;\
-            if (CubDebug(error = tile_status.Init(num_tiles, allocations[0], allocation_sizes[0]))) break;\
-            int init_grid_size = CUB_MAX(1, (num_tiles + INIT_KERNEL_THREADS - 1) / INIT_KERNEL_THREADS);\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(device_scan_init_kernel), dim3(%d), dim3(%d), 0, %lld, )\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);\
-            hipLaunchKernel(HIP_KERNEL_NAME(device_scan_init_kernel),\
-                            dim3(init_grid_size),\
-                            dim3(INIT_KERNEL_THREADS),\
-                            0,\
-                            stream,\
-                            tile_status,\
-                            num_tiles,\
-                            d_num_runs_out);\
-            if (CubDebug(error = hipPeekAtLastError())) break;\
-            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
-            if (num_items == 0)\
-                break;\
-            int device_rle_kernel_sm_occupancy;\
-            if (CubDebug(error = MaxSmOccupancy(\
-                device_rle_kernel_sm_occupancy,            \
-                (const void *)device_rle_sweep_kernel,\
-                device_rle_config.block_threads))) break;\
-            int max_dim_x;\
-            if (CubDebug(error = hipDeviceGetAttribute(&max_dim_x, hipDeviceAttributeMaxGridDimX, device_ordinal))) break;;\
-            dim3 scan_grid_size;\
-            scan_grid_size.z = 1;\
-            scan_grid_size.y = ((unsigned int) num_tiles + max_dim_x - 1) / max_dim_x;\
-            scan_grid_size.x = CUB_MIN(num_tiles, max_dim_x);\
-            if (debug_synchronous) _CubLog("Invoking hipLaunchKernel(HIP_KERNEL_NAME(device_rle_sweep_kernel), dim3({%d,%d,%d}), dim3(%d), 0, %lld, ), %d items per thread, %d SM occupancy\n",\
-                scan_grid_size.x, scan_grid_size.y, scan_grid_size.z, device_rle_config.block_threads, (long long) stream, device_rle_config.items_per_thread, device_rle_kernel_sm_occupancy);\
-            hipLaunchKernel(HIP_KERNEL_NAME(device_rle_sweep_kernel), dim3(scan_grid_size), dim3(device_rle_config.block_threads), 0, stream,\
-                d_in,\
-                d_offsets_out,\
-                d_lengths_out,\
-                d_num_runs_out,\
-                tile_status,\
-                equality_op,\
-                num_items,\
-                num_tiles);\
-            if (CubDebug(error = hipPeekAtLastError())) break;\
-            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;\
-        return error
-
+#include <hip/hip_runtime.h>
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -135,14 +73,9 @@ template <
     typename            ScanTileStateT,              ///< Tile status interface type
     typename            EqualityOpT,                 ///< T equality operator type
     typename            OffsetT>                    ///< Signed integer type for global offsets
-#if !defined(__HIP_PLATFORM_HCC__)
-    __launch_bounds__ (int(AgentRlePolicyT::BLOCK_THREADS), 1)
-#endif
-__global__
-__attribute__((used))
-void DeviceRleSweepKernel(
-    hipLaunchParm               lp,
-    InputIteratorT     d_in,               ///< [in] Pointer to input sequence of data items
+__launch_bounds__ (int(AgentRlePolicyT::BLOCK_THREADS))
+__global__ void DeviceRleSweepKernel(
+    InputIteratorT              d_in,               ///< [in] Pointer to input sequence of data items
     OffsetsOutputIteratorT      d_offsets_out,      ///< [out] Pointer to output sequence of run-offsets
     LengthsOutputIteratorT      d_lengths_out,      ///< [out] Pointer to output sequence of run-lengths
     NumRunsOutputIteratorT      d_num_runs_out,     ///< [out] Pointer to total number of runs (i.e., length of \p d_offsets_out)
@@ -411,6 +344,149 @@ struct DeviceRleDispatch
     };
 
 
+    /******************************************************************************
+     * Dispatch entrypoints
+     ******************************************************************************/
+
+    /**
+     * Internal dispatch routine for computing a device-wide run-length-encode using the
+     * specified kernel functions.
+     */
+    template <
+        typename                    DeviceScanInitKernelPtr,        ///< Function type of cub::DeviceScanInitKernel
+        typename                    DeviceRleSweepKernelPtr>        ///< Function type of cub::DeviceRleSweepKernelPtr
+    CUB_RUNTIME_FUNCTION __forceinline__
+    static hipError_t Dispatch(
+        void*                       d_temp_storage,                 ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
+        size_t&                     temp_storage_bytes,             ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
+        InputIteratorT              d_in,                           ///< [in] Pointer to the input sequence of data items
+        OffsetsOutputIteratorT      d_offsets_out,                  ///< [out] Pointer to the output sequence of run-offsets
+        LengthsOutputIteratorT      d_lengths_out,                  ///< [out] Pointer to the output sequence of run-lengths
+        NumRunsOutputIteratorT      d_num_runs_out,                 ///< [out] Pointer to the total number of runs encountered (i.e., length of \p d_offsets_out)
+        EqualityOpT                 equality_op,                    ///< [in] Equality operator for input items
+        OffsetT                     num_items,                      ///< [in] Total number of input items (i.e., length of \p d_in)
+        hipStream_t                 stream,                         ///< [in] CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        bool                        debug_synchronous,              ///< [in] Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
+        int                         ptx_version,                    ///< [in] PTX version of dispatch kernels
+        DeviceScanInitKernelPtr     device_scan_init_kernel,        ///< [in] Kernel function pointer to parameterization of cub::DeviceScanInitKernel
+        DeviceRleSweepKernelPtr     device_rle_sweep_kernel,        ///< [in] Kernel function pointer to parameterization of cub::DeviceRleSweepKernel
+        KernelConfig                device_rle_config)              ///< [in] Dispatch parameters that match the policy that \p device_rle_sweep_kernel was compiled for
+    {
+
+#ifndef CUB_RUNTIME_ENABLED
+
+        // Kernel launch not supported from this device
+        return CubDebug(hipErrorNotMapped);
+
+#else
+
+        hipError_t error = hipSuccess;
+        do
+        {
+            // Get device ordinal
+            int device_ordinal;
+            if (CubDebug(error = hipGetDevice(&device_ordinal))) break;
+
+            // Get SM count
+            int sm_count;
+            if (CubDebug(error = hipDeviceGetAttribute (&sm_count, hipDeviceAttributeMultiprocessorCount, device_ordinal))) break;
+
+            // Number of input tiles
+            int tile_size = device_rle_config.block_threads * device_rle_config.items_per_thread;
+            int num_tiles = (num_items + tile_size - 1) / tile_size;
+
+            // Specify temporary storage allocation requirements
+            size_t  allocation_sizes[1];
+            if (CubDebug(error = ScanTileStateT::AllocationSize(num_tiles, allocation_sizes[0]))) break;    // bytes needed for tile status descriptors
+
+            // Compute allocation pointers into the single storage blob (or compute the necessary size of the blob)
+            void* allocations[1];
+            if (CubDebug(error = AliasTemporaries(d_temp_storage, temp_storage_bytes, allocations, allocation_sizes))) break;
+            if (d_temp_storage == NULL)
+            {
+                // Return if the caller is simply requesting the size of the storage allocation
+                break;
+            }
+
+            // Construct the tile status interface
+            ScanTileStateT tile_status;
+            if (CubDebug(error = tile_status.Init(num_tiles, allocations[0], allocation_sizes[0]))) break;
+
+            // Log device_scan_init_kernel configuration
+            int init_grid_size = CUB_MAX(1, (num_tiles + INIT_KERNEL_THREADS - 1) / INIT_KERNEL_THREADS);
+            if (debug_synchronous) _CubLog("Invoking device_scan_init_kernel<<<%d, %d, 0, %lld>>>()\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
+
+            // Invoke device_scan_init_kernel to initialize tile descriptors and queue descriptors
+            hipLaunchKernelGGL(
+                device_scan_init_kernel,
+                dim3(init_grid_size),
+                dim3(INIT_KERNEL_THREADS),
+                0,
+                stream,
+                tile_status,
+                num_tiles,
+                d_num_runs_out);
+
+            // Check for failure to launch
+            if (CubDebug(error = hipPeekAtLastError())) break;
+
+            // Sync the stream if specified to flush runtime errors
+            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
+
+            // Return if empty problem
+            if (num_items == 0)
+                break;
+
+            // Get SM occupancy for device_rle_sweep_kernel
+            int device_rle_kernel_sm_occupancy;
+            if (CubDebug(error = MaxSmOccupancy(
+                device_rle_kernel_sm_occupancy,            // out
+                device_rle_sweep_kernel,
+                device_rle_config.block_threads))) break;
+
+            // Get max x-dimension of grid
+            int max_dim_x;
+            if (CubDebug(error = hipDeviceGetAttribute(&max_dim_x, hipDeviceAttributeMaxGridDimX, device_ordinal))) break;;
+
+            // Get grid size for scanning tiles
+            dim3 scan_grid_size;
+            scan_grid_size.z = 1;
+            scan_grid_size.y = ((unsigned int) num_tiles + max_dim_x - 1) / max_dim_x;
+            scan_grid_size.x = CUB_MIN(num_tiles, max_dim_x);
+
+            // Log device_rle_sweep_kernel configuration
+            if (debug_synchronous) _CubLog("Invoking device_rle_sweep_kernel<<<{%d,%d,%d}, %d, 0, %lld>>>(), %d items per thread, %d SM occupancy\n",
+                scan_grid_size.x, scan_grid_size.y, scan_grid_size.z, device_rle_config.block_threads, (long long) stream, device_rle_config.items_per_thread, device_rle_kernel_sm_occupancy);
+
+            // Invoke device_rle_sweep_kernel
+            hipLaunchKernelGGL(
+                device_rle_sweep_kernel,
+                dim3(scan_grid_size),
+                dim3(device_rle_config.block_threads),
+                0,
+                stream,
+                d_in,
+                d_offsets_out,
+                d_lengths_out,
+                d_num_runs_out,
+                tile_status,
+                equality_op,
+                num_items,
+                num_tiles);
+
+            // Check for failure to launch
+            if (CubDebug(error = hipPeekAtLastError())) break;
+
+            // Sync the stream if specified to flush runtime errors
+            if (debug_synchronous && (CubDebug(error = SyncStream(stream)))) break;
+
+        }
+        while (0);
+
+        return error;
+
+#endif  // CUB_RUNTIME_ENABLED
+    }
 
 
     /**
@@ -426,7 +502,7 @@ struct DeviceRleDispatch
         NumRunsOutputIteratorT      d_num_runs_out,                 ///< [out] Pointer to total number of runs (i.e., length of \p d_offsets_out)
         EqualityOpT                 equality_op,                    ///< [in] Equality operator for input items
         OffsetT                     num_items,                      ///< [in] Total number of input items (i.e., length of \p d_in)
-        hipStream_t                stream,                         ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        hipStream_t                 stream,                         ///< [in] <b>[optional]</b> CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
         bool                        debug_synchronous)              ///< [in] <b>[optional]</b> Whether or not to synchronize the stream after every kernel launch to check for errors.  Also causes launch configurations to be printed to the console.  Default is \p false.
     {
         hipError_t error = hipSuccess;
@@ -445,7 +521,7 @@ struct DeviceRleDispatch
             InitConfigs(ptx_version, device_rle_config);
 
             // Dispatch
-/*            if (CubDebug(error = Dispatch(
+            if (CubDebug(error = Dispatch(
                 d_temp_storage,
                 temp_storage_bytes,
                 d_in,
@@ -459,22 +535,7 @@ struct DeviceRleDispatch
                 ptx_version,
                 DeviceCompactInitKernel<ScanTileStateT, NumRunsOutputIteratorT>,
                 DeviceRleSweepKernel<PtxRleSweepPolicy, InputIteratorT, OffsetsOutputIteratorT, LengthsOutputIteratorT, NumRunsOutputIteratorT, ScanTileStateT, EqualityOpT, OffsetT>,
-                device_rle_config))) break;*/
-            Dispatch_rle(
-                d_temp_storage,
-                temp_storage_bytes,
-                d_in,
-                d_offsets_out,
-                d_lengths_out,
-                d_num_runs_out,
-                equality_op,
-                num_items,
-                stream,
-                debug_synchronous,
-                ptx_version,
-                (DeviceCompactInitKernel<ScanTileStateT, NumRunsOutputIteratorT>),
-                (DeviceRleSweepKernel<PtxRleSweepPolicy, InputIteratorT, OffsetsOutputIteratorT, LengthsOutputIteratorT, NumRunsOutputIteratorT, ScanTileStateT, EqualityOpT, OffsetT>),
-                device_rle_config);
+                device_rle_config))) break;
         }
         while (0);
 

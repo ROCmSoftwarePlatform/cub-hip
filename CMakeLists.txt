@@ -43,7 +43,27 @@ set_source_files_properties(
     ${CMAKE_CURRENT_SOURCE_DIR}/experimental/defunct/test_device_seq_reduce.cu
     ${CMAKE_CURRENT_SOURCE_DIR}/experimental/histogram_compare.cu
     ${CMAKE_CURRENT_SOURCE_DIR}/experimental/spmv_compare.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/link_a.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/link_b.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_allocator.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_histogram.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_load_store.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_radix_sort.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_reduce.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_scan.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_histogram.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_radix_sort.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_reduce_by_key.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_reduce.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_run_length_encode.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_scan.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_select_if.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_select_unique.cu
     ${CMAKE_CURRENT_SOURCE_DIR}/test/test_grid_barrier.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_iterator.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_warp_reduce.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_warp_scan.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/tune/tune_device_reduce.cu
     PROPERTIES LANGUAGE CXX)
 
 enable_testing()
@@ -228,8 +248,8 @@ set_property(
 #------------------------------------Tests-------------------------------------#
 add_executable(
     link
-        ${CMAKE_CURRENT_SOURCE_DIR}/test/link_a.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/test/link_b.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/link_a.cu
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/link_b.cu
         ${CMAKE_CURRENT_SOURCE_DIR}/test/link_main.cpp)
 target_include_directories(link PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(link PUBLIC external::hip)
@@ -241,7 +261,7 @@ set_property(
     PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
 
 add_executable(
-    test_allocator ${CMAKE_CURRENT_SOURCE_DIR}/test/test_allocator.cpp)
+    test_allocator ${CMAKE_CURRENT_SOURCE_DIR}/test/test_allocator.cu)
 target_include_directories(test_allocator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(test_allocator PUBLIC external::hip)
 add_test(
@@ -253,7 +273,7 @@ set_property(
 
 add_executable(
     test_block_histogram
-        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_histogram.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_histogram.cu)
 target_include_directories(
     test_block_histogram PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(test_block_histogram PUBLIC external::hip)
@@ -266,7 +286,7 @@ set_property(
 
 add_executable(
     test_block_load_store
-        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_load_store.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_load_store.cu)
 target_include_directories(
     test_block_load_store PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(test_block_load_store PUBLIC external::hip)
@@ -279,7 +299,7 @@ set_property(
 
 add_executable(
     test_block_radix_sort
-        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_radix_sort.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_radix_sort.cu)
 target_include_directories(
     test_block_radix_sort PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(test_block_radix_sort PUBLIC external::hip)
@@ -293,7 +313,7 @@ set_property(
 # TODO: 27/06/2017 TestFoo test fails in SROA pass.
 #       char{2, 4} and short{2, 4} cause invalid addrspacecast errors.
 add_executable(
-    test_block_reduce ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_reduce.cpp)
+    test_block_reduce ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_reduce.cu)
 target_include_directories(test_block_reduce PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(test_block_reduce PUBLIC external::hip)
 target_compile_definitions(
@@ -306,7 +326,7 @@ set_property(
     PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
 
 add_executable(
-    test_block_scan ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_scan.cpp)
+    test_block_scan ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_scan.cu)
 target_include_directories(test_block_scan PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(test_block_scan PUBLIC external::hip)
 target_compile_definitions(
@@ -331,7 +351,7 @@ set_property(
 
 add_executable(
     test_device_radix_sort
-        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_radix_sort.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_radix_sort.cu)
 target_include_directories(
     test_device_radix_sort PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(test_device_radix_sort PUBLIC external::hip)
@@ -386,7 +406,7 @@ set_property(
 # TODO: 27/06/2017 TestFoo test fails in SROA pass.
 #       (u)char{2, 4} and ushort2 cause invalid addrspacecast errors.
 add_executable(
-    test_device_scan ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_scan.cpp)
+    test_device_scan ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_scan.cu)
 target_include_directories(test_device_scan PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(test_device_scan PUBLIC external::hip)
 add_test(
@@ -399,7 +419,7 @@ set_property(
 # TODO: 27/06/2017 TestFoo test fails in SROA pass.
 add_executable(
     test_device_select_if
-        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_select_if.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_select_if.cu)
 target_include_directories(
     test_device_select_if PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(test_device_select_if PUBLIC external::hip)
@@ -413,7 +433,7 @@ set_property(
 # TODO: 27/06/2017 TestFoo test fails in SROA pass.
 add_executable(
     test_device_select_unique
-        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_select_unique.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_select_unique.cu)
 target_include_directories(
     test_device_select_unique PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(test_device_select_unique PUBLIC external::hip)
@@ -435,7 +455,7 @@ set_property(
     TEST test_grid_barrier
     PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
 
-add_executable(test_iterator ${CMAKE_CURRENT_SOURCE_DIR}/test/test_iterator.cpp)
+add_executable(test_iterator ${CMAKE_CURRENT_SOURCE_DIR}/test/test_iterator.cu)
 target_include_directories(test_iterator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(test_iterator PUBLIC external::hip)
 add_test(
@@ -446,7 +466,7 @@ set_property(
     PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
 
 add_executable(
-    test_warp_reduce ${CMAKE_CURRENT_SOURCE_DIR}/test/test_warp_reduce.cpp)
+    test_warp_reduce ${CMAKE_CURRENT_SOURCE_DIR}/test/test_warp_reduce.cu)
 target_include_directories(test_warp_reduce PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(test_warp_reduce PUBLIC external::hip)
 add_test(
@@ -457,7 +477,7 @@ set_property(
     PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
 
 add_executable(
-    test_warp_scan ${CMAKE_CURRENT_SOURCE_DIR}/test/test_warp_scan.cpp)
+    test_warp_scan ${CMAKE_CURRENT_SOURCE_DIR}/test/test_warp_scan.cu)
 target_include_directories(test_warp_scan PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(test_warp_scan PUBLIC external::hip)
 add_test(
@@ -466,3 +486,20 @@ add_test(
 set_property(
     TEST test_warp_scan
     PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
+#------------------------------------Tests-------------------------------------#
+
+#-------------------------------------Tune-------------------------------------#
+# TODO: enable.
+# add_executable(
+#     tune_device_reduce ${CMAKE_CURRENT_SOURCE_DIR}/tune/tune_device_reduce.cu)
+# target_include_directories(
+#     tune_device_reduce PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+# target_link_libraries(tune_device_reduce PUBLIC external::hip)
+# target_compile_definitions(tune_device_reduce PUBLIC TUNE_SIZE=4)
+# add_test(
+#     NAME tune_device_reduce
+#     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/tune_device_reduce)
+# set_property(
+#     TEST tune_device_reduce
+#     PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
+#-------------------------------------Tune-------------------------------------#

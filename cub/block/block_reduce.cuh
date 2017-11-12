@@ -1,8 +1,7 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -42,6 +41,8 @@
 #include "../thread/thread_operators.cuh"
 #include "../util_namespace.cuh"
 
+#include <hip/hip_runtime.h>
+
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
 
@@ -56,7 +57,7 @@ namespace cub {
 
 /**
  * BlockReduceAlgorithm enumerates alternative algorithms for parallel
- * reduction across a CUDA threadblock.
+ * reduction across a CUDA thread block.
  */
 enum BlockReduceAlgorithm
 {
@@ -77,7 +78,7 @@ enum BlockReduceAlgorithm
      *
      * \par
      * \image html block_reduce.png
-     * <div class="centercaption">\p BLOCK_REDUCE_RAKING data flow for a hypothetical 16-thread threadblock and 4-thread raking warp.</div>
+     * <div class="centercaption">\p BLOCK_REDUCE_RAKING data flow for a hypothetical 16-thread thread block and 4-thread raking warp.</div>
      *
      * \par Performance Considerations
      * - This variant performs less communication than BLOCK_REDUCE_RAKING_NON_COMMUTATIVE
@@ -107,7 +108,7 @@ enum BlockReduceAlgorithm
      *
      * \par
      * \image html block_reduce.png
-     * <div class="centercaption">\p BLOCK_REDUCE_RAKING data flow for a hypothetical 16-thread threadblock and 4-thread raking warp.</div>
+     * <div class="centercaption">\p BLOCK_REDUCE_RAKING data flow for a hypothetical 16-thread thread block and 4-thread raking warp.</div>
      *
      * \par Performance Considerations
      * - This variant performs more communication than BLOCK_REDUCE_RAKING
@@ -138,7 +139,7 @@ enum BlockReduceAlgorithm
      *
      * \par
      * \image html block_scan_warpscans.png
-     * <div class="centercaption">\p BLOCK_REDUCE_WARP_REDUCTIONS data flow for a hypothetical 16-thread threadblock and 4-thread raking warp.</div>
+     * <div class="centercaption">\p BLOCK_REDUCE_WARP_REDUCTIONS data flow for a hypothetical 16-thread thread block and 4-thread raking warp.</div>
      *
      * \par Performance Considerations
      * - This variant applies more reduction operators than BLOCK_REDUCE_RAKING
@@ -348,7 +349,7 @@ public:
     template <typename ReductionOp>
     __device__ __forceinline__ T Reduce(
         T               input,                      ///< [in] Calling thread's input
-        ReductionOp     reduction_op)               ///< [in] Binary reduction functor 
+        ReductionOp     reduction_op)               ///< [in] Binary reduction functor
     {
         return InternalBlockReduce(temp_storage).template Reduce<true>(input, BLOCK_THREADS, reduction_op);
     }
@@ -395,10 +396,10 @@ public:
         typename ReductionOp>
     __device__ __forceinline__ T Reduce(
         T               (&inputs)[ITEMS_PER_THREAD],    ///< [in] Calling thread's input segment
-        ReductionOp     reduction_op)                   ///< [in] Binary reduction functor 
+        ReductionOp     reduction_op)                   ///< [in] Binary reduction functor
     {
         // Reduce partials
-        T partial = ThreadReduce(inputs, reduction_op);
+        T partial = internal::ThreadReduce(inputs, reduction_op);
         return Reduce(partial, reduction_op);
     }
 
@@ -440,7 +441,7 @@ public:
     template <typename ReductionOp>
     __device__ __forceinline__ T Reduce(
         T                   input,                  ///< [in] Calling thread's input
-        ReductionOp         reduction_op,           ///< [in] Binary reduction functor 
+        ReductionOp         reduction_op,           ///< [in] Binary reduction functor
         int                 num_valid)              ///< [in] Number of threads containing valid elements (may be less than BLOCK_THREADS)
     {
         // Determine if we scan skip bounds checking
@@ -541,7 +542,7 @@ public:
         T   (&inputs)[ITEMS_PER_THREAD])    ///< [in] Calling thread's input segment
     {
         // Reduce partials
-        T partial = ThreadReduce(inputs, cub::Sum());
+        T partial = internal::ThreadReduce(inputs, cub::Sum());
         return Sum(partial);
     }
 

@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -46,6 +45,8 @@
 #include "coo_graph.cuh"
 #include "../test/test_util.h"
 
+#include <hip/hip_runtime.h>
+
 using namespace cub;
 using namespace std;
 
@@ -76,7 +77,7 @@ struct TexVector
     typedef typename If<(Equals<Value, double>::VALUE), uint2, Value>::Type CastType;
 
     // Texture reference type
-    typedef texture<CastType, cudaTextureType1D, hipReadModeElementType> TexRef;
+    typedef texture<CastType, hipTextureType1D, hipReadModeElementType> TexRef;
 
     static TexRef ref;
 
@@ -213,7 +214,7 @@ struct NewRowOp
  ******************************************************************************/
 
 /**
- * SpMV threadblock abstraction for processing a contiguous segment of
+ * SpMV thread block abstraction for processing a contiguous segment of
  * sparse COO tiles.
  */
 template <
@@ -251,7 +252,7 @@ struct PersistentBlockSpmv
     // Parameterized BlockDiscontinuity type for setting head-flags for each new row segment
     typedef BlockDiscontinuity<HeadFlag, BLOCK_THREADS> BlockDiscontinuity;
 
-    // Shared memory type for this threadblock
+    // Shared memory type for this thread block
     struct TempStorage
     {
         union
@@ -268,9 +269,6 @@ struct PersistentBlockSpmv
         VertexId        first_block_row;    ///< The first row-ID seen by this thread block
         VertexId        last_block_row;     ///< The last row-ID seen by this thread block
         Value           first_product;      ///< The first dot-product written by this thread block
-
-        __host__ __device__
-        ~TempStorage() {}
     };
 
     //---------------------------------------------------------------------
@@ -351,7 +349,7 @@ struct PersistentBlockSpmv
         PartialProduct  partial_sums[ITEMS_PER_THREAD];
         HeadFlag        head_flags[ITEMS_PER_THREAD];
 
-        // Load a threadblock-striped tile of A (sparse row-ids, column-ids, and values)
+        // Load a thread block-striped tile of A (sparse row-ids, column-ids, and values)
         if (FULL_TILE)
         {
             // Unguarded loads
@@ -459,7 +457,7 @@ struct PersistentBlockSpmv
         {
             if (hipGridDim_x == 1)
             {
-                // Scatter the final aggregate (this kernel contains only 1 threadblock)
+                // Scatter the final aggregate (this kernel contains only 1 thread block)
                 d_result[prefix_op.running_prefix.row] = prefix_op.running_prefix.partial;
             }
             else
@@ -511,7 +509,7 @@ struct FinalizeSpmvBlock
     // Parameterized BlockDiscontinuity type for setting head-flags for each new row segment
     typedef BlockDiscontinuity<HeadFlag, BLOCK_THREADS> BlockDiscontinuity;
 
-    // Shared memory type for this threadblock
+    // Shared memory type for this thread block
     struct TempStorage
     {
         typename BlockScan::TempStorage           scan;               // Smem needed for reduce-value-by-row scan
@@ -660,7 +658,7 @@ struct FinalizeSpmvBlock
             ProcessTile<false>(block_offset, guarded_items);
         }
 
-        // Scatter the final aggregate (this kernel contains only 1 threadblock)
+        // Scatter the final aggregate (this kernel contains only 1 thread block)
         if (hipThreadIdx_x == 0)
         {
             d_result[prefix_op.running_prefix.row] = prefix_op.running_prefix.partial;
@@ -684,10 +682,7 @@ template <
     typename                        VertexId,
     typename                        Value>
 __launch_bounds__ (BLOCK_THREADS)
-__global__
-inline
-void CooKernel(
-    hipLaunchParm                  lp,
+__global__ void CooKernel(
     GridEvenShare<int>              even_share,
     PartialProduct<VertexId, Value> *d_block_partials,
     VertexId                        *d_rows,
@@ -696,13 +691,13 @@ void CooKernel(
     Value                           *d_vector,
     Value                           *d_result)
 {
-    // Specialize SpMV threadblock abstraction type
+    // Specialize SpMV thread block abstraction type
     typedef PersistentBlockSpmv<BLOCK_THREADS, ITEMS_PER_THREAD, VertexId, Value> PersistentBlockSpmv;
 
     // Shared memory allocation
     __shared__ typename PersistentBlockSpmv::TempStorage temp_storage;
 
-    // Initialize threadblock even-share to tell us where to start and stop our tile-processing
+    // Initialize thread block even-share to tell us where to start and stop our tile-processing
     even_share.BlockInit();
 
     // Construct persistent thread block
@@ -731,15 +726,12 @@ template <
     typename                        VertexId,
     typename                        Value>
 __launch_bounds__ (BLOCK_THREADS,  1)
-__global__
-inline
-void CooFinalizeKernel(
-    hipLaunchParm                  lp,
+__global__ void CooFinalizeKernel(
     PartialProduct<VertexId, Value> *d_block_partials,
     int                             num_partials,
     Value                           *d_result)
 {
-    // Specialize "fix-up" threadblock abstraction type
+    // Specialize "fix-up" thread block abstraction type
     typedef FinalizeSpmvBlock<BLOCK_THREADS, ITEMS_PER_THREAD, VertexId, Value> FinalizeSpmvBlock;
 
     // Shared memory allocation
@@ -785,7 +777,7 @@ void TestDevice(
     Value           *d_values;           // SOA graph values
     Value           *d_vector;           // Vector multiplicand
     Value           *d_result;           // Output row
-    PartialProduct  *d_block_partials;   // Temporary storage for communicating dot product partials between threadblocks
+    PartialProduct  *d_block_partials;   // Temporary storage for communicating dot product partials between thread blocks
 
     // Create SOA version of coo_graph on host
     int             num_edges   = coo_graph.coo_tuples.size();
@@ -834,11 +826,11 @@ void TestDevice(
     TexVector<Value>::BindTexture(d_vector, coo_graph.col_dim);
 
     // Print debug info
-    printf("hipLaunchKernel(HIP_KERNEL_NAME(CooKernel<%d, %d>), dim3(%d), dim3(%d), 0, 0, ...), Max SM occupancy: %d\n",
+    printf("CooKernel<%d, %d><<<%d, %d>>>(...), Max SM occupancy: %d\n",
         COO_BLOCK_THREADS, COO_ITEMS_PER_THREAD, coo_grid_size, COO_BLOCK_THREADS, coo_sm_occupancy);
     if (coo_grid_size > 1)
     {
-        printf("hipLaunchKernel(HIP_KERNEL_NAME(CooFinalizeKernel), dim3(1), dim3(%d), 0, 0, ...)\n", FINALIZE_BLOCK_THREADS);
+        printf("CooFinalizeKernel<<<1, %d>>>(...)\n", FINALIZE_BLOCK_THREADS);
     }
     fflush(stdout);
 
@@ -855,7 +847,12 @@ void TestDevice(
         CubDebugExit(hipMemset(d_result, 0, coo_graph.row_dim * sizeof(Value)));
 
         // Run the COO kernel
-        hipLaunchKernel(HIP_KERNEL_NAME(CooKernel<COO_BLOCK_THREADS, COO_ITEMS_PER_THREAD>), dim3(coo_grid_size), dim3(COO_BLOCK_THREADS), 0, 0,
+        hipLaunchKernelGGL(
+            CooKernel<COO_BLOCK_THREADS, COO_ITEMS_PER_THREAD>,
+            dim3(coo_grid_size),
+            dim3(COO_BLOCK_THREADS),
+            0,
+            0,
             even_share,
             d_block_partials,
             d_rows,
@@ -867,7 +864,10 @@ void TestDevice(
         if (coo_grid_size > 1)
         {
             // Run the COO finalize kernel
-            hipLaunchKernel(HIP_KERNEL_NAME(CooFinalizeKernel<FINALIZE_BLOCK_THREADS, FINALIZE_ITEMS_PER_THREAD>), dim3(1), dim3(FINALIZE_BLOCK_THREADS), 0, 0,
+            hipLaunchKernelGGL(
+                CooFinalizeKernel<FINALIZE_BLOCK_THREADS, FINALIZE_ITEMS_PER_THREAD>,
+                dim3(1),
+                dim3(FINALIZE_BLOCK_THREADS),
                 d_block_partials,
                 num_partials,
                 d_result);
@@ -880,7 +880,7 @@ void TestDevice(
     }
 
     // Force any kernel stdio to screen
-    CubDebugExit(hipDeviceSynchronize());
+    CubDebugExit(hipThreadSynchronize());
     fflush(stdout);
 
     // Display timing

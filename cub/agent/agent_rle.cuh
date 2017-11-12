@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -47,6 +46,8 @@
 #include "../iterator/constant_input_iterator.cuh"
 #include "../util_namespace.cuh"
 
+#include "hip/hip_runtime.h"
+
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
 
@@ -91,7 +92,7 @@ struct AgentRlePolicy
  ******************************************************************************/
 
 /**
- * \brief AgentRle implements a stateful abstraction of CUDA thread blocks for participating in device-wide run-length-encode 
+ * \brief AgentRle implements a stateful abstraction of CUDA thread blocks for participating in device-wide run-length-encode
  */
 template <
     typename    AgentRlePolicyT,        ///< Parameterized AgentRlePolicyT tuning policy type
@@ -159,7 +160,7 @@ struct AgentRle
         {}
 
         template <typename Index>
-        __device__ __forceinline__ bool operator()(T first, T second, Index idx)
+        __host__ __device__ __forceinline__ bool operator()(T first, T second, Index idx)
         {
             if (!LAST_TILE || (idx < num_remaining))
                 return !equality_op(first, second);
@@ -209,10 +210,11 @@ struct AgentRle
 
     typedef LengthOffsetPair WarpAggregates[WARPS];
 
-    // Shared memory type for this threadblock
+    // Shared memory type for this thread block
     struct _TempStorage
     {
-        union
+        // Aliasable storage layout
+        union Aliasable
         {
             struct
             {
@@ -225,15 +227,17 @@ struct AgentRle
             // Smem needed for input loading
             typename BlockLoadT::TempStorage                    load;
 
-            // Smem needed for two-phase scatter
-            union
+            // Aliasable layout needed for two-phase scatter
+            union ScatterAliasable
             {
                 unsigned long long                              align;
                 WarpExchangePairsStorage                        exchange_pairs[ACTIVE_EXCHANGE_WARPS];
                 typename WarpExchangeOffsets::TempStorage       exchange_offsets[ACTIVE_EXCHANGE_WARPS];
                 typename WarpExchangeLengths::TempStorage       exchange_lengths[ACTIVE_EXCHANGE_WARPS];
-            };
-        };
+
+            } scatter_aliasable;
+
+        } aliasable;
 
         OffsetT             tile_idx;                   // Shared tile index
         LengthOffsetPair    tile_inclusive;             // Inclusive tile prefix
@@ -303,7 +307,7 @@ struct AgentRle
         {
             // First-and-last-tile always head-flags the first item and tail-flags the last item
 
-            BlockDiscontinuityT(temp_storage.discontinuity).FlagHeadsAndTails(
+            BlockDiscontinuityT(temp_storage.aliasable.discontinuity).FlagHeadsAndTails(
                 head_flags, tail_flags, items, inequality_op);
         }
         else if (FIRST_TILE)
@@ -315,7 +319,7 @@ struct AgentRle
             if (hipThreadIdx_x == BLOCK_THREADS - 1)
                 tile_successor_item = d_in[tile_offset + TILE_ITEMS];
 
-            BlockDiscontinuityT(temp_storage.discontinuity).FlagHeadsAndTails(
+            BlockDiscontinuityT(temp_storage.aliasable.discontinuity).FlagHeadsAndTails(
                 head_flags, tail_flags, tile_successor_item, items, inequality_op);
         }
         else if (LAST_TILE)
@@ -327,7 +331,7 @@ struct AgentRle
             if (hipThreadIdx_x == 0)
                 tile_predecessor_item = d_in[tile_offset - 1];
 
-            BlockDiscontinuityT(temp_storage.discontinuity).FlagHeadsAndTails(
+            BlockDiscontinuityT(temp_storage.aliasable.discontinuity).FlagHeadsAndTails(
                 head_flags, tile_predecessor_item, tail_flags, items, inequality_op);
         }
         else
@@ -342,7 +346,7 @@ struct AgentRle
             if (hipThreadIdx_x == 0)
                 tile_predecessor_item = d_in[tile_offset - 1];
 
-            BlockDiscontinuityT(temp_storage.discontinuity).FlagHeadsAndTails(
+            BlockDiscontinuityT(temp_storage.aliasable.discontinuity).FlagHeadsAndTails(
                 head_flags, tile_predecessor_item, tail_flags, tile_successor_item, items, inequality_op);
         }
 
@@ -350,7 +354,7 @@ struct AgentRle
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
-            lengths_and_num_runs[ITEM].key   = head_flags[ITEM] && (!tail_flags[ITEM]);
+            lengths_and_num_runs[ITEM].key      = head_flags[ITEM] && (!tail_flags[ITEM]);
             lengths_and_num_runs[ITEM].value    = ((!head_flags[ITEM]) || (!tail_flags[ITEM]));
         }
     }
@@ -378,8 +382,8 @@ struct AgentRle
         identity.value = 0;
 
         LengthOffsetPair thread_inclusive;
-        LengthOffsetPair thread_aggregate = ThreadReduce(lengths_and_num_runs, scan_op);
-        WarpScanPairs(temp_storage.warp_scan[warp_id]).Scan(
+        LengthOffsetPair thread_aggregate = internal::ThreadReduce(lengths_and_num_runs, scan_op);
+        WarpScanPairs(temp_storage.aliasable.warp_scan[warp_id]).Scan(
             thread_aggregate,
             thread_inclusive,
             thread_exclusive_in_warp,
@@ -388,14 +392,14 @@ struct AgentRle
 
         // Last lane in each warp shares its warp-aggregate
         if (lane_id == WARP_THREADS - 1)
-            temp_storage.warp_aggregates.Alias()[warp_id] = thread_inclusive;
+            temp_storage.aliasable.warp_aggregates.Alias()[warp_id] = thread_inclusive;
 
-        __syncthreads();
+        CTA_SYNC();
 
         // Accumulate total selected and the warp-wide prefix
         warp_exclusive_in_tile          = identity;
-        warp_aggregate                  = temp_storage.warp_aggregates.Alias()[warp_id];
-        tile_aggregate                  = temp_storage.warp_aggregates.Alias()[0];
+        warp_aggregate                  = temp_storage.aliasable.warp_aggregates.Alias()[warp_id];
+        tile_aggregate                  = temp_storage.aliasable.warp_aggregates.Alias()[0];
 
         #pragma unroll
         for (int WARP = 1; WARP < WARPS; ++WARP)
@@ -403,7 +407,7 @@ struct AgentRle
             if (warp_id == WARP)
                 warp_exclusive_in_tile = tile_aggregate;
 
-            tile_aggregate = scan_op(tile_aggregate, temp_storage.warp_aggregates.Alias()[WARP]);
+            tile_aggregate = scan_op(tile_aggregate, temp_storage.aliasable.warp_aggregates.Alias()[WARP]);
         }
     }
 
@@ -430,18 +434,20 @@ struct AgentRle
         // Locally compact items within the warp (first warp)
         if (warp_id == 0)
         {
-            WarpExchangePairs(temp_storage.exchange_pairs[0]).ScatterToStriped(lengths_and_offsets, thread_num_runs_exclusive_in_warp);
+            WarpExchangePairs(temp_storage.aliasable.scatter_aliasable.exchange_pairs[0]).ScatterToStriped(
+                lengths_and_offsets, thread_num_runs_exclusive_in_warp);
         }
 
         // Locally compact items within the warp (remaining warps)
         #pragma unroll
         for (int SLICE = 1; SLICE < WARPS; ++SLICE)
         {
-            __syncthreads();
+            CTA_SYNC();
 
             if (warp_id == SLICE)
             {
-                WarpExchangePairs(temp_storage.exchange_pairs[0]).ScatterToStriped(lengths_and_offsets, thread_num_runs_exclusive_in_warp);
+                WarpExchangePairs(temp_storage.aliasable.scatter_aliasable.exchange_pairs[0]).ScatterToStriped(
+                    lengths_and_offsets, thread_num_runs_exclusive_in_warp);
             }
         }
 
@@ -495,14 +501,13 @@ struct AgentRle
             run_lengths[ITEM] = lengths_and_offsets[ITEM].value;
         }
 
-        WarpExchangeOffsets(temp_storage.exchange_offsets[warp_id]).ScatterToStriped(run_offsets, thread_num_runs_exclusive_in_warp);
+        WarpExchangeOffsets(temp_storage.aliasable.scatter_aliasable.exchange_offsets[warp_id]).ScatterToStriped(
+            run_offsets, thread_num_runs_exclusive_in_warp);
 
-        if (sizeof(LengthT) == sizeof(OffsetT))
-            __threadfence_block();
-        else
-            __syncthreads();
+        WARP_SYNC(0xffffffff);
 
-        WarpExchangeLengths(temp_storage.exchange_lengths[warp_id]).ScatterToStriped(run_lengths, thread_num_runs_exclusive_in_warp);
+        WarpExchangeLengths(temp_storage.aliasable.scatter_aliasable.exchange_lengths[warp_id]).ScatterToStriped(
+            run_lengths, thread_num_runs_exclusive_in_warp);
 
         // Global scatter
         #pragma unroll
@@ -625,12 +630,12 @@ struct AgentRle
             // Load items
             T items[ITEMS_PER_THREAD];
             if (LAST_TILE)
-                BlockLoadT(temp_storage.load).Load(d_in + tile_offset, items, num_remaining, T());
+                BlockLoadT(temp_storage.aliasable.load).Load(d_in + tile_offset, items, num_remaining, T());
             else
-                BlockLoadT(temp_storage.load).Load(d_in + tile_offset, items);
+                BlockLoadT(temp_storage.aliasable.load).Load(d_in + tile_offset, items);
 
             if (SYNC_AFTER_LOAD)
-                __syncthreads();
+                CTA_SYNC();
 
             // Set flags
             LengthOffsetPair    lengths_and_num_runs[ITEMS_PER_THREAD];
@@ -667,7 +672,7 @@ struct AgentRle
             LengthOffsetPair    lengths_and_num_runs2[ITEMS_PER_THREAD];
 
             // Downsweep scan through lengths_and_num_runs
-            ThreadScanExclusive(lengths_and_num_runs, lengths_and_num_runs2, scan_op, thread_exclusive_in_warp);
+            internal::ThreadScanExclusive(lengths_and_num_runs, lengths_and_num_runs2, scan_op, thread_exclusive_in_warp);
 
             // Zip
 
@@ -705,12 +710,12 @@ struct AgentRle
             // Load items
             T items[ITEMS_PER_THREAD];
             if (LAST_TILE)
-                BlockLoadT(temp_storage.load).Load(d_in + tile_offset, items, num_remaining, T());
+                BlockLoadT(temp_storage.aliasable.load).Load(d_in + tile_offset, items, num_remaining, T());
             else
-                BlockLoadT(temp_storage.load).Load(d_in + tile_offset, items);
+                BlockLoadT(temp_storage.aliasable.load).Load(d_in + tile_offset, items);
 
             if (SYNC_AFTER_LOAD)
-                __syncthreads();
+                CTA_SYNC();
 
             // Set flags
             LengthOffsetPair    lengths_and_num_runs[ITEMS_PER_THREAD];
@@ -735,7 +740,7 @@ struct AgentRle
                 lengths_and_num_runs);
 
             // First warp computes tile prefix in lane 0
-            TilePrefixCallbackOpT prefix_op(tile_status, temp_storage.prefix, Sum(), tile_idx);
+            TilePrefixCallbackOpT prefix_op(tile_status, temp_storage.aliasable.prefix, Sum(), tile_idx);
             unsigned int warp_id = ((WARPS == 1) ? 0 : hipThreadIdx_x / WARP_THREADS);
             if (warp_id == 0)
             {
@@ -744,7 +749,7 @@ struct AgentRle
                     temp_storage.tile_exclusive = prefix_op.exclusive_prefix;
             }
 
-            __syncthreads();
+            CTA_SYNC();
 
             LengthOffsetPair tile_exclusive_in_global = temp_storage.tile_exclusive;
 
@@ -758,7 +763,7 @@ struct AgentRle
             LengthOffsetPair    lengths_and_offsets[ITEMS_PER_THREAD];
             OffsetT             thread_num_runs_exclusive_in_warp[ITEMS_PER_THREAD];
 
-            ThreadScanExclusive(lengths_and_num_runs, lengths_and_num_runs2, scan_op, thread_exclusive_in_warp);
+            internal::ThreadScanExclusive(lengths_and_num_runs, lengths_and_num_runs2, scan_op, thread_exclusive_in_warp);
 
             // Zip
             #pragma unroll
@@ -826,7 +831,6 @@ struct AgentRle
             }
         }
     }
-    __host__ __device__ ~AgentRle() {}
 };
 
 

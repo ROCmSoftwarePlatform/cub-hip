@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,14 +29,19 @@
 /******************************************************************************
  * Test evaluation for caching allocator of device memory
  ******************************************************************************/
+
 // Ensure printing of CUDA runtime errors to console
 #define CUB_STDERR
 
 #include <stdio.h>
+
 #include <cub/util_allocator.cuh>
 #include "test_util.h"
 
+#include <hip/hip_runtime.h>
+
 using namespace cub;
+
 
 //---------------------------------------------------------------------
 // Main
@@ -46,7 +50,6 @@ using namespace cub;
 /**
  * Main
  */
-
 int main(int argc, char** argv)
 {
     // Initialize command line
@@ -99,12 +102,7 @@ int main(int argc, char** argv)
     CubDebugExit(allocator.DeviceAllocate((void **) &d_999B_stream0_a, 999, 0));
 
     // Run some big kernel in stream 0
-    hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel<void>),
-                    dim3(32000),
-                    dim3(512),
-                    1024 * 8,
-                    0,
-                    0);
+    hipLaunchKernelGGL(EmptyKernel<void>, dim3(32000), dim3(512), 1024 * 8, 0);
 
     // Free d_999B_stream0_a
     CubDebugExit(allocator.DeviceFree(d_999B_stream0_a));
@@ -119,12 +117,7 @@ int main(int argc, char** argv)
     AssertEquals(allocator.cached_blocks.size(), 0);
 
     // Run some big kernel in stream 0
-    hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel<void>),
-                    dim3(32000),
-                    dim3(512),
-                    1024 * 8,
-                    0,
-                    0);
+    hipLaunchKernelGGL(EmptyKernel<void>, dim3(32000), dim3(512), 1024 * 8, 0);
 
     // Free d_999B_stream0_b
     CubDebugExit(allocator.DeviceFree(d_999B_stream0_b));
@@ -137,23 +130,12 @@ int main(int argc, char** argv)
     // Check that that we have 1 live blocks on the initial GPU (that we allocated a new one because d_999B_stream0_b is only available for stream 0 until it becomes idle)
     AssertEquals(allocator.live_blocks.size(), 1);
 
-    #ifdef __HIP_PLATFORM_NVCC__
     // Check that that we have one cached block on the initial GPU
     AssertEquals(allocator.cached_blocks.size(), 1);
-    #endif
 
-    #ifdef __HIP_PLATFORM_HCC__
-    // Check that that we have no cached block on the initial GPU 
-    // AMD makes use of cached block if available, irrespective of the stream allocation.
-    AssertEquals(allocator.cached_blocks.size(), 0);
-    #endif
     // Run some big kernel in other_stream
-    hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel<void>),
-                    dim3(32000),
-                    dim3(512),
-                    1024 * 8,
-                    other_stream,
-                    0);
+    hipLaunchKernelGGL(
+        EmptyKernel<void>, dim3(32000), dim3(512), 1024 * 8, other_stream);
 
     // Free d_999B_stream_other
     CubDebugExit(allocator.DeviceFree(d_999B_stream_other_a));
@@ -185,12 +167,8 @@ int main(int argc, char** argv)
     AssertEquals(allocator.cached_blocks.size(), 0);
 
     // Run some big kernel in other_stream
-    hipLaunchKernel(HIP_KERNEL_NAME(EmptyKernel<void>),
-                    dim3(32000),
-                    dim3(512),
-                    1024 * 8,
-                    other_stream,
-                    0);
+    hipLaunchKernelGGL(
+        EmptyKernel<void>, dim3(32000), dim3(512), 1024 * 8, other_stream);
 
     // Free d_999B_stream_other_a and d_999B_stream_other_b
     CubDebugExit(allocator.DeviceFree(d_999B_stream_other_a));
@@ -406,7 +384,7 @@ int main(int argc, char** argv)
     // Prime the caching allocator and the kernel
     CubDebugExit(allocator.DeviceAllocate((void **) &d_1024MB, timing_bytes));
     CubDebugExit(allocator.DeviceFree(d_1024MB));
-    hipLaunchKernel(HIP_KERNEL_NAME((cub::EmptyKernel<void>)), dim3(1), dim3(32), 0, 0, 0);
+    hipLaunchKernelGGL(cub::EmptyKernel<void>, dim3(1), dim3(32), 0, 0);
 
     // CUDA
     cpu_timer.Start();
@@ -443,7 +421,7 @@ int main(int argc, char** argv)
     gpu_timer.Start();
     for (int i = 0; i < timing_iterations; ++i)
     {
-        hipLaunchKernel(HIP_KERNEL_NAME((cub::EmptyKernel<void>)), dim3(1), dim3(32), 0, 0, 0);
+        hipLaunchKernelGGL(cub::EmptyKernel<void>, dim3(1), dim3(32), 0, 0);
     }
     gpu_timer.Stop();
     float cuda_empty_elapsed_millis = gpu_timer.ElapsedMillis();
@@ -453,7 +431,7 @@ int main(int argc, char** argv)
     for (int i = 0; i < timing_iterations; ++i)
     {
         CubDebugExit(hipMalloc((void **) &d_1024MB, timing_bytes));
-        hipLaunchKernel(HIP_KERNEL_NAME((cub::EmptyKernel<void>)), dim3(1), dim3(32), 0, 0, 0);
+        hipLaunchKernelGGL(cub::EmptyKernel<void>, dim3(1), dim3(32), 0, 0);
         CubDebugExit(hipFree(d_1024MB));
     }
     gpu_timer.Stop();
@@ -464,7 +442,7 @@ int main(int argc, char** argv)
     for (int i = 0; i < timing_iterations; ++i)
     {
         CubDebugExit(allocator.DeviceAllocate((void **) &d_1024MB, timing_bytes));
-        hipLaunchKernel(HIP_KERNEL_NAME((cub::EmptyKernel<void>)), dim3(1), dim3(32), 0, 0, 0);
+        hipLaunchKernelGGL(cub::EmptyKernel<void>, dim3(1), dim3(32), 0, 0);
         CubDebugExit(allocator.DeviceFree(d_1024MB));
     }
     gpu_timer.Stop();

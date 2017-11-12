@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,6 +39,8 @@
 
 #include "test_util.h"
 
+#include <hip/hip_runtime.h>
+
 using namespace cub;
 
 
@@ -50,9 +51,9 @@ using namespace cub;
 /**
  * Kernel that iterates through the specified number of software global barriers
  */
-__global__
-inline
-void Kernel(hipLaunchParm lp, GridBarrier global_barrier, int iterations)
+__global__ void Kernel(
+    GridBarrier global_barrier,
+    int iterations)
 {
     for (int i = 0; i < iterations; i++)
     {

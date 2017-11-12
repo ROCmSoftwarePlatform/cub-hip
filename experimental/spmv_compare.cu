@@ -1,6 +1,5 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -107,9 +106,7 @@ template <
     typename    OffsetT,
     typename    VectorItr>
 __launch_bounds__ (int(BLOCK_THREADS))
-__global__
-inline
-void NonZeroIoKernel(
+__global__ void NonZeroIoKernel(
     SpmvParams<ValueT, OffsetT> params,
     VectorItr                   d_vector_x)
 {
@@ -216,7 +213,9 @@ float TestGpuCsrIoProxy(
         printf("NonZeroIoKernel<%d,%d><<<%d, %d>>>, sm occupancy %d\n", BLOCK_THREADS, ITEMS_PER_THREAD, blocks, BLOCK_THREADS, spmv_sm_occupancy);
 
     // Warmup
-    hipLaunchKernel(HIP_KERNEL_NAME(NonZeroIoKernel<BLOCK_THREADS, ITEMS_PER_THREAD>), dim3(blocks), dim3(BLOCK_THREADS), smem, 0, params, x_itr);
+    hipLaunchKernelGGL(
+        NonZeroIoKernel<BLOCK_THREADS, ITEMS_PER_THREAD>
+        dim3(blocks), dim3(BLOCK_THREADS), smem, 0, params, x_itr);
 
     // Check for failures
     CubDebugExit(hipPeekAtLastError());
@@ -228,7 +227,9 @@ float TestGpuCsrIoProxy(
     timer.Start();
     for (int it = 0; it < timing_iterations; ++it)
     {
-        hipLaunchKernel(HIP_KERNEL_NAME(NonZeroIoKernel<BLOCK_THREADS, ITEMS_PER_THREAD>), dim3(blocks), dim3(BLOCK_THREADS), smem, 0, params, x_itr);
+        hipLaunchKernelGGL(
+            NonZeroIoKernel<BLOCK_THREADS, ITEMS_PER_THREAD>,
+            dim3(blocks), dim3(BLOCK_THREADS), smem, 0, params, x_itr);
     }
     timer.Stop();
     elapsed_millis += timer.ElapsedMillis();

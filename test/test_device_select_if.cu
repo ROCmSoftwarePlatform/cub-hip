@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -37,21 +36,21 @@
 #include <stdio.h>
 #include <typeinfo>
 
-#include <cub/util_allocator.cuh>
-#include <cub/device/device_select.cuh>
-#include <cub/device/device_partition.cuh>
-#include <cub/iterator/counting_input_iterator.cuh>
+#include <hip/hip_runtime.h>
 
 #if defined(__HIP_PLATFORM_HCC__)
     #include <bolt/amp/copy.h>
-    //#include <bolt/amp/partition.h>
-    // TODO: no existing equivalent for reverse_iterator or partition.
 #else
     #include <thrust/device_ptr.h>
     #include <thrust/copy.h>
     #include <thrust/partition.h>
     #include <thrust/iterator/reverse_iterator.h>
 #endif
+
+#include <cub/util_allocator.cuh>
+#include <cub/device/device_select.cuh>
+#include <cub/device/device_partition.cuh>
+#include <cub/iterator/counting_input_iterator.cuh>
 
 #include "test_util.h"
 
@@ -91,8 +90,7 @@ struct LessThan
         return (a < compare);
     }
 
-    __host__ __device__
-    ~LessThan() {}
+    __host__ __device__ ~LessThan() {}
 };
 
 //---------------------------------------------------------------------
@@ -145,6 +143,7 @@ hipError_t Dispatch(
     int                         timing_timing_iterations,
     size_t*                     d_temp_storage_bytes,
     hipError_t*                d_cdp_error,
+
     void*                       d_temp_storage,
     size_t&                     temp_storage_bytes,
     InputIteratorT              d_in,
@@ -239,7 +238,7 @@ hipError_t Dispatch(
  * Dispatch to select if entrypoint
  */
 template <typename InputIteratorT, typename FlagIteratorT, typename SelectOpT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
-/*__host__*/ __forceinline__
+__host__ __forceinline__
 hipError_t Dispatch(
     Int2Type<THRUST>            dispatch_to,
     Int2Type<false>             is_flagged,
@@ -285,25 +284,18 @@ hipError_t Dispatch(
 
             OffsetT num_selected = d_out_end - d_out;
         #else
-            thrust::device_ptr<OutputT> d_out_wrapper_end;
-            thrust::device_ptr<InputT>  d_in_wrapper(d_in);
-            thrust::device_ptr<OutputT> d_out_wrapper(d_out);
+            thrust::device_ptr<OutputT>         d_out_wrapper_end;
+            thrust::device_ptr<InputT>          d_in_wrapper(d_in);
+            thrust::device_ptr<OutputT>         d_out_wrapper(d_out);
 
-            auto d_out_end = d_out;
             for (int i = 0; i < timing_timing_iterations; ++i)
             {
-                d_out_wrapper_end = thrust::copy_if(d_in_wrapper,
-                                                    d_in_wrapper + num_items,
-                                                    d_out_wrapper,
-                                                    select_op);
+                d_out_wrapper_end = thrust::copy_if(d_in_wrapper, d_in_wrapper + num_items, d_out_wrapper, select_op);
             }
 
-            OffsetT num_selected = d_out_wrapper_end - d_out_wrapper;
+            OffsetT num_selected = OffsetT(d_out_wrapper_end - d_out_wrapper);
         #endif
-        CubDebugExit(hipMemcpy(d_num_selected_out,
-                               &num_selected,
-                               sizeof(OffsetT),
-                               hipMemcpyHostToDevice));
+        CubDebugExit(hipMemcpy(d_num_selected_out, &num_selected, sizeof(OffsetT), hipMemcpyHostToDevice));
     }
 
     return hipSuccess;
@@ -314,7 +306,7 @@ hipError_t Dispatch(
  * Dispatch to partition if entrypoint
  */
 template <typename InputIteratorT, typename FlagIteratorT, typename SelectOpT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
-/*__host__*/ __forceinline__
+__host__ __forceinline__
 hipError_t Dispatch(
     Int2Type<THRUST>            dispatch_to,
     Int2Type<false>             is_flagged,
@@ -345,9 +337,8 @@ hipError_t Dispatch(
     #if defined(__HIP_PLATFORM_HCC__)
         typedef std::reverse_iterator<OutputIteratorT> ReverseOutputIteratorT;
     #else
-        typedef thrust::reverse_iterator<thrust::device_ptr<OutputT>> ReverseOutputIteratorT;
+        typedef thrust::reverse_iterator<thrust::device_ptr<OutputT> > ReverseOutputIteratorT;
     #endif
-
     if (d_temp_storage == 0)
     {
         temp_storage_bytes = 1;
@@ -359,15 +350,13 @@ hipError_t Dispatch(
             ReverseOutputIteratorT d_out_unselected{d_out + num_items};
             std::pair<OutputIteratorT, ReverseOutputIteratorT> d_out_wrapper_end;
         #else
-            thrust::pair<thrust::device_ptr<OutputT>,
-                         ReverseOutputIteratorT> d_out_wrapper_end;
+            thrust::pair<thrust::device_ptr<OutputT>, ReverseOutputIteratorT> d_out_wrapper_end;
 
             thrust::device_ptr<InputT>       d_in_wrapper(d_in);
-            thrust::device_ptr<OutputT>      d_out_wrapper(d_out);
+            thrust::device_ptr<OutputT>       d_out_wrapper(d_out);
 
             ReverseOutputIteratorT d_out_unselected(d_out_wrapper + num_items);
         #endif
-
         for (int i = 0; i < timing_timing_iterations; ++i)
         {
             d_out_wrapper_end =
@@ -386,11 +375,8 @@ hipError_t Dispatch(
             #endif
         }
 
-       OffsetT num_selected = d_out_wrapper_end.first - d_out_wrapper;
-       CubDebugExit(hipMemcpy(d_num_selected_out,
-                              &num_selected,
-                              sizeof(OffsetT),
-                              hipMemcpyHostToDevice));
+        OffsetT num_selected = OffsetT(d_out_wrapper_end.first - d_out_wrapper);
+        CubDebugExit(hipMemcpy(d_num_selected_out, &num_selected, sizeof(OffsetT), hipMemcpyHostToDevice));
     }
 
     return hipSuccess;
@@ -401,7 +387,7 @@ hipError_t Dispatch(
  * Dispatch to select flagged entrypoint
  */
 template <typename InputIteratorT, typename FlagIteratorT, typename SelectOpT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
-/*__host__*/ __forceinline__
+__host__ __forceinline__
 hipError_t Dispatch(
     Int2Type<THRUST>            dispatch_to,
     Int2Type<true>              is_flagged,
@@ -456,21 +442,18 @@ hipError_t Dispatch(
                                    d_in + num_items,
                                    d_flags,
                                    d_out_wrapper,
-                                   Cast<bool>{});
+                                   CastOp<bool>{});
             #else
                 thrust::copy_if(d_in_wrapper,
                                 d_in_wrapper + num_items,
                                 d_flags_wrapper,
                                 d_out_wrapper,
-                                Cast<bool>());
+                                CastOp<bool>());
             #endif
         }
 
-        OffsetT num_selected = d_out_wrapper_end - d_out_wrapper;
-        CubDebugExit(hipMemcpy(d_num_selected_out,
-                               &num_selected,
-                               sizeof(OffsetT),
-                               hipMemcpyHostToDevice));
+        OffsetT num_selected = OffsetT(d_out_wrapper_end - d_out_wrapper);
+        CubDebugExit(hipMemcpy(d_num_selected_out, &num_selected, sizeof(OffsetT), hipMemcpyHostToDevice));
     }
 
     return hipSuccess;
@@ -481,7 +464,7 @@ hipError_t Dispatch(
  * Dispatch to partition flagged entrypoint
  */
 template <typename InputIteratorT, typename FlagIteratorT, typename SelectOpT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
-/*__host__*/ __forceinline__
+__host__ __forceinline__
 hipError_t Dispatch(
     Int2Type<THRUST>            dispatch_to,
     Int2Type<true>              is_flagged,
@@ -530,8 +513,7 @@ hipError_t Dispatch(
                       ReverseOutputIteratorT> d_out_wrapper_end;
             ReverseOutputIteratorT d_out_unselected(d_out_wrapper + num_items);
         #else
-            thrust::pair<thrust::device_ptr<OutputT>,
-                         ReverseOutputIteratorT> d_out_wrapper_end;
+            thrust::pair<thrust::device_ptr<OutputT>, ReverseOutputIteratorT> d_out_wrapper_end;
 
             thrust::device_ptr<InputT>  d_in_wrapper(d_in);
             thrust::device_ptr<OutputT> d_out_wrapper(d_out);
@@ -548,25 +530,22 @@ hipError_t Dispatch(
                                     d_flags,
                                     d_out_wrapper,
                                     d_out_unselected,
-                                    Cast<bool>{});
+                                    CastOp<bool>{});
             #else
                 thrust::partition_copy(d_in_wrapper,
                                        d_in_wrapper + num_items,
                                        d_flags_wrapper,
                                        d_out_wrapper,
                                        d_out_unselected,
-                                       Cast<bool>());
+                                       CastOp<bool>());
             #endif
         }
 
-        OffsetT num_selected = d_out_wrapper_end.first - d_out_wrapper;
-        CubDebugExit(hipMemcpy(d_num_selected_out,
-                               &num_selected,
-                               sizeof(OffsetT),
-                               hipMemcpyHostToDevice));
+        OffsetT num_selected = OffsetT(d_out_wrapper_end.first - d_out_wrapper);
+        CubDebugExit(hipMemcpy(d_num_selected_out, &num_selected, sizeof(OffsetT), hipMemcpyHostToDevice));
     }
 
-    return hipErrorTbd;
+    return hipSuccess;
 }
 
 
@@ -579,7 +558,6 @@ hipError_t Dispatch(
  */
 template <typename InputIteratorT, typename FlagIteratorT, typename SelectOpT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT, typename IsFlaggedTag, typename IsPartitionTag>
 __global__ void CnpDispatchKernel(
-    hipLaunchParm lp,
     IsFlaggedTag                is_flagged,
     IsPartitionTag              is_partition,
     int                         timing_timing_iterations,
@@ -631,38 +609,17 @@ hipError_t Dispatch(
     bool                        debug_synchronous)
 {
     // Invoke kernel to invoke device-side dispatch
-    hipLaunchKernel(HIP_KERNEL_NAME(CnpDispatchKernel),
-                    dim3(1),
-                    dim3(1),
-                    0,
-                    0,
-                    is_flagged,
-                    is_partition,
-                    timing_timing_iterations,
-                    d_temp_storage_bytes,
-                    d_cdp_error,
-                    d_temp_storage,
-                    temp_storage_bytes,
-                    d_in,
-                    d_flags,
-                    d_out,
-                    d_num_selected_out,
-                    num_items,
-                    select_op,
-                    debug_synchronous);
+    hipLaunchKernelGGL(
+        CnpDispatchKernel, dim3(1), dim3(1), 0, 0,
+        is_flagged, is_partition, timing_timing_iterations, d_temp_storage_bytes, d_cdp_error,
+        d_temp_storage, temp_storage_bytes, d_in, d_flags, d_out, d_num_selected_out, num_items, select_op, debug_synchronous);
 
     // Copy out temp_storage_bytes
-    CubDebugExit(hipMemcpy(&temp_storage_bytes,
-                           d_temp_storage_bytes,
-                           sizeof(size_t) * 1,
-                           hipMemcpyDeviceToHost));
+    CubDebugExit(hipMemcpy(&temp_storage_bytes, d_temp_storage_bytes, sizeof(size_t) * 1, hipMemcpyDeviceToHost));
 
     // Copy out error
     hipError_t retval;
-    CubDebugExit(hipMemcpy(&retval,
-                           d_cdp_error,
-                           sizeof(hipError_t) * 1,
-                           hipMemcpyDeviceToHost));
+    CubDebugExit(hipMemcpy(&retval, d_cdp_error, sizeof(hipError_t) * 1, hipMemcpyDeviceToHost));
     return retval;
 }
 
@@ -869,8 +826,7 @@ void TestPointer(
     LessThan<T> select_op(compare);
     int num_selected = Solve(h_in, select_op, h_reference, h_flags, num_items);
 
-    // TODO: temporarily disabled.
-//    if (g_verbose) std::cout << "\nComparison item: " << compare << "\n";
+    //if (g_verbose) std::cout << "\nComparison item: " << compare << "\n";
     printf("\nPointer %s cub::%s::%s %d items, %d selected (select ratio %.3f), %s %d-byte elements\n",
         (IS_PARTITION) ? "DevicePartition" : "DeviceSelect",
         (IS_FLAGGED) ? "Flagged" : "If",
@@ -1147,7 +1103,7 @@ int main(int argc, char** argv)
         Test<uint4>(num_items);
         Test<ulonglong4>(num_items);
 
-//        Test<TestFoo>(num_items);
+        Test<TestFoo>(num_items);
         Test<TestBar>(num_items);
     }
 

@@ -1,6 +1,6 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -121,8 +121,6 @@ private:
 
         /// Constructor
         __host__ __device__ __forceinline__ Reference(ValueType* ptr) : ptr(ptr) {}
-        __host__ __device__ __forceinline__
-        Reference(const Reference& x) : ptr{x.ptr} {}
 
         /// Assignment
         __device__ __forceinline__ ValueType operator =(ValueType val)
@@ -130,9 +128,6 @@ private:
             ThreadStore<MODIFIER>(ptr, val);
             return val;
         }
-
-        __host__ __device__
-        ~Reference() {}
     };
 
 public:
@@ -144,19 +139,17 @@ public:
     typedef void                                pointer;                ///< The type of a pointer to an element the iterator can point to
     typedef Reference                           reference;              ///< The type of a reference to an element the iterator can point to
 
-    #if defined(__HIP_PLATFORM_HCC__)
-        typedef std::random_access_iterator_tag     iterator_category;  ///< The iterator category
-    #else
-        #if (THRUST_VERSION >= 100700)
-            // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
-            typedef typename thrust::detail::iterator_facade_category<
-                thrust::device_system_tag,
-                thrust::random_access_traversal_tag,
-                value_type,
-                reference
-            >::type iterator_category;                                  ///< The iterator category
-        #endif // THRUST_VERSION
-    #endif
+#if (THRUST_VERSION >= 100700)
+    // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
+    typedef typename thrust::detail::iterator_facade_category<
+        thrust::device_system_tag,
+        thrust::random_access_traversal_tag,
+        value_type,
+        reference
+      >::type iterator_category;                                        ///< The iterator category
+#else
+    typedef std::random_access_iterator_tag     iterator_category;      ///< The iterator category
+#endif  // THRUST_VERSION
 
 private:
 
@@ -170,11 +163,6 @@ public:
         QualifiedValueType* ptr)     ///< Native pointer to wrap
     :
         ptr(const_cast<typename RemoveQualifiers<QualifiedValueType>::Type *>(ptr))
-    {}
-
-    __host__ __device__ __forceinline__
-    CacheModifiedOutputIterator(const CacheModifiedOutputIterator& x)
-        : ptr{x.ptr}
     {}
 
     /// Postfix increment
@@ -261,9 +249,6 @@ public:
     {
         return os;
     }
-
-    __host__ __device__
-    ~CacheModifiedOutputIterator() {}
 };
 
 

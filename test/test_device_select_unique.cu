@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -36,6 +35,8 @@
 
 #include <stdio.h>
 #include <typeinfo>
+
+#include <hip/hip_runtime.h>
 
 #include <cub/util_allocator.cuh>
 #include <cub/iterator/counting_input_iterator.cuh>
@@ -115,7 +116,7 @@ hipError_t Dispatch(
  * Dispatch to unique entrypoint
  */
 template <typename InputIteratorT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
-/*__host__*/ __forceinline__
+__host__ __forceinline__
 hipError_t Dispatch(
     Int2Type<THRUST>            dispatch_to,
     int                         timing_timing_iterations,
@@ -145,7 +146,7 @@ hipError_t Dispatch(
     }
     else
     {
-        #if defined(__HIP_PLATFORM_HCC__)
+         #if defined(__HIP_PLATFORM_HCC__)
             OutputIteratorT d_out_wrapper{d_out};
             OutputIteratorT d_out_wrapper_end;
         #else
@@ -160,17 +161,13 @@ hipError_t Dispatch(
             #if defined(__HIP_PLATFORM_HCC__)
                 bolt::amp::unique_copy(d_in, d_in + num_items, d_out_wrapper);
             #else
-                thrust::unique_copy(d_in_wrapper,
-                                    d_in_wrapper + num_items,
-                                    d_out_wrapper);
+                thrust::unique_copy(d_in_wrapper, d_in_wrapper + num_items, d_out_wrapper);
             #endif
         }
 
-        OffsetT num_selected = d_out_wrapper_end - d_out_wrapper;
-        CubDebugExit(hipMemcpy(d_num_selected_out,
-                               &num_selected,
-                               sizeof(OffsetT),
-                               hipMemcpyHostToDevice));
+        OffsetT num_selected = OffsetT(d_out_wrapper_end - d_out_wrapper);
+        CubDebugExit(hipMemcpy(d_num_selected_out, &num_selected, sizeof(OffsetT), hipMemcpyHostToDevice));
+
     }
 
     return hipSuccess;
@@ -187,7 +184,6 @@ hipError_t Dispatch(
  */
 template <typename InputIteratorT, typename OutputIteratorT, typename NumSelectedIteratorT, typename OffsetT>
 __global__ void CnpDispatchKernel(
-    hipLaunchParm lp,
     int                         timing_timing_iterations,
     size_t                      *d_temp_storage_bytes,
     hipError_t                 *d_cdp_error,
@@ -231,7 +227,9 @@ hipError_t Dispatch(
     bool                        debug_synchronous)
 {
     // Invoke kernel to invoke device-side dispatch
-    hipLaunchKernel(HIP_KERNEL_NAME(CnpDispatchKernel), dim3(1), dim3(1), 0, 0, timing_timing_iterations, d_temp_storage_bytes, d_cdp_error,
+    hipLaunchKernelGGL(
+        CnpDispatchKernel, dim3(1), dim3(1), 0, 0,
+        timing_timing_iterations, d_temp_storage_bytes, d_cdp_error,
         d_temp_storage, temp_storage_bytes, d_in, d_out, d_num_selected_out, num_items, debug_synchronous);
 
     // Copy out temp_storage_bytes
@@ -613,7 +611,7 @@ int main(int argc, char** argv)
     if (num_items < 0) num_items = 32000000;
 
     printf("-- Iterator ----------------------------\n");
-    TestIterator<CUB, int>(num_items);
+    TestIterator<CUB, int>(        num_items);
 
     printf("----------------------------\n");
     TestPointer<CUB, char>(        num_items * ((sm_version <= 130) ? 1 : 4), entropy_reduction, maxseg);
@@ -656,7 +654,7 @@ int main(int argc, char** argv)
         Test<uint4>(num_items);
         Test<ulonglong4>(num_items);
 
-//        Test<TestFoo>(num_items);
+        Test<TestFoo>(num_items);
         Test<TestBar>(num_items);
     }
 

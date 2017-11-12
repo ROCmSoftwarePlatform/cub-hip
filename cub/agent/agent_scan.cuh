@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -43,6 +42,8 @@
 #include "../grid/grid_queue.cuh"
 #include "../iterator/cache_modified_input_iterator.cuh"
 #include "../util_namespace.cuh"
+
+#include "hip/hip_runtime.h"
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -164,7 +165,7 @@ struct AgentScan
             ScanOpT>
         RunningPrefixCallbackOp;
 
-    // Shared memory type for this threadblock
+    // Shared memory type for this thread block
     union _TempStorage
     {
         typename BlockLoadT::TempStorage    load;       // Smem needed for tile loading
@@ -300,7 +301,7 @@ struct AgentScan
         else
             BlockLoadT(temp_storage.load).Load(d_in + tile_offset, items);
 
-        __syncthreads();
+        CTA_SYNC();
 
         // Perform tile scan
         if (tile_idx == 0)
@@ -318,7 +319,7 @@ struct AgentScan
             ScanTile(items, scan_op, prefix_op, Int2Type<IS_INCLUSIVE>());
         }
 
-        __syncthreads();
+        CTA_SYNC();
 
         // Store items
         if (IS_LAST_TILE)
@@ -377,7 +378,7 @@ struct AgentScan
         else
             BlockLoadT(temp_storage.load).Load(d_in + tile_offset, items);
 
-        __syncthreads();
+        CTA_SYNC();
 
         // Block scan
         if (IS_FIRST_TILE)
@@ -391,7 +392,7 @@ struct AgentScan
             ScanTile(items, scan_op, prefix_op, Int2Type<IS_INCLUSIVE>());
         }
 
-        __syncthreads();
+        CTA_SYNC();
 
         // Store items
         if (IS_LAST_TILE)
@@ -463,7 +464,7 @@ struct AgentScan
             ConsumeTile<false, false>(range_offset, prefix_op, valid_items);
         }
     }
-    __host__ __device__ ~AgentScan() {}
+
 };
 
 

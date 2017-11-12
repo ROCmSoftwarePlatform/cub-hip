@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -37,6 +36,8 @@
 #include "../util_type.cuh"
 #include "../util_ptx.cuh"
 #include "../util_namespace.cuh"
+
+#include "hip/hip_runtime.h"
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -253,7 +254,7 @@ public:
         // Share last item
         temp_storage.last_items[linear_tid] = input[ITEMS_PER_THREAD - 1];
 
-        __syncthreads();
+        CTA_SYNC();
 
         if (linear_tid == 0)
         {
@@ -284,7 +285,7 @@ public:
         // Share last item
         temp_storage.last_items[linear_tid] = input[ITEMS_PER_THREAD - 1];
 
-        __syncthreads();
+        CTA_SYNC();
 
         // Set flag for first thread-item
         preds[0] = (linear_tid == 0) ?
@@ -342,7 +343,7 @@ public:
         // Share first item
         temp_storage.first_items[linear_tid] = input[0];
 
-        __syncthreads();
+        CTA_SYNC();
 
         // Set flag for last thread-item
         tail_flags[ITEMS_PER_THREAD - 1] = (linear_tid == BLOCK_THREADS - 1) ?
@@ -371,7 +372,7 @@ public:
         // Share first item
         temp_storage.first_items[linear_tid] = input[0];
 
-        __syncthreads();
+        CTA_SYNC();
 
         // Set flag for last thread-item
         T successor_item = (linear_tid == BLOCK_THREADS - 1) ?
@@ -403,7 +404,7 @@ public:
         temp_storage.first_items[linear_tid] = input[0];
         temp_storage.last_items[linear_tid] = input[ITEMS_PER_THREAD - 1];
 
-        __syncthreads();
+        CTA_SYNC();
 
         T preds[ITEMS_PER_THREAD];
 
@@ -455,7 +456,7 @@ public:
         temp_storage.first_items[linear_tid] = input[0];
         temp_storage.last_items[linear_tid] = input[ITEMS_PER_THREAD - 1];
 
-        __syncthreads();
+        CTA_SYNC();
 
         T preds[ITEMS_PER_THREAD];
 
@@ -507,7 +508,7 @@ public:
         temp_storage.first_items[linear_tid] = input[0];
         temp_storage.last_items[linear_tid] = input[ITEMS_PER_THREAD - 1];
 
-        __syncthreads();
+        CTA_SYNC();
 
         T preds[ITEMS_PER_THREAD];
 
@@ -555,7 +556,7 @@ public:
         temp_storage.first_items[linear_tid] = input[0];
         temp_storage.last_items[linear_tid] = input[ITEMS_PER_THREAD - 1];
 
-        __syncthreads();
+        CTA_SYNC();
 
         T preds[ITEMS_PER_THREAD];
 

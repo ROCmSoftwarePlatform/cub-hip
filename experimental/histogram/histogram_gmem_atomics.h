@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,11 +24,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  ******************************************************************************/
-#pragma once
 
 #include <test/test_util.h>
 
-#include "hip/hip_runtime.h"
+#include <hip/hip_runtime.h>
+
 namespace histogram_gmem_atomics
 {
     // Decode float4 pixel into bins
@@ -66,10 +66,7 @@ namespace histogram_gmem_atomics
         int         ACTIVE_CHANNELS,
         int         NUM_BINS,
         typename    PixelType>
-    __global__
-    inline
-    void histogram_gmem_atomics(
-        hipLaunchParm   lp,
+    __global__ void histogram_gmem_atomics(
         const PixelType *in,
         int width,
         int height,
@@ -116,10 +113,7 @@ namespace histogram_gmem_atomics
         int         NUM_PARTS,
         int         ACTIVE_CHANNELS,
         int         NUM_BINS>
-    __global__
-    inline
-    void histogram_gmem_accum(
-        hipLaunchParm   lp,
+    __global__ void histogram_gmem_accum(
         const unsigned int *in,
         int n,
         unsigned int *out)
@@ -172,7 +166,7 @@ double run_gmem_atomics(
     GpuTimer gpu_timer;
     gpu_timer.Start();
 
-    hipLaunchKernel(
+    hipLaunchKernelGGL(
         HIP_KERNEL_NAME(
             histogram_gmem_atomics::histogram_gmem_atomics<
                 NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>),
@@ -180,12 +174,12 @@ double run_gmem_atomics(
         dim3(block),
         0,
         0,
-        d_image,
+        static_cast<const PixelType*>(d_image),
         width,
         height,
         d_part_hist);
 
-    hipLaunchKernel(
+    hipLaunchKernelGGL(
         HIP_KERNEL_NAME(
             histogram_gmem_atomics::histogram_gmem_accum<
                 NUM_PARTS, ACTIVE_CHANNELS, NUM_BINS>),
@@ -193,7 +187,7 @@ double run_gmem_atomics(
         dim3(block2),
         0,
         0,
-        d_part_hist,
+        static_cast<const unsigned int*>(d_part_hist),
         total_blocks,
         d_hist);
 

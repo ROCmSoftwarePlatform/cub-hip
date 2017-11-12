@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -44,6 +43,8 @@
 #include "../iterator/cache_modified_input_iterator.cuh"
 #include "../iterator/constant_input_iterator.cuh"
 #include "../util_namespace.cuh"
+
+#include "hip/hip_runtime.h"
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -116,8 +117,8 @@ struct AgentSegmentFixup
         TILE_ITEMS          = BLOCK_THREADS * ITEMS_PER_THREAD,
 
         // Whether or not do fixup using RLE + global atomics
-        USE_ATOMIC_FIXUP    = (CUB_PTX_ARCH >= 350) && 
-                                (Equals<ValueT, float>::VALUE || 
+        USE_ATOMIC_FIXUP    = (CUB_PTX_ARCH >= 350) &&
+                                (Equals<ValueT, float>::VALUE ||
                                  Equals<ValueT, int>::VALUE ||
                                  Equals<ValueT, unsigned int>::VALUE ||
                                  Equals<ValueT, unsigned long long>::VALUE),
@@ -163,7 +164,7 @@ struct AgentSegmentFixup
             ScanTileStateT>
         TilePrefixCallbackOpT;
 
-    // Shared memory type for this threadblock
+    // Shared memory type for this thread block
     union _TempStorage
     {
         struct
@@ -243,7 +244,7 @@ struct AgentSegmentFixup
         else
             BlockLoadPairs(temp_storage.load_pairs).Load(d_pairs_in + tile_offset, pairs);
 
-        // RLE 
+        // RLE
         #pragma unroll
         for (int ITEM = 1; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
@@ -284,7 +285,7 @@ struct AgentSegmentFixup
         else
             BlockLoadPairs(temp_storage.load_pairs).Load(d_pairs_in + tile_offset, pairs);
 
-        __syncthreads();
+        CTA_SYNC();
 
         KeyValuePairT tile_aggregate;
         if (tile_idx == 0)

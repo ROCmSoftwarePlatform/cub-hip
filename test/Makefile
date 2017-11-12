@@ -1,6 +1,6 @@
 #/******************************************************************************
 # * Copyright (c) 2011, Duane Merrill.  All rights reserved.
-# * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+# * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
 # * 
 # * Redistribution and use in source and binary forms, with or without
 # * modification, are permitted provided that the following conditions are met:
@@ -43,7 +43,7 @@ endif
 HIPCC=${HIP_PATH}/bin/hipcc
 HIP_INC=${HIP_PATH}/include/
 
-include ../common.mk 
+include ../common.mk
 
 #-------------------------------------------------------------------------------
 # Commandline Options
@@ -56,7 +56,7 @@ ifeq ($(quickertest), 1)
 else ifeq ($(quicktest), 1)
 	HIPCCFLAGS += -DQUICK_TEST
 	TEST_SUFFIX = quick
-else 
+else
 	TEST_SUFFIX = thorough
 endif
 
@@ -125,7 +125,7 @@ ALL = 				link \
 				 	test_device_reduce \
 			 		test_device_histogram \
 			 		test_device_scan \
-					test_device_radix_sort \
+			 		test_device_radix_sort \
 					test_device_reduce_by_key\
 					test_device_run_length_encode\
 		 			test_device_select_unique \
@@ -140,15 +140,15 @@ ALL = 				link \
 # make default
 #-------------------------------------------------------------------------------
 
-#default:
-.PHONY:$(ALL)
+default:
+
 
 #-------------------------------------------------------------------------------
 # make clean
 #-------------------------------------------------------------------------------
 
 clean :
-	rm -f bin/*$(CPU_ARCH_SUFFIX)* bin/*.obj
+	rm -f bin/*$(CPU_ARCH_SUFFIX)*
 	rm -f *.i* *.cubin *.cu.c *.cudafe* *.fatbin.c *.ptx *.hash *.cu.cpp *.o
 
 
@@ -226,7 +226,7 @@ test_allocator: bin/test_allocator_$(SUFFIX)
 bin/test_allocator_$(SUFFIX) : test_allocator.cpp $(DEPS)
 	mkdir -p bin
 	$(HIPCC) $(DEFINES) $(SM_TARGETS) -DGENERIC_GRID_LAUNCH=0 -o bin/test_allocator_$(SUFFIX) test_allocator.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
-endif	
+endif
 	
 #-------------------------------------------------------------------------------
 # make test_grid_barrier 
@@ -236,7 +236,7 @@ test_grid_barrier: bin/test_grid_barrier_$(SUFFIX)
 
 bin/test_grid_barrier_$(SUFFIX) : test_grid_barrier.cu $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_grid_barrier_$(SUFFIX) test_grid_barrier.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_grid_barrier_$(SUFFIX) test_grid_barrier.cu $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 	
 
 #-------------------------------------------------------------------------------
@@ -247,7 +247,7 @@ test_warp_scan: bin/test_warp_scan_$(SUFFIX)
 
 bin/test_warp_scan_$(SUFFIX) : test_warp_scan.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_warp_scan_$(SUFFIX) test_warp_scan.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_warp_scan_$(SUFFIX) test_warp_scan.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -258,7 +258,7 @@ test_warp_reduce: bin/test_warp_reduce_$(SUFFIX)
 
 bin/test_warp_reduce_$(SUFFIX) : test_warp_reduce.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_warp_reduce_$(SUFFIX) test_warp_reduce.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) $(SM_TARGETS) -o bin/test_warp_reduce_$(SUFFIX) test_warp_reduce.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -269,7 +269,7 @@ test_block_reduce_raking: bin/test_block_reduce_raking_$(SUFFIX)
 
 bin/test_block_reduce_raking_$(SUFFIX) : test_block_reduce.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) -DTEST_RAKING $(SM_TARGETS) -o bin/test_block_reduce_raking_$(SUFFIX) test_block_reduce.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_RAKING $(SM_TARGETS) -o bin/test_block_reduce_raking_$(SUFFIX) test_block_reduce.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -280,7 +280,7 @@ test_block_reduce_warp_reductions: bin/test_block_reduce_warp_reductions_$(SUFFI
 
 bin/test_block_reduce_warp_reductions_$(SUFFIX) : test_block_reduce.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) -DTEST_WARP_REDUCTIONS $(SM_TARGETS) -o bin/test_block_reduce_warp_reductions_$(SUFFIX) test_block_reduce.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_WARP_REDUCTIONS $(SM_TARGETS) -o bin/test_block_reduce_warp_reductions_$(SUFFIX) test_block_reduce.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -298,7 +298,7 @@ test_block_scan_raking: bin/test_block_scan_raking_$(SUFFIX)
 
 bin/test_block_scan_raking_$(SUFFIX) : test_block_scan.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) -DTEST_RAKING $(SM_TARGETS) -o bin/test_block_scan_raking_$(SUFFIX) test_block_scan.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_RAKING $(SM_TARGETS) -o bin/test_block_scan_raking_$(SUFFIX) test_block_scan.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -309,7 +309,7 @@ test_block_scan_raking_memoize: bin/test_block_scan_raking_memoize_$(SUFFIX)
 
 bin/test_block_scan_raking_memoize_$(SUFFIX) : test_block_scan.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) -DTEST_RAKING_MEMOIZE $(SM_TARGETS) -o bin/test_block_scan_raking_memoize_$(SUFFIX) test_block_scan.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_RAKING_MEMOIZE $(SM_TARGETS) -o bin/test_block_scan_raking_memoize_$(SUFFIX) test_block_scan.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------
@@ -320,7 +320,7 @@ test_block_scan_warp_scans: bin/test_block_scan_warp_scans_$(SUFFIX)
 
 bin/test_block_scan_warp_scans_$(SUFFIX) : test_block_scan.cpp $(DEPS)
 	mkdir -p bin
-	$(HIPCC) $(DEFINES) -DTEST_WARP_SCANS $(SM_TARGETS) -o bin/test_block_scan_warp_scans_$(SUFFIX) test_block_scan.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3  
+	$(HIPCC) $(DEFINES) -DTEST_WARP_SCANS $(SM_TARGETS) -o bin/test_block_scan_warp_scans_$(SUFFIX) test_block_scan.cpp $(HIPCCFLAGS) $(CPU_ARCH) $(INC) $(LIBS) -O3
 
 
 #-------------------------------------------------------------------------------

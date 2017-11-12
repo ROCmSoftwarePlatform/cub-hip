@@ -626,7 +626,7 @@ namespace amp{
                                     result, sz, false, ctl);
 
         // Map the output iterator to a device_vector
-        device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
+        device_vector< oType, hc::array_view > dvOutput( result, sz, true, ctl );
 
 
 		typedef int IndexType;
@@ -634,8 +634,8 @@ namespace amp{
         //Note IndexType is int. and bool_to_int converts to int.
         bool_to_int<Predicate> internal_pred(pred);
 
-        device_vector< IndexType, concurrency::array > predicates( sz, 0, true, ctl );
-        device_vector< IndexType, concurrency::array > scatter_indices( sz, 0, true, ctl );
+        device_vector< IndexType, hc::array > predicates( sz, 0, true, ctl );
+        device_vector< IndexType, hc::array > scatter_indices( sz, 0, true, ctl );
         //Transform the input routine to fill with 0 for false and 1 for true.
         bolt::amp::transform( ctl, dvStencil_itr , dvStencil_itr  + sz, predicates.begin(), internal_pred);
 

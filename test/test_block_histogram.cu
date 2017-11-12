@@ -1,6 +1,6 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,19 +33,17 @@
 // Ensure printing of CUDA runtime errors to console
 #define CUB_STDERR
 
-#include "test_util.h"
+#include <stdio.h>
+#include <limits>
+#include <string>
+#include <typeinfo>
 
 #include <cub/block/block_histogram.cuh>
 #include <cub/block/block_load.cuh>
 #include <cub/block/block_store.cuh>
 #include <cub/util_allocator.cuh>
 
-#include "hip/hip_runtime.h"
-
-#include <stdio.h>
-#include <limits>
-#include <string>
-#include <typeinfo>
+#include "test_util.h"
 
 using namespace cub;
 
@@ -74,9 +72,9 @@ template <
     BlockHistogramAlgorithm ALGORITHM,
     typename                T,
     typename                HistoCounter>
-__global__ void BlockHistogramKernel(hipLaunchParm lp,
-                          T             *d_samples,
-                          HistoCounter  *d_histogram)
+__global__ void BlockHistogramKernel(
+    T                       *d_samples,
+    HistoCounter            *d_histogram)
 {
     // Parameterize BlockHistogram type for our thread block
     typedef BlockHistogram<T, BLOCK_THREADS, ITEMS_PER_THREAD, BINS, ALGORITHM> BlockHistogram;
@@ -89,7 +87,7 @@ __global__ void BlockHistogramKernel(hipLaunchParm lp,
     LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_samples, data);
 
     // Test histo (writing directly to histogram buffer in global)
-    BlockHistogram{temp_storage}.Histogram(data, d_histogram);
+    BlockHistogram(temp_storage).Histogram(data, d_histogram);
 }
 
 
@@ -170,16 +168,14 @@ void Test(
     CubDebugExit(hipMemset(d_histogram, 0, sizeof(int) * BINS));
 
     // Run kernel
-    hipLaunchKernel(HIP_KERNEL_NAME(BlockHistogramKernel<BINS,
-                                                         BLOCK_THREADS,
-                                                         ITEMS_PER_THREAD,
-                                                         ALGORITHM>),
-                    dim3(1),
-                    dim3(BLOCK_THREADS),
-                    0,
-                    0,
-                    d_samples,
-                    d_histogram);
+    hipLaunchKernelGGL(
+        BlockHistogramKernel<BINS, BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>,
+        dim3(1),
+        dim3(BLOCK_THREADS),
+        0,
+        0,
+        d_samples,
+        d_histogram);
 
     // Check for correctness (and display results, if specified)
     int compare = CompareDeviceResults((int*) h_reference, d_histogram, BINS, g_verbose, g_verbose);

@@ -1,6 +1,6 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -319,10 +319,7 @@ bool IsNaN(T val) { return false; }
 template<>
 __noinline__ bool IsNaN<float>(float val)
 {
-    volatile unsigned int bits = reinterpret_cast<unsigned int &>(val);
-
-    return (((bits >= 0x7F800001) && (bits <= 0x7FFFFFFF)) ||
-        ((bits >= 0xFF800001) && (bits <= 0xFFFFFFFF)));
+    return isnan(val);
 }
 
 template<>
@@ -352,10 +349,7 @@ __noinline__ bool IsNaN<float4>(float4 val)
 template<>
 __noinline__ bool IsNaN<double>(double val)
 {
-    volatile unsigned long long bits = *reinterpret_cast<unsigned long long *>(&val);
-
-    return (((bits >= 0x7FF0000000000001) && (bits <= 0x7FFFFFFFFFFFFFFF)) ||
-        ((bits >= 0xFFF0000000000001) && (bits <= 0xFFFFFFFFFFFFFFFF)));
+    return isnan(val);
 }
 
 template<>
@@ -506,15 +500,14 @@ enum GenMode
  * Initialize value
  */
 template <typename T>
-__host__ __device__ __forceinline__
-void InitValue(GenMode gen_mode, T &value, int index = 0)
+__host__ __device__ __forceinline__ inline void InitValue(GenMode gen_mode, T &value, int index = 0)
 {
     switch (gen_mode)
     {
-#if (CUB_PTX_ARCH == 0)
+#if (CUB_PTX_ARCH == 0) && !defined(__HIP_DEVICE_COMPILE__)
     case RANDOM:
-         RandomBits(value);
-         break;
+        RandomBits(value);
+        break;
 #endif
      case UNIFORM:
         value = 2;
@@ -530,11 +523,11 @@ void InitValue(GenMode gen_mode, T &value, int index = 0)
 /**
  * Initialize value (bool)
  */
-/*__host__ __device__*/ __forceinline__ void InitValue(GenMode gen_mode, bool &value, int index = 0)
+__host__ __device__ __forceinline__ inline void InitValue(GenMode gen_mode, bool &value, int index = 0)
 {
     switch (gen_mode)
     {
-#if (CUB_PTX_ARCH == 0)
+#if (CUB_PTX_ARCH == 0) && !defined(__HIP_DEVICE_COMPILE__)
     case RANDOM:
         char c;
         RandomBits(c, 0, 0, 1);
@@ -563,7 +556,7 @@ __host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, cub::NullTy
  * cub::KeyValuePair<OffsetT, ValueT>test initialization
  */
 template <typename KeyT, typename ValueT>
-/*__host__ __device__*/ __forceinline__ void InitValue(
+__host__ __device__ __forceinline__ inline void InitValue(
     GenMode                             gen_mode,
     cub::KeyValuePair<KeyT, ValueT>&    value,
     int                                 index = 0)
@@ -1064,8 +1057,7 @@ struct TestFoo
         return w > b.w;
     }
 
-    __host__ __device__
-    ~TestFoo() {}
+    __host__ __device__ ~TestFoo() {}
 };
 
 /**
@@ -1080,8 +1072,7 @@ std::ostream& operator<<(std::ostream& os, const TestFoo& val)
 /**
  * TestFoo test initialization
  */
-__host__ __device__ __forceinline__
-void InitValue(GenMode gen_mode, TestFoo &value, int index = 0)
+__host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, TestFoo &value, int index = 0)
 {
     InitValue(gen_mode, value.x, index);
     InitValue(gen_mode, value.y, index);
@@ -1185,8 +1176,7 @@ struct TestBar
         return y > b.y;
     }
 
-    __host__ __device__
-    ~TestBar() {}
+    __host__ __device__ ~TestBar() {}
 };
 
 
@@ -1202,8 +1192,7 @@ std::ostream& operator<<(std::ostream& os, const TestBar& val)
 /**
  * TestBar test initialization
  */
-__host__ __device__ __forceinline__
-void InitValue(GenMode gen_mode, TestBar &value, int index = 0)
+__host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, TestBar &value, int index = 0)
 {
     InitValue(gen_mode, value.x, index);
     InitValue(gen_mode, value.y, index);
@@ -1245,18 +1234,15 @@ struct NumericTraits<TestBar>
  * Compares the equivalence of two arrays
  */
 template <typename S, typename T, typename OffsetT>
-inline
 int CompareResults(T* computed, S* reference, OffsetT len, bool verbose = true)
 {
     for (OffsetT i = 0; i < len; i++)
     {
         if (computed[i] != reference[i])
-        {   // TODO: temporarily disabled for AMD stack.
-        #ifdef __HIP_PLATFORM_NVCC__
-            if (verbose) std::cout << "INCORRECT: [" << i << "]: "
-                << CoutCast(computed[i]) << " != "
-                << CoutCast(reference[i]);
-        #endif
+        {
+            // if (verbose) std::cout << "INCORRECT: [" << i << "]: "
+            //     << CoutCast(computed[i]) << " != "
+            //     << CoutCast(reference[i]);
             return 1;
         }
     }
@@ -1268,7 +1254,6 @@ int CompareResults(T* computed, S* reference, OffsetT len, bool verbose = true)
  * Compares the equivalence of two arrays
  */
 template <typename OffsetT>
-inline
 int CompareResults(float* computed, float* reference, OffsetT len, bool verbose = true)
 {
     for (OffsetT i = 0; i < len; i++)
@@ -1280,9 +1265,9 @@ int CompareResults(float* computed, float* reference, OffsetT len, bool verbose 
 
             if (fraction > 0.0001)
             {
-                if (verbose) std::cout << "INCORRECT: [" << i << "]: "
-                    << "(computed) " << CoutCast(computed[i]) << " != "
-                    << CoutCast(reference[i]) << " (difference:" << difference << ", fraction: " << fraction << ")";
+                // if (verbose) std::cout << "INCORRECT: [" << i << "]: "
+                //     << "(computed) " << CoutCast(computed[i]) << " != "
+                //     << CoutCast(reference[i]) << " (difference:" << difference << ", fraction: " << fraction << ")";
                 return 1;
             }
         }
@@ -1295,7 +1280,6 @@ int CompareResults(float* computed, float* reference, OffsetT len, bool verbose 
  * Compares the equivalence of two arrays
  */
 template <typename OffsetT>
-inline
 int CompareResults(cub::NullType* computed, cub::NullType* reference, OffsetT len, bool verbose = true)
 {
     return 0;
@@ -1305,7 +1289,6 @@ int CompareResults(cub::NullType* computed, cub::NullType* reference, OffsetT le
  * Compares the equivalence of two arrays
  */
 template <typename OffsetT>
-inline
 int CompareResults(double* computed, double* reference, OffsetT len, bool verbose = true)
 {
     for (OffsetT i = 0; i < len; i++)
@@ -1332,7 +1315,6 @@ int CompareResults(double* computed, double* reference, OffsetT len, bool verbos
  * Verify the contents of a device array match those
  * of a host array
  */
-inline
 int CompareDeviceResults(
     cub::NullType *h_reference,
     cub::NullType *d_data,
@@ -1343,13 +1325,11 @@ int CompareDeviceResults(
     return 0;
 }
 
-
 /**
  * Verify the contents of a device array match those
  * of a host array
  */
 template <typename S, typename T>
-inline
 int CompareDeviceResults(
     S *h_reference,
     T *d_data,
@@ -1365,19 +1345,17 @@ int CompareDeviceResults(
 
     // Display data
     if (display_data)
-    {   // TODO: the below is temporarily disabled.
+    {
         printf("Reference:\n");
-    #ifdef __HIP_PLATFORM_NVCC__
         for (int i = 0; i < int(num_items); i++)
         {
-            std::cout << CoutCast(h_reference[i]) << ", ";
+        //    std::cout << CoutCast(h_reference[i]) << ", ";
         }
         printf("\n\nComputed:\n");
         for (int i = 0; i < int(num_items); i++)
         {
-            std::cout << CoutCast(h_data[i]) << ", ";
+        //    std::cout << CoutCast(h_data[i]) << ", ";
         }
-    #endif
         printf("\n\n");
     }
 
@@ -1396,7 +1374,6 @@ int CompareDeviceResults(
  * of a device array
  */
 template <typename T>
-inline
 int CompareDeviceDeviceResults(
     T *d_reference,
     T *d_data,
@@ -1441,7 +1418,6 @@ int CompareDeviceDeviceResults(
 /**
  * Print the contents of a host array
  */
-inline
 void DisplayResults(
     cub::NullType   *h_data,
     size_t          num_items)
@@ -1452,18 +1428,15 @@ void DisplayResults(
  * Print the contents of a host array
  */
 template <typename InputIteratorT>
-inline
 void DisplayResults(
     InputIteratorT h_data,
     size_t num_items)
 {
     // Display data
-#ifdef __HIP_PLATFORM_NVCC__
     for (int i = 0; i < int(num_items); i++)
-    {   // TODO: temporarily disabled.
-        std::cout << CoutCast(h_data[i]) << ", ";
+    {
+        //std::cout << CoutCast(h_data[i]) << ", ";
     }
-#endif
     printf("\n");
 }
 
@@ -1472,7 +1445,6 @@ void DisplayResults(
  * Print the contents of a device array
  */
 template <typename T>
-inline
 void DisplayDeviceResults(
     T *d_data,
     size_t num_items)
@@ -1497,7 +1469,6 @@ void DisplayDeviceResults(
 /**
  * Initialize segments
  */
-inline
 void InitializeSegments(
     int     num_items,
     int     num_segments,

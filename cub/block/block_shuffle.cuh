@@ -1,8 +1,7 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -39,6 +38,8 @@
 #include "../util_macro.cuh"
 #include "../util_type.cuh"
 #include "../util_namespace.cuh"
+
+#include <hip/hip_runtime.h>
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -176,7 +177,7 @@ public:
     {
         temp_storage[linear_tid].prev = input;
 
-        __syncthreads();
+        CTA_SYNC();
 
         if ((linear_tid + distance >= 0) && (linear_tid + distance < BLOCK_THREADS))
             output = temp_storage[linear_tid + distance].prev;
@@ -196,7 +197,7 @@ public:
     {
         temp_storage[linear_tid].prev = input;
 
-        __syncthreads();
+        CTA_SYNC();
 
         unsigned int offset = hipThreadIdx_x + distance;
         if (offset >= BLOCK_THREADS)
@@ -221,7 +222,7 @@ public:
     {
         temp_storage[linear_tid].prev = input[ITEMS_PER_THREAD - 1];
 
-        __syncthreads();
+        CTA_SYNC();
 
         #pragma unroll
         for (int ITEM = ITEMS_PER_THREAD - 1; ITEM > 0; --ITEM)
@@ -267,7 +268,7 @@ public:
     {
         temp_storage[linear_tid].prev = input[ITEMS_PER_THREAD - 1];
 
-        __syncthreads();
+        CTA_SYNC();
 
         #pragma unroll
         for (int ITEM = ITEMS_PER_THREAD - 1; ITEM > 0; --ITEM)

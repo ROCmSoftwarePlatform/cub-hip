@@ -1,6 +1,6 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -111,8 +111,6 @@ namespace cub {
  * \tparam T                    The value type of this iterator
  * \tparam OffsetT              The difference type of this iterator (Default: \p ptrdiff_t)
  */
-//Textures not supported in HIP yet
-//TODO: Support texture operations in cub-hip
 template <
     typename    T,
     typename    OffsetT = ptrdiff_t>
@@ -127,19 +125,17 @@ public:
     typedef T*                                  pointer;                ///< The type of a pointer to an element the iterator can point to
     typedef T                                   reference;              ///< The type of a reference to an element the iterator can point to
 
-    #if defined(__HIP_PLATFORM_HCC__)
-        typedef std::random_access_iterator_tag     iterator_category;  ///< The iterator category
-    #else
-        #if (THRUST_VERSION >= 100700)
-            // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
-            typedef typename thrust::detail::iterator_facade_category<
-                thrust::device_system_tag,
-                thrust::random_access_traversal_tag,
-                value_type,
-                reference
-            >::type iterator_category;                                  ///< The iterator category
-        #endif // THRUST_VERSION
-    #endif
+#if (THRUST_VERSION >= 100700)
+    // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
+    typedef typename thrust::detail::iterator_facade_category<
+        thrust::device_system_tag,
+        thrust::random_access_traversal_tag,
+        value_type,
+        reference
+      >::type iterator_category;                                        ///< The iterator category
+#else
+    typedef std::random_access_iterator_tag     iterator_category;      ///< The iterator category
+#endif  // THRUST_VERSION
 
 private:
 
@@ -155,7 +151,7 @@ private:
 
     T*                  ptr;
     difference_type     tex_offset;
-    //cudaTextureObject_t tex_obj;
+    hipTextureObject_t tex_obj;
 
 public:
 
@@ -163,9 +159,8 @@ public:
     __host__ __device__ __forceinline__ TexObjInputIterator()
     :
         ptr(NULL),
-        tex_offset(0)
-       //tex_obj(0)
-
+        tex_offset(0),
+        tex_obj(0)
     {}
 
     /// Use this iterator to bind \p ptr with a texture reference
@@ -178,27 +173,23 @@ public:
         this->ptr = const_cast<typename RemoveQualifiers<QualifiedT>::Type *>(ptr);
         this->tex_offset = tex_offset;
 
-        /*cudaChannelFormatDesc   channel_desc = cudaCreateChannelDesc<TextureWord>();
-        cudaResourceDesc        res_desc;
-        cudaTextureDesc         tex_desc;
-        memset(&res_desc, 0, sizeof(cudaResourceDesc));
-        memset(&tex_desc, 0, sizeof(cudaTextureDesc));
-        res_desc.resType                = cudaResourceTypeLinear;
+        hipChannelFormatDesc   channel_desc = hipCreateChannelDesc<TextureWord>();
+        hipResourceDesc        res_desc;
+        hipTextureDesc         tex_desc;
+        memset(&res_desc, 0, sizeof(hipResourceDesc));
+        memset(&tex_desc, 0, sizeof(hipTextureDesc));
+        res_desc.resType                = hipResourceTypeLinear;
         res_desc.res.linear.devPtr      = this->ptr;
         res_desc.res.linear.desc        = channel_desc;
         res_desc.res.linear.sizeInBytes = bytes;
-        tex_desc.readMode               = cudaReadModeElementType;
-        return cudaCreateTextureObject(&tex_obj, &res_desc, &tex_desc, NULL);*/
-        return hipErrorTbd;
-
+        tex_desc.readMode               = hipReadModeElementType;
+        return hipCreateTextureObject(&tex_obj, &res_desc, &tex_desc, NULL);
     }
 
     /// Unbind this iterator from its texture reference
     hipError_t UnbindTexture()
     {
-        //return cudaDestroyTextureObject(tex_obj);
-        return hipErrorTbd;
-
+        return cudaDestroyTextureObject(tex_obj);
     }
 
     /// Postfix increment
@@ -229,9 +220,9 @@ public:
         #pragma unroll
         for (int i = 0; i < TEXTURE_MULTIPLE; ++i)
         {
-            words[i] = 0;//tex1Dfetch<TextureWord>(
-//                tex_obj,
-//                (tex_offset * TEXTURE_MULTIPLE) + i);
+            words[i] = tex1Dfetch<TextureWord>(
+                tex_obj,
+                (tex_offset * TEXTURE_MULTIPLE) + i);
         }
 
         // Load from words
@@ -245,7 +236,7 @@ public:
     {
         self_type retval;
         retval.ptr          = ptr;
-//        retval.tex_obj      = tex_obj;
+        retval.tex_obj      = tex_obj;
         retval.tex_offset   = tex_offset + n;
         return retval;
     }
@@ -264,7 +255,7 @@ public:
     {
         self_type retval;
         retval.ptr          = ptr;
-//        retval.tex_obj      = tex_obj;
+        retval.tex_obj      = tex_obj;
         retval.tex_offset   = tex_offset - n;
         return retval;
     }
@@ -300,13 +291,13 @@ public:
     /// Equal to
     __host__ __device__ __forceinline__ bool operator==(const self_type& rhs)
     {
-        return ((ptr == rhs.ptr) && (tex_offset == rhs.tex_offset)); // && (tex_obj == rhs.tex_obj));
+        return ((ptr == rhs.ptr) && (tex_offset == rhs.tex_offset) && (tex_obj == rhs.tex_obj));
     }
 
     /// Not equal to
     __host__ __device__ __forceinline__ bool operator!=(const self_type& rhs)
     {
-        return ((ptr != rhs.ptr) || (tex_offset != rhs.tex_offset));// || (tex_obj != rhs.tex_obj));
+        return ((ptr != rhs.ptr) || (tex_offset != rhs.tex_offset) || (tex_obj != rhs.tex_obj));
     }
 
     /// ostream operator

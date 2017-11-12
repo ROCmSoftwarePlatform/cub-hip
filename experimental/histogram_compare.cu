@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -38,6 +38,8 @@
 
 #include <cub/util_allocator.cuh>
 #include <test/test_util.h>
+
+#include <hip/hip_runtime.h>
 
 using namespace cub;
 
@@ -539,7 +541,7 @@ int main(int argc, char **argv)
             "\n\t"
                 "--file=<.tga filename> "
             "\n\t"
-                "--entropy=<-1 (0%), 0 (100%), 1 (81%), 2 (54%), 3 (34%), 4 (20%), ..."
+                "--entropy=<-1 (0%%), 0 (100%%), 1 (81%%), 2 (54%%), 3 (34%%), 4 (20%%), ..."
                 "[--height=<default: 1080>] "
                 "[--width=<default: 1920>] "
             "\n", argv[0]);

@@ -61,7 +61,7 @@ namespace amp{
 
         pointer1 first_pointer1 = std::addressof(*first1);
 
-        device_vector< iType, concurrency::array_view > dvInput1( first_pointer1, sz, var, ctl );
+        device_vector< iType, hc::array_view > dvInput1( first_pointer1, sz, var, ctl );
         return dvInput1.begin();
     }
 
@@ -72,7 +72,7 @@ namespace amp{
     typename bolt::amp::device_vector<T>::iterator
     create_mapped_iterator(std::random_access_iterator_tag, T* first1, int sz, bool var, ::bolt::amp::control &ctl)
     {
-        device_vector< T, concurrency::array_view > dvInput1( first1, sz, var, ctl );
+        device_vector< T, hc::array_view > dvInput1( first1, sz, var, ctl );
         return dvInput1.begin();
     }
 

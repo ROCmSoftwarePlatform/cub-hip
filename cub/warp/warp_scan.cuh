@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,6 +39,8 @@
 #include "../util_arch.cuh"
 #include "../util_type.cuh"
 #include "../util_namespace.cuh"
+
+#include "hip/hip_runtime.h"
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -165,10 +166,9 @@ private:
     };
 
     /// Internal specialization.  Use SHFL-based scan if (architecture is >= SM30) and (LOGICAL_WARP_THREADS is a power-of-two)
-        typedef typename If<(PTX_ARCH >= 300) && (IS_POW_OF_TWO),
-            WarpScanShfl<T, LOGICAL_WARP_THREADS, PTX_ARCH>,
-            WarpScanSmem<T, LOGICAL_WARP_THREADS, PTX_ARCH> >::Type InternalWarpScan;
-
+    typedef typename If<(PTX_ARCH >= 300) && (IS_POW_OF_TWO),
+        WarpScanShfl<T, LOGICAL_WARP_THREADS, PTX_ARCH>,
+        WarpScanSmem<T, LOGICAL_WARP_THREADS, PTX_ARCH> >::Type InternalWarpScan;
 
     /// Shared memory storage layout type for WarpScan
     typedef typename InternalWarpScan::TempStorage _TempStorage;
@@ -560,11 +560,12 @@ public:
         T inclusive_output;
         internal.InclusiveScan(input, inclusive_output, scan_op);
 
-        internal.Update(input,
-                        inclusive_output,
-                        exclusive_output,
-                        scan_op,
-                        Int2Type<IS_INTEGER>());
+        internal.Update(
+            input,
+            inclusive_output,
+            exclusive_output,
+            scan_op,
+            Int2Type<IS_INTEGER>());
     }
 
 

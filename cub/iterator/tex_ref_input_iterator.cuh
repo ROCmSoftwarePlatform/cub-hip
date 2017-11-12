@@ -1,6 +1,6 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -42,18 +42,13 @@
 #include "../util_debug.cuh"
 #include "../util_namespace.cuh"
 
-//#if (CUDA_VERSION >= 5050) || defined(DOXYGEN_ACTIVE)  // This iterator is compatible with CUDA 5.5 and newer
+#if defined(__HIP_PLATFORM_HCC__) || (CUDA_VERSION >= 5050) || defined(DOXYGEN_ACTIVE) // This iterator is compatible with CUDA 5.5 and newer
 
-#if defined(__HIP_PLATFORM_HCC__)
-#else
-    #include <thrust/version.h>
+#if (THRUST_VERSION >= 100700)    // This iterator is compatible with Thrust API 1.7 and newer
+    #include <thrust/iterator/iterator_facade.h>
+    #include <thrust/iterator/iterator_traits.h>
+#endif // THRUST_VERSION
 
-    #if (THRUST_VERSION >= 100700)
-        // This iterator is compatible with Thrust API 1.7 and newer
-        #include <thrust/iterator/iterator_facade.h>
-        #include <thrust/iterator/iterator_traits.h>
-    #endif // THRUST_VERSION
-#endif
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -67,7 +62,6 @@ namespace cub {
  *****************************************************************************/
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS    // Do not document
-//TODO:(mcw) Texture doesn't support in hip
 // Anonymous namespace
 namespace {
 
@@ -90,36 +84,35 @@ struct IteratorTexRef
         };
 
         // Texture reference type
-        //typedef texture<TextureWord> TexRef;
+        typedef texture<TextureWord> TexRef;
 
         // Texture reference
-        //static TexRef ref;
+        static TexRef ref;
 
         /// Bind texture
         static hipError_t BindTexture(void *d_in, size_t &offset)
         {
-            /*if (d_in)
+            if (d_in)
             {
                 hipChannelFormatDesc tex_desc = hipCreateChannelDesc<TextureWord>();
                 ref.channelDesc = tex_desc;
                 return (CubDebug(hipBindTexture(&offset, ref, d_in)));
-            }*/
+            }
 
             return hipSuccess;
         }
 
         /// Unbind texture
-        //TODO:(mcw) error: no instance of function template "hipUnbindTexture" matches the argument list
         static hipError_t UnbindTexture()
         {
-            return hipSuccess;//CubDebug(hipUnbindTexture(ref));
+            return CubDebug(hipUnbindTexture(ref));
         }
 
         /// Fetch element
         template <typename Distance>
         static __device__ __forceinline__ T Fetch(Distance tex_offset)
         {
-            /*DeviceWord temp[DEVICE_MULTIPLE];
+            DeviceWord temp[DEVICE_MULTIPLE];
             TextureWord *words = reinterpret_cast<TextureWord*>(temp);
 
             #pragma unroll
@@ -128,16 +121,15 @@ struct IteratorTexRef
                 words[i] = tex1Dfetch(ref, (tex_offset * TEXTURE_MULTIPLE) + i);
             }
 
-            return reinterpret_cast<T&>(temp);*/
-            return hipSuccess;
+            return reinterpret_cast<T&>(temp);
         }
     };
 };
 
 // Texture reference definitions
-//template <typename  T>
-//template <int       UNIQUE_ID>
-//typename IteratorTexRef<T>::template TexId<UNIQUE_ID>::TexRef IteratorTexRef<T>::template TexId<UNIQUE_ID>::ref = 0;
+template <typename  T>
+template <int       UNIQUE_ID>
+typename IteratorTexRef<T>::template TexId<UNIQUE_ID>::TexRef IteratorTexRef<T>::template TexId<UNIQUE_ID>::ref = 0;
 
 
 } // Anonymous namespace
@@ -158,7 +150,7 @@ struct IteratorTexRef
  * \brief A random-access input wrapper for dereferencing array values through texture cache.  Uses older Tesla/Fermi-style texture references.
  *
  * \par Overview
- * - TexRefInputIteratorTwraps a native device pointer of type <tt>ValueType*</tt>. References
+ * - TexRefInputIteratorT wraps a native device pointer of type <tt>ValueType*</tt>. References
  *   to elements are to be loaded through texture cache.
  * - Can be used to load any data type from memory through texture cache.
  * - Can be manipulated and exchanged within and between host and device
@@ -219,19 +211,17 @@ public:
     typedef T*                                  pointer;                ///< The type of a pointer to an element the iterator can point to
     typedef T                                   reference;              ///< The type of a reference to an element the iterator can point to
 
-    #if defined(__HIP_PLATFORM_HCC__)
-        typedef std::random_access_iterator_tag     iterator_category;  ///< The iterator category
-    #else
-        #if (THRUST_VERSION >= 100700)
-            // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
-            typedef typename thrust::detail::iterator_facade_category<
-                thrust::device_system_tag,
-                thrust::random_access_traversal_tag,
-                value_type,
-                reference
-            >::type iterator_category;                                  ///< The iterator category
-        #endif // THRUST_VERSION
-    #endif
+#if (THRUST_VERSION >= 100700)
+    // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
+    typedef typename thrust::detail::iterator_facade_category<
+        thrust::device_system_tag,
+        thrust::random_access_traversal_tag,
+        value_type,
+        reference
+      >::type iterator_category;                                        ///< The iterator category
+#else
+    typedef std::random_access_iterator_tag     iterator_category;      ///< The iterator category
+#endif  // THRUST_VERSION
 
 private:
 
@@ -380,4 +370,4 @@ public:
 }               // CUB namespace
 CUB_NS_POSTFIX  // Optional outer namespace(s)
 
-//#endif // CUDA_VERSION
+#endif // CUDA_VERSION

@@ -1,6 +1,6 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -59,7 +59,7 @@
 #include "device/device_spmv.cuh"
 
 // Grid
-#include "grid/grid_barrier.cuh"
+//#include "grid/grid_barrier.cuh"
 #include "grid/grid_even_share.cuh"
 #include "grid/grid_mapping.cuh"
 #include "grid/grid_queue.cuh"
@@ -76,7 +76,6 @@
 #include "warp/warp_scan.cuh"
 
 // Iterator
-
 #include "iterator/arg_index_input_iterator.cuh"
 #include "iterator/cache_modified_input_iterator.cuh"
 #include "iterator/cache_modified_output_iterator.cuh"
@@ -86,9 +85,7 @@
 #include "iterator/tex_ref_input_iterator.cuh"
 #include "iterator/transform_input_iterator.cuh"
 
-
 // Util
-#include "util_allocator.cuh"
 #include "util_arch.cuh"
 #include "util_debug.cuh"
 #include "util_device.cuh"

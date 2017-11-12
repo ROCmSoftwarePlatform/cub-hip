@@ -1,6 +1,6 @@
 #/******************************************************************************
 # * Copyright (c) 2011, Duane Merrill.  All rights reserved.
-# * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+# * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
 # * 
 # * Redistribution and use in source and binary forms, with or without
 # * modification, are permitted provided that the following conditions are met:
@@ -33,16 +33,25 @@ HIP_PLATFORM=$(shell $(HIP_PATH)/bin/hipconfig --platform)
 # Commandline Options
 #-------------------------------------------------------------------------------
 
-# [sm=<XXX,...>] Compute-capability to compile for, e.g., "sm=200,300,350" (SM52 by default).
+# [sm=<XXX,...>] Compute-capability to compile for, e.g., "sm=200,300,350" (SM20 by default).
   
 COMMA = ,
 ifdef sm
 	SM_ARCH = $(subst $(COMMA),-,$(sm))
 else 
-    SM_ARCH = 520
+    SM_ARCH = 200
 endif
 
 ifeq (${HIP_PLATFORM}, nvcc)
+
+ifeq (700, $(findstring 700, $(SM_ARCH)))
+    SM_TARGETS 	+= -gencode=arch=compute_70,code=\"sm_70,compute_70\"
+    SM_DEF 		+= -DSM700
+    TEST_ARCH 	= 700
+endif
+    SM_ARCH = 520
+endif
+
 ifeq (620, $(findstring 620, $(SM_ARCH)))
     SM_TARGETS 	+= -gencode=arch=compute_62,code=\"sm_62,compute_62\" 
     SM_DEF 		+= -DSM620
@@ -59,7 +68,7 @@ ifeq (600, $(findstring 600, $(SM_ARCH)))
     TEST_ARCH 	= 600
 endif
 ifeq (520, $(findstring 520, $(SM_ARCH)))
-    SM_TARGETS 	+= -gencode=arch=compute_52,code=sm_52 
+    SM_TARGETS 	+= -gencode=arch=compute_52,code=\"sm_52,compute_52\"
     SM_DEF 		+= -DSM520
     TEST_ARCH 	= 520
 endif
@@ -84,7 +93,7 @@ ifeq (210, $(findstring 210, $(SM_ARCH)))
     TEST_ARCH 	= 210
 endif
 ifeq (200, $(findstring 200, $(SM_ARCH)))
-    SM_TARGETS 	+= `-gencode=arch=compute_20,code=\"sm_20,compute_20\"`
+    SM_TARGETS 	+= -gencode=arch=compute_20,code=\"sm_20,compute_20\"
     SM_DEF 		+= -DSM200
     TEST_ARCH 	= 200
 endif
@@ -159,6 +168,7 @@ ifeq ($(cdp), 1)
 	DEFINES += -DCUB_CDP
 	CDP_SUFFIX = cdp
     HCCFLAGS += -rdc=true -lcudadevrt
+    NVCCFLAGS += -rdc=true -lcudadevrt
 else
 	CDP_SUFFIX = nocdp
 endif
@@ -171,7 +181,7 @@ ifeq ($(force32), 1)
 else
 	CPU_ARCH = -m64
 	CPU_ARCH_SUFFIX = x86_64
-    NPPI = -lnppi
+    NPPI = -lnppist
 endif
 
 
@@ -180,6 +190,7 @@ ifneq ($(abi), 0)
 	ABI_SUFFIX = abi
 else 
 	HCCFLAGS += -Xptxas -abi=no
+	NVCCFLAGS += -Xptxas -abi=no
 	ABI_SUFFIX = noabi
 endif
 
@@ -187,6 +198,7 @@ endif
 # [open64=<0|1>] Middle-end compiler option (nvvm by default)
 ifeq ($(open64), 1)
 	HCCFLAGS += -open64
+	NVCCFLAGS += -open64
 	PTX_SUFFIX = open64
 else 
 	PTX_SUFFIX = nvvm
@@ -196,17 +208,20 @@ endif
 # [verbose=<0|1>] Verbose toolchain output from nvcc option
 ifeq ($(verbose), 1)
 	HCCFLAGS += -v
+	NVCCFLAGS += -v
 endif
 
 
 # [keep=<0|1>] Keep intermediate compilation artifacts option
 ifeq ($(keep), 1)
 	HCCFLAGS += -keep
+	NVCCFLAGS += -keep
 endif
 
 # [debug=<0|1>] Generate debug mode code
 ifeq ($(debug), 1)
 	HCCFLAGS += -G
+	NVCCFLAGS += -G
 endif
 
 CPPFLAGS += $(shell $(HIP_PATH)/bin/hipconfig --cpp_config)
@@ -231,7 +246,7 @@ OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 
 # Default flags: verbose kernel properties (regs, smem, cmem, etc.); runtimes for compilation phases 
 ifeq (${HIP_PLATFORM}, nvcc)
-    HCCFLAGS += $(SM_DEF) -Xptxas -v -Xcudafe -\# 
+    HCCFLAGS += $(SM_DEF) -Xptxas -v -Xcudafe -\#
 else
     HCCFLAGS += $(SM_DEF)
 endif

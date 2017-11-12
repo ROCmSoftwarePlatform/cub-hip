@@ -1,5 +1,4 @@
-#include "hip/hip_runtime.h"
-
+#include <hip/hip_runtime.h>
 
 #include <cub/cub.cuh>
 
@@ -8,9 +7,7 @@ template <
     int         BLOCK_THREADS,          ///< Number of CTA threads
     typename    KeyT,                   ///< Key type
     typename    ValueT>                 ///< Value type
-__global__
-inline
-void Kernel()
+__global__ void Kernel()
 {
     // Tuple type for scanning (pairs accumulated segment-value with segment-index)
     typedef cub::KeyValuePair<int, ValueT> OffsetValuePairT;
@@ -32,7 +29,7 @@ void Kernel()
         BlockScanT;
 
     // Shared memory
-    __shared__ union
+    __shared__ union TempStorage
     {
         typename BlockScanT::TempStorage                scan;           // Scan storage
         typename BlockDiscontinuityKeysT::TempStorage   discontinuity;  // Discontinuity storage

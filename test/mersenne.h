@@ -56,6 +56,7 @@ static unsigned int mt[N];  /* the array for the state vector  */
 static int mti = N + 1;     /* mti==N+1 means mt[N] is not initialized */
 
 /* initializes mt[N] with a seed */
+__host__ __device__
 void init_genrand(unsigned int s)
 {
     mt[0] = s & 0xffffffff;
@@ -114,6 +115,7 @@ void init_by_array(unsigned int init_key[], int key_length)
 }
 
 /* generates a random number on [0,0xffffffff]-interval */
+__host__ __device__
 unsigned int genrand_int32(void)
 {
     unsigned int y;

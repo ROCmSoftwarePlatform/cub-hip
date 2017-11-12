@@ -1,6 +1,6 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,13 +33,13 @@
 
 #pragma once
 
+#include <iterator>
+#include <iostream>
+
 #include "../thread/thread_load.cuh"
 #include "../thread/thread_store.cuh"
 #include "../util_device.cuh"
 #include "../util_namespace.cuh"
-
-#include <iterator>
-#include <iostream>
 
 #if defined(__HIP_PLATFORM_HCC__)
 #else
@@ -119,128 +119,112 @@ public:
     typedef ValueType*                          pointer;                ///< The type of a pointer to an element the iterator can point to
     typedef ValueType                           reference;              ///< The type of a reference to an element the iterator can point to
 
-    #if defined(__HIP_PLATFORM_HCC__)
-        typedef std::random_access_iterator_tag     iterator_category;  ///< The iterator category
-    #else
-        #if (THRUST_VERSION >= 100700)
-            // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
-            typedef typename thrust::detail::iterator_facade_category<
-                thrust::device_system_tag,
-                thrust::random_access_traversal_tag,
-                value_type,
-                reference
-            >::type iterator_category;                                  ///< The iterator category
-        #endif // THRUST_VERSION
-    #endif
+#if (THRUST_VERSION >= 100700)
+    // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
+    typedef typename thrust::detail::iterator_facade_category<
+        thrust::device_system_tag,
+        thrust::random_access_traversal_tag,
+        value_type,
+        reference
+      >::type iterator_category;                                        ///< The iterator category
+#else
+    typedef std::random_access_iterator_tag     iterator_category;      ///< The iterator category
+#endif  // THRUST_VERSION
+
 
 public:
 
     /// Wrapped native pointer
-    //ValueType* ptr;
-    std::uintptr_t ptr;
+    ValueType* ptr;
 
     /// Constructor
     template <typename QualifiedValueType>
-    __host__ __device__ __forceinline__
-    CacheModifiedInputIterator(QualifiedValueType* ptr)     ///< Native pointer to wrap
+    __host__ __device__ __forceinline__ CacheModifiedInputIterator(
+        QualifiedValueType* ptr)     ///< Native pointer to wrap
     :
-        ptr(reinterpret_cast<std::uintptr_t>(ptr))//const_cast<typename RemoveQualifiers<QualifiedValueType>::Type *>(ptr))
-    {}
-    __host__ __device__ __forceinline__
-    CacheModifiedInputIterator(const CacheModifiedInputIterator& x)
-        : ptr{x.ptr}
+        ptr(const_cast<typename RemoveQualifiers<QualifiedValueType>::Type *>(ptr))
     {}
 
     /// Postfix increment
     __host__ __device__ __forceinline__ self_type operator++(int)
     {
         self_type retval = *this;
-        ptr += sizeof(ValueType);
+        ptr++;
         return retval;
     }
 
     /// Prefix increment
     __host__ __device__ __forceinline__ self_type operator++()
     {
-        ptr += sizeof(ValueType);
+        ptr++;
         return *this;
     }
 
     /// Indirection
     __device__ __forceinline__ reference operator*() const
     {
-        return ThreadLoad<MODIFIER>(reinterpret_cast<ValueType*>(ptr));
+        return ThreadLoad<MODIFIER>(ptr);
     }
 
     /// Addition
     template <typename Distance>
-    __host__ __device__ __forceinline__
-    self_type operator+(Distance n) const
+    __host__ __device__ __forceinline__ self_type operator+(Distance n) const
     {
-        self_type retval(reinterpret_cast<ValueType*>(ptr) + n);
+        self_type retval(ptr + n);
         return retval;
     }
 
     /// Addition assignment
     template <typename Distance>
-    __host__ __device__ __forceinline__
-    self_type& operator+=(Distance n)
+    __host__ __device__ __forceinline__ self_type& operator+=(Distance n)
     {
-        ptr += n * sizeof(ValueType);
+        ptr += n;
         return *this;
     }
 
     /// Subtraction
     template <typename Distance>
-    __host__ __device__ __forceinline__
-    self_type operator-(Distance n) const
+    __host__ __device__ __forceinline__ self_type operator-(Distance n) const
     {
-        self_type retval(reinterpret_cast<ValueType*>(ptr) - n);
+        self_type retval(ptr - n);
         return retval;
     }
 
     /// Subtraction assignment
     template <typename Distance>
-    __host__ __device__ __forceinline__
-    self_type& operator-=(Distance n)
+    __host__ __device__ __forceinline__ self_type& operator-=(Distance n)
     {
-        ptr -= n * sizeof(ValueType);
+        ptr -= n;
         return *this;
     }
 
     /// Distance
-    __host__ __device__ __forceinline__
-    difference_type operator-(self_type other) const
+    __host__ __device__ __forceinline__ difference_type operator-(self_type other) const
     {
-        return reinterpret_cast<ValueType*>(ptr) -
-               reinterpret_cast<ValueType*>(other.ptr);
+        return ptr - other.ptr;
     }
 
     /// Array subscript
     template <typename Distance>
-    __device__ __forceinline__
-    reference operator[](Distance n) const
+    __device__ __forceinline__ reference operator[](Distance n) const
     {
-        return ThreadLoad<MODIFIER>(reinterpret_cast<ValueType*>(ptr) + n);
+        return ThreadLoad<MODIFIER>(ptr + n);
     }
 
     /// Structure dereference
-    __device__ __forceinline__
-    pointer operator->()
+    __device__ __forceinline__ pointer operator->()
     {
-        return &ThreadLoad<MODIFIER>(reinterpret_cast<ValueType*>(ptr));
+        return &ThreadLoad<MODIFIER>(ptr);
     }
 
     /// Equal to
-    __host__ __device__ __forceinline__
-    bool operator==(const self_type& rhs)
+    __host__ __device__ __forceinline__ bool operator==(const self_type& rhs)
     {
         return (ptr == rhs.ptr);
     }
 
     /// Not equal to
-    __host__ __device__ __forceinline__
-    bool operator!=(const self_type& rhs)
+    __host__ __device__ __forceinline__ bool operator!=(const self_type& rhs)
     {
         return (ptr != rhs.ptr);
     }
@@ -250,9 +234,6 @@ public:
     {
         return os;
     }
-
-    __host__ __device__
-    ~CacheModifiedInputIterator() {}
 };
 
 

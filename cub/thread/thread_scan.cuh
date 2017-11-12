@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -42,6 +42,10 @@ CUB_NS_PREFIX
 /// CUB namespace
 namespace cub {
 
+/// Internal namespace (to prevent ADL mishaps between static functions when mixing different CUB installations)
+namespace internal {
+
+
 /**
  * \addtogroup UtilModule
  * @{
@@ -64,25 +68,14 @@ __device__ __forceinline__ T ThreadScanExclusive(
     ScanOp              scan_op,                ///< [in] Binary scan operator
     Int2Type<LENGTH>    /*length*/)
 {
-    T addend = *input;
-    inclusive = scan_op(exclusive, addend);
-    *output = exclusive;
-    exclusive = inclusive;
+    #pragma unroll
+    for (int i = 0; i < LENGTH; ++i)
+    {
+        inclusive = scan_op(exclusive, input[i]);
+        output[i] = exclusive;
+        exclusive = inclusive;
+    }
 
-    return ThreadScanExclusive(inclusive, exclusive, input + 1, output + 1, scan_op, Int2Type<LENGTH - 1>());
-}
-
-template <
-    typename    T,
-    typename    ScanOp>
-__device__ __forceinline__ T ThreadScanExclusive(
-    T                   inclusive,
-    T                   /*exclusive*/,
-    T                   * /*input*/,                ///< [in] Input array
-    T                   * /*output*/,               ///< [out] Output array (may be aliased to \p input)
-    ScanOp              /*scan_op*/,                ///< [in] Binary scan operator
-    Int2Type<0>         /*length*/)
-{
     return inclusive;
 }
 
@@ -157,23 +150,13 @@ __device__ __forceinline__ T ThreadScanInclusive(
     ScanOp              scan_op,                ///< [in] Binary scan operator
     Int2Type<LENGTH>    /*length*/)
 {
-    T addend = *input;
-    inclusive = scan_op(inclusive, addend);
-    output[0] = inclusive;
+    #pragma unroll
+    for (int i = 0; i < LENGTH; ++i)
+    {
+        inclusive = scan_op(inclusive, input[i]);
+        output[i] = inclusive;
+    }
 
-    return ThreadScanInclusive(inclusive, input + 1, output + 1, scan_op, Int2Type<LENGTH - 1>());
-}
-
-template <
-    typename    T,
-    typename    ScanOp>
-__device__ __forceinline__ T ThreadScanInclusive(
-    T                   inclusive,
-    T                   * /*input*/,                ///< [in] Input array
-    T                   * /*output*/,               ///< [out] Output array (may be aliased to \p input)
-    ScanOp              /*scan_op*/,                ///< [in] Binary scan operator
-    Int2Type<0>         /*length*/)
-{
     return inclusive;
 }
 
@@ -279,5 +262,6 @@ __device__ __forceinline__ T ThreadScanInclusive(
 /** @} */       // end group UtilModule
 
 
+}               // internal namespace
 }               // CUB namespace
 CUB_NS_POSTFIX  // Optional outer namespace(s)

@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -79,8 +78,6 @@ struct WrapperFunctor
     {
         return op(a, b);
     }
-    uint8_t dummyVar;
-    __host__ __device__ ~WrapperFunctor() {}
 };
 
 //---------------------------------------------------------------------
@@ -201,14 +198,14 @@ template <
     typename    WarpScanT,
     typename    T,
     typename    InitialValueT>
-__device__ __forceinline__
-void DeviceTest(WarpScanT                       &warp_scan,
-                T                               &data,
-                NullType                        &initial_value,
-                Sum                             &scan_op,
-                T                               &aggregate,
-                Int2Type<BASIC>                 test_mode,
-                Int2Type<true>                  is_primitive)
+__device__ __forceinline__ void DeviceTest(
+    WarpScanT                       &warp_scan,
+    T                               &data,
+    NullType                        &initial_value,
+    Sum                             &scan_op,
+    T                               &aggregate,
+    Int2Type<BASIC>                 test_mode,
+    Int2Type<true>                  is_primitive)
 {
     // Test basic warp scan
     warp_scan.InclusiveSum(data, data);
@@ -242,14 +239,13 @@ template <
     typename    T,
     typename    ScanOpT,
     typename    InitialValueT>
-__global__
-void WarpScanKernel(hipLaunchParm lp,
-                    T             *d_in,
-                    T             *d_out,
-                    T             *d_aggregate,
-                    ScanOpT       scan_op,
-                    InitialValueT initial_value,
-                    clock_t       *d_elapsed)
+__global__ void WarpScanKernel(
+    T               *d_in,
+    T               *d_out,
+    T               *d_aggregate,
+    ScanOpT         scan_op,
+    InitialValueT   initial_value,
+    clock_t         *d_elapsed)
 {
     // Cooperative warp-scan utility type (1 warp)
     typedef WarpScan<T, LOGICAL_WARP_THREADS> WarpScanT;
@@ -269,13 +265,14 @@ void WarpScanKernel(hipLaunchParm lp,
 
     // Test scan
     WarpScanT warp_scan(temp_storage);
-    DeviceTest(warp_scan,
-               data,
-               initial_value,
-               scan_op,
-               aggregate,
-               Int2Type<TEST_MODE>(),
-               Int2Type<Traits<T>::PRIMITIVE>());
+    DeviceTest(
+        warp_scan,
+        data,
+        initial_value,
+        scan_op,
+        aggregate,
+        Int2Type<TEST_MODE>(),
+        Int2Type<Traits<T>::PRIMITIVE>());
 
     // Stop cycle timer
     __threadfence_block();      // workaround to prevent clock hoisting
@@ -431,17 +428,18 @@ void Test(
     fflush(stdout);
 
     // Run aggregate/prefix kernel
-    hipLaunchKernel(HIP_KERNEL_NAME(WarpScanKernel<LOGICAL_WARP_THREADS, TEST_MODE, T, ScanOpT, InitialValueT>),
-                                    dim3(1),
-                                    dim3(LOGICAL_WARP_THREADS),
-                                    0,
-                                    0,
-                                    d_in,
-                                    d_out,
-                                    d_aggregate,
-                                    scan_op,
-                                    initial_value,
-                                    d_elapsed);
+    hipLaunchKernelGGL(
+        WarpScanKernel<LOGICAL_WARP_THREADS, TEST_MODE>,
+        dim3(1),
+        dim3(LOGICAL_WARP_THREADS),
+        0,
+        0,
+        d_in,
+        d_out,
+        d_aggregate,
+        scan_op,
+        initial_value,
+        d_elapsed);
 
     printf("\tElapsed clocks: ");
     DisplayDeviceResults(d_elapsed, 1);
@@ -534,8 +532,6 @@ void Test(GenMode gen_mode)
     Test<LOGICAL_WARP_THREADS>(gen_mode, Max(), (unsigned int) 99);
     Test<LOGICAL_WARP_THREADS>(gen_mode, Max(), (unsigned long long) 99);
 
-    //TODO: Revert once hang issue is fixed
-#ifdef __HIP_PLATFORM_NVCC__
     // vec-2
     Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_uchar2(17, 21));
     Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_ushort2(17, 21));
@@ -565,7 +561,7 @@ void Test(GenMode gen_mode)
     // complex
     Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), TestFoo::MakeTestFoo(17, 21, 32, 85));
     Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), TestBar(17, 21));
-#endif
+
 }
 
 
@@ -623,9 +619,6 @@ int main(int argc, char** argv)
     for (int i = 0; i <= g_repeat; ++i)
     {
         // Test logical warp sizes
-    #ifdef __HIP_PLATFORM_HCC__
-	Test<64>();
-    #endif
         Test<32>();
         Test<16>();
         Test<9>();

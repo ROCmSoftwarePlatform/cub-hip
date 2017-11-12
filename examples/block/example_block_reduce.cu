@@ -1,7 +1,6 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -47,6 +46,8 @@
 
 #include "../../test/test_util.h"
 
+#include <hip/hip_runtime.h>
+
 using namespace cub;
 
 //---------------------------------------------------------------------
@@ -76,7 +77,6 @@ template <
     int                     ITEMS_PER_THREAD,
     BlockReduceAlgorithm    ALGORITHM>
 __global__ void BlockSumKernel(
-    hipLaunchParm lp,
     int         *d_in,          // Tile of input
     int         *d_out,         // Tile aggregate
     clock_t     *d_elapsed)     // Elapsed cycle count of block reduction
@@ -179,7 +179,7 @@ void Test()
         TILE_SIZE, g_timing_iterations, g_grid_size, BLOCK_THREADS, ITEMS_PER_THREAD, max_sm_occupancy);
 
     // Run aggregate/prefix kernel
-    hipLaunchKernel(HIP_KERNEL_NAME(BlockSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0, 
+    hipLaunchKernel(HIP_KERNEL_NAME(BlockSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0,
         d_in,
         d_out,
         d_elapsed);
@@ -203,7 +203,7 @@ void Test()
         timer.Start();
 
         // Run aggregate/prefix kernel
-        hipLaunchKernel(HIP_KERNEL_NAME(BlockSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0, 
+        hipLaunchKernel(HIP_KERNEL_NAME(BlockSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, ALGORITHM>), dim3(g_grid_size), dim3(BLOCK_THREADS), 0, 0,
             d_in,
             d_out,
             d_elapsed);

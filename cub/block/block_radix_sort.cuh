@@ -1,8 +1,7 @@
-#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2016, NVIDIA CORPORATION.  All rights reserved.
- * 
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -13,7 +12,7 @@
  *     * Neither the name of the NVIDIA CORPORATION nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -42,6 +41,7 @@
 #include "../util_type.cuh"
 #include "../util_namespace.cuh"
 
+#include "hip/hip_runtime.h"
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
 
@@ -117,7 +117,6 @@ namespace cub {
  * <tt>{ [0,1,2,3], [4,5,6,7], [8,9,10,11], ..., [508,509,510,511] }</tt>.
  *
  */
-#ifdef __HIP_PLATFORM_HCC__
 template <
     typename                KeyT,
     int                     BLOCK_DIM_X,
@@ -130,20 +129,6 @@ template <
     int                     BLOCK_DIM_Y             = 1,
     int                     BLOCK_DIM_Z             = 1,
     int                     PTX_ARCH                = CUB_PTX_ARCH>
-#elif defined(__HIP_PLATFORM_NVCC__)
-template <
-    typename                KeyT,
-    int                     BLOCK_DIM_X,
-    int                     ITEMS_PER_THREAD,
-    typename                ValueT                   = NullType,
-    int                     RADIX_BITS              = 4,
-    bool                    MEMOIZE_OUTER_SCAN      = (CUB_PTX_ARCH >= 350) ? true : false,
-    BlockScanAlgorithm      INNER_SCAN_ALGORITHM    = BLOCK_SCAN_WARP_SCANS,
-    cudaSharedMemConfig     SMEM_CONFIG             = cudaSharedMemBankSizeFourByte,
-    int                     BLOCK_DIM_Y             = 1,
-    int                     BLOCK_DIM_Z             = 1,
-    int                     PTX_ARCH                = CUB_PTX_ARCH>
-#endif
 class BlockRadixSort
 {
 private:
@@ -198,15 +183,12 @@ private:
     typedef BlockExchange<ValueT, BLOCK_DIM_X, ITEMS_PER_THREAD, false, BLOCK_DIM_Y, BLOCK_DIM_Z, PTX_ARCH> BlockExchangeValues;
 
     /// Shared memory storage layout type
-    struct _TempStorage
+    union _TempStorage
     {
-        union
-        {
-            typename AscendingBlockRadixRank::TempStorage  asending_ranking_storage;
-            typename DescendingBlockRadixRank::TempStorage descending_ranking_storage;
-            typename BlockExchangeKeys::TempStorage        exchange_keys;
-            typename BlockExchangeValues::TempStorage      exchange_values;
-        };
+        typename AscendingBlockRadixRank::TempStorage  asending_ranking_storage;
+        typename DescendingBlockRadixRank::TempStorage descending_ranking_storage;
+        typename BlockExchangeKeys::TempStorage        exchange_keys;
+        typename BlockExchangeValues::TempStorage      exchange_values;
     };
 
 
@@ -268,7 +250,7 @@ private:
         Int2Type<false> /*is_keys_only*/,
         Int2Type<true>  /*is_blocked*/)
     {
-        __syncthreads();
+        CTA_SYNC();
 
         // Exchange values through shared memory in blocked arrangement
         BlockExchangeValues(temp_storage.exchange_values).ScatterToBlocked(values, ranks);
@@ -281,7 +263,7 @@ private:
         Int2Type<false> /*is_keys_only*/,
         Int2Type<false> /*is_blocked*/)
     {
-        __syncthreads();
+        CTA_SYNC();
 
         // Exchange values through shared memory in blocked arrangement
         BlockExchangeValues(temp_storage.exchange_values).ScatterToStriped(values, ranks);
@@ -326,7 +308,7 @@ private:
             RankKeys(unsigned_keys, ranks, begin_bit, pass_bits, is_descending);
             begin_bit += RADIX_BITS;
 
-            __syncthreads();
+            CTA_SYNC();
 
             // Exchange keys through shared memory in blocked arrangement
             BlockExchangeKeys(temp_storage.exchange_keys).ScatterToBlocked(keys, ranks);
@@ -337,7 +319,7 @@ private:
             // Quit if done
             if (begin_bit >= end_bit) break;
 
-            __syncthreads();
+            CTA_SYNC();
         }
 
         // Untwiddle bits if necessary
@@ -382,7 +364,7 @@ public:
             RankKeys(unsigned_keys, ranks, begin_bit, pass_bits, is_descending);
             begin_bit += RADIX_BITS;
 
-            __syncthreads();
+            CTA_SYNC();
 
             // Check if this is the last pass
             if (begin_bit >= end_bit)
@@ -403,7 +385,7 @@ public:
             // Exchange values through shared memory in blocked arrangement
             ExchangeValues(values, ranks, is_keys_only, Int2Type<true>());
 
-            __syncthreads();
+            CTA_SYNC();
         }
 
         // Untwiddle bits if necessary
@@ -494,7 +476,7 @@ public:
         int     begin_bit   = 0,                    ///< [in] <b>[optional]</b> The beginning (least-significant) bit index needed for key comparison
         int     end_bit     = sizeof(KeyT) * 8)      ///< [in] <b>[optional]</b> The past-the-end (most-significant) bit index needed for key comparison
     {
-        NullType values[ITEMS_PER_THREAD];
+        NullType values [ITEMS_PER_THREAD];
         SortBlocked(keys, values, begin_bit, end_bit, Int2Type<false>(), Int2Type<KEYS_ONLY>());
     }
 
