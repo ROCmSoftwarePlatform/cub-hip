@@ -638,7 +638,7 @@ struct DeviceRadixSortPolicy
         typedef typename If<KEYS_ONLY, AltUpsweepPolicyKeys, AltUpsweepPolicyPairs>::Type   AltUpsweepPolicy;
 
         // Scan policy
-        typedef AgentScanPolicy <256, 4, BLOCK_LOAD_VECTORIZE, LOAD_DEFAULT, BLOCK_STORE_VECTORIZE, BLOCK_SCAN_WARP_SCANS> ScanPolicy;
+        typedef AgentScanPolicy <1024, 4, BLOCK_LOAD_VECTORIZE, LOAD_DEFAULT, BLOCK_STORE_VECTORIZE, BLOCK_SCAN_WARP_SCANS> ScanPolicy;
 
         // Keys-only downsweep policies
         typedef AgentRadixSortDownsweepPolicy <128, CUB_MAX(1, 14 / SCALE_FACTOR_4B), BLOCK_LOAD_WARP_TRANSPOSE, LOAD_DEFAULT, RADIX_RANK_BASIC, BLOCK_SCAN_WARP_SCANS, PRIMARY_RADIX_BITS>   DownsweepPolicyKeys;
@@ -669,7 +669,7 @@ struct DeviceRadixSortPolicy
         };
 
         // Scan policy
-        typedef AgentScanPolicy <256, 4, BLOCK_LOAD_VECTORIZE, LOAD_DEFAULT, BLOCK_STORE_VECTORIZE, BLOCK_SCAN_WARP_SCANS> ScanPolicy;
+        typedef AgentScanPolicy <1024, 4, BLOCK_LOAD_VECTORIZE, LOAD_DEFAULT, BLOCK_STORE_VECTORIZE, BLOCK_SCAN_WARP_SCANS> ScanPolicy;
 
         // Keys-only downsweep policies
         typedef AgentRadixSortDownsweepPolicy <128,   CUB_MAX(1, 9 / SCALE_FACTOR_4B), BLOCK_LOAD_WARP_TRANSPOSE, LOAD_LDG, RADIX_RANK_MATCH, BLOCK_SCAN_WARP_SCANS, PRIMARY_RADIX_BITS> DownsweepPolicyKeys;
@@ -1561,8 +1561,6 @@ struct DispatchSegmentedRadixSort :
 
             // Update current bit
             current_bit += pass_bits;
-
-            hipDeviceSynchronize();
         }
         while (0);
 
@@ -1602,11 +1600,13 @@ struct DispatchSegmentedRadixSort :
         SegmentedKernelT     segmented_kernel,          ///< [in] Kernel function pointer to parameterization of cub::DeviceSegmentedRadixSortKernel
         SegmentedKernelT     alt_segmented_kernel)      ///< [in] Alternate kernel function pointer to parameterization of cub::DeviceSegmentedRadixSortKernel
     {
-/*      (void)segmented_kernel;
+#ifndef CUB_RUNTIME_ENABLED
+      (void)segmented_kernel;
       (void)alt_segmented_kernel;
 
         // Kernel launch not supported from this device
-        return CubDebug(hipErrorNotInitialized ); // NotSupported Changed by Neel*/
+        return CubDebug(cudaErrorNotSupported );
+#else
 
         hipError_t error = hipSuccess;
         do
@@ -1687,6 +1687,7 @@ struct DispatchSegmentedRadixSort :
 
         return error;
 
+#endif // CUB_RUNTIME_ENABLED
     }
 
 
