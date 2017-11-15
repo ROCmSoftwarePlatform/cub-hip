@@ -287,6 +287,7 @@ __device__ __forceinline__ void StoreDirectWarpStriped(
     int wid         = linear_tid >> CUB_PTX_LOG_WARP_THREADS;
     int warp_offset = wid * CUB_PTX_WARP_THREADS * ITEMS_PER_THREAD;
 
+
     OutputIteratorT thread_itr = block_itr + warp_offset + tid;
 
     // Store directly in warp-striped order
@@ -698,7 +699,7 @@ private:
         };
 
         // Assert BLOCK_THREADS must be a multiple of WARP_THREADS
-        //CUB_STATIC_ASSERT((BLOCK_THREADS % WARP_THREADS == 0), "BLOCK_THREADS must be a multiple of WARP_THREADS");
+        CUB_STATIC_ASSERT((BLOCK_THREADS % WARP_THREADS == 0), "BLOCK_THREADS must be a multiple of WARP_THREADS");
 
         // BlockExchange utility type for keys
         typedef BlockExchange<T, BLOCK_DIM_X, ITEMS_PER_THREAD, false, BLOCK_DIM_Y, BLOCK_DIM_Z, PTX_ARCH> BlockExchange;
@@ -766,7 +767,7 @@ private:
         };
 
         // Assert BLOCK_THREADS must be a multiple of WARP_THREADS
-       // CUB_STATIC_ASSERT((BLOCK_THREADS % WARP_THREADS == 0), "BLOCK_THREADS must be a multiple of WARP_THREADS");
+        CUB_STATIC_ASSERT((BLOCK_THREADS % WARP_THREADS == 0), "BLOCK_THREADS must be a multiple of WARP_THREADS");
 
         // BlockExchange utility type for keys
         typedef BlockExchange<T, BLOCK_DIM_X, ITEMS_PER_THREAD, true, BLOCK_DIM_Y, BLOCK_DIM_Z, PTX_ARCH> BlockExchange;
