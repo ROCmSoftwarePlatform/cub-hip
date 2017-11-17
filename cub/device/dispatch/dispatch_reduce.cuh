@@ -196,7 +196,6 @@ template <
     typename                OutputT>                    ///< Data element type that is convertible to the \p value type of \p OutputIteratorT
 #ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS))
-
 #endif
 __global__ void DeviceSegmentedReduceKernel(
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
@@ -219,8 +218,8 @@ __global__ void DeviceSegmentedReduceKernel(
     // Shared memory storage
     __shared__ typename AgentReduceT::TempStorage temp_storage;
 
-    OffsetT segment_begin   = d_begin_offsets[hipBlockIdx_x];
-    OffsetT segment_end     = d_end_offsets[hipBlockIdx_x];
+   OffsetT segment_begin   = d_begin_offsets[hipBlockIdx_x];
+   OffsetT segment_end     = d_end_offsets[hipBlockIdx_x];
 
     // Check if empty problem
     if (segment_begin == segment_end)
@@ -239,7 +238,7 @@ __global__ void DeviceSegmentedReduceKernel(
     NormalizeReductionOutput(block_aggregate, segment_begin, d_in);
 
     if (hipThreadIdx_x == 0)
-        d_out[hipBlockIdx_x] = reduction_op(init, block_aggregate);;
+        d_out[hipBlockIdx_x] = reduction_op(init, block_aggregate);
 }
 
 
@@ -472,8 +471,10 @@ struct DispatchReduce :
 
             // Invoke single_reduce_sweep_kernel
 #ifdef __HIP_PLATFORM_HCC__
-            static const auto tmp = make_forwarder(single_tile_kernel);
-            hipLaunchKernelGGL(tmp, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream,
+            typedef typename DispatchReduce::MaxPolicy          MaxPolicyT;
+            hipLaunchKernelGGL(
+                (DeviceReduceSingleTileKernel<MaxPolicyT, InputIteratorT, OutputIteratorT, OffsetT, ReductionOpT, OutputT>)
+, 1, 256, 0, stream,
 #else
             hipLaunchKernelGGL(single_tile_kernel, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream,
 #endif
@@ -572,8 +573,10 @@ struct DispatchReduce :
 
             // Invoke DeviceReduceKernel
 #ifdef  __HIP_PLATFORM_HCC__
-            static const auto tmp1 = make_forwarder(reduce_kernel);
-            hipLaunchKernelGGL(tmp1, reduce_grid_size, ActivePolicyT::ReducePolicy::BLOCK_THREADS, 0, stream,
+            typedef typename DispatchReduce::MaxPolicy          MaxPolicyT;
+            hipLaunchKernelGGL(
+            (DeviceReduceKernel<typename DispatchReduce::MaxPolicy, InputIteratorT, OutputT*, OffsetT, ReductionOpT>),
+            reduce_grid_size, 256, 0, stream,
 #else
             hipLaunchKernelGGL(reduce_kernel, reduce_grid_size, ActivePolicyT::ReducePolicy::BLOCK_THREADS, 0, stream,
 #endif
@@ -597,8 +600,10 @@ struct DispatchReduce :
 
             // Invoke DeviceReduceSingleTileKernel
 #ifdef __HIP_PLATFORM_HCC__
-            static const auto tmp2 = make_forwarder(single_tile_kernel);
-            hipLaunchKernelGGL(tmp2, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream, 
+            typedef typename DispatchReduce::MaxPolicy          MaxPolicyT;
+            hipLaunchKernelGGL(
+            (DeviceReduceSingleTileKernel<MaxPolicyT, OutputT*, OutputIteratorT, OffsetT, ReductionOpT, OutputT>),
+ 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream, 
 #else
             hipLaunchKernelGGL(single_tile_kernel, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream, 
 #endif
@@ -820,8 +825,10 @@ struct DispatchSegmentedReduce :
 
             // Invoke DeviceReduceKernel
  #ifdef __HIP_PLATFORM_HCC__
-            static const auto tmp = make_forwarder(segmented_reduce_kernel);
-            hipLaunchKernelGGL(tmp, num_segments, ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS, 0, stream,
+            typedef typename DispatchSegmentedReduce::MaxPolicy MaxPolicyT;
+            hipLaunchKernelGGL(
+            (DeviceSegmentedReduceKernel<MaxPolicyT, InputIteratorT, OutputIteratorT, OffsetIteratorT, OffsetT, ReductionOpT, OutputT>),
+            num_segments, 256, 0, stream,
 #else
             hipLaunchKernelGGL(segmented_reduce_kernel, num_segments, ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS, 0, stream,
 #endif
