@@ -696,8 +696,8 @@ struct KeyValuePair
     typedef _Key    Key;                ///< Key data type
     typedef _Value  Value;              ///< Value data type
 #ifdef __HIP_PLATFORM_HCC__
-    alignas(8) Key     key;                        ///< Item key
-    alignas(8) Value value; ///< Item value
+    alignas(32) Key     key;                        ///< Item key
+    alignas(32) Value value; ///< Item value
 #elif defined(__HIP_PLATFORM_NVCC__)
     Key     key;                        ///< Item key
     Value   value;                      ///< Item value

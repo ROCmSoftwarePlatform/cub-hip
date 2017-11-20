@@ -154,11 +154,11 @@ CUB_RUNTIME_FUNCTION __forceinline__ hipError_t PtxVersion(int &ptx_version)
 #endif
         //Temporary fix: TODO:(mcw) revert once PTX operations are supported in HIP
         hipDeviceProp_t deviceProp;
-        error = hipGetDeviceProperties(&deviceProp, 0);
         if(error == hipSuccess) {
           #ifdef __HIP_PLATFORM_HCC__
             ptx_version = 520;
           #elif defined(__HIP_PLATFORM_NVCC__)
+            error = hipGetDeviceProperties(&deviceProp, 0);
             ptx_version = deviceProp.major * 100 + deviceProp.minor * 10;
           #endif
         }

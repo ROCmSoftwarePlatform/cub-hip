@@ -603,7 +603,7 @@ struct DispatchReduce :
             typedef typename DispatchReduce::MaxPolicy          MaxPolicyT;
             hipLaunchKernelGGL(
             (DeviceReduceSingleTileKernel<MaxPolicyT, OutputT*, OutputIteratorT, OffsetT, ReductionOpT, OutputT>),
- 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream, 
+ 1, 256, 0, stream, 
 #else
             hipLaunchKernelGGL(single_tile_kernel, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream, 
 #endif
@@ -641,7 +641,7 @@ struct DispatchReduce :
         typedef typename DispatchReduce::MaxPolicy          MaxPolicyT;
 
         // Force kernel code-generation in all compiler passes
-        if (num_items <= (SingleTilePolicyT::BLOCK_THREADS * SingleTilePolicyT::ITEMS_PER_THREAD))
+        if (num_items <= (256 * SingleTilePolicyT::ITEMS_PER_THREAD))
         {
             // Small, single tile size
             return InvokeSingleTile<ActivePolicyT>(

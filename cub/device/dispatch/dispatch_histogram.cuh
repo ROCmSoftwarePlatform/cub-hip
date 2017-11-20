@@ -661,8 +661,9 @@ struct DipatchHistogram
 
             // Invoke histogram_init_kernel
 #ifdef __HIP_PLATFORM_HCC__
-            static const auto tmp = make_forwarder(histogram_init_kernel);
-            hipLaunchKernelGGL(tmp, histogram_init_grid_dims, histogram_init_block_threads, 0, stream,
+            hipLaunchKernelGGL(
+            (DeviceHistogramInitKernel<NUM_ACTIVE_CHANNELS, CounterT, OffsetT>),
+            histogram_init_grid_dims, histogram_init_block_threads, 0, stream,
 #else
             hipLaunchKernelGGL(histogram_init_kernel, histogram_init_grid_dims, histogram_init_block_threads, 0, stream,
 #endif
@@ -680,12 +681,10 @@ struct DipatchHistogram
                 histogram_sweep_config.block_threads, (long long) stream, histogram_sweep_config.pixels_per_thread, histogram_sweep_sm_occupancy);
 
 #ifdef __HIP_PLATFORM_HCC__
-            static const auto tmp1 = make_forwarder(histogram_sweep_kernel);
-            hipLaunchKernelGGL(tmp1, sweep_grid_dims, histogram_sweep_config.block_threads, 0, stream,
-#else
-            // Invoke histogram_sweep_kernel
-            hipLaunchKernelGGL(histogram_sweep_kernel, sweep_grid_dims, histogram_sweep_config.block_threads, 0, stream,
-#endif
+            if (max_num_output_bins > MAX_PRIVATIZED_SMEM_BINS) {
+                hipLaunchKernelGGL(
+                (DeviceHistogramSweepKernel<PtxHistogramSweepPolicy, 0, NUM_CHANNELS, NUM_ACTIVE_CHANNELS, SampleIteratorT, CounterT, PrivatizedDecodeOpT, OutputDecodeOpT, OffsetT>),
+                sweep_grid_dims, histogram_sweep_config.block_threads, 0, stream,
                 d_samples,
                 num_output_bins_wrapper,
                 num_privatized_bins_wrapper,
@@ -698,6 +697,43 @@ struct DipatchHistogram
                 row_stride_samples,
                 tiles_per_row,
                 tile_queue);
+            }
+            else {
+                hipLaunchKernelGGL(
+                (DeviceHistogramSweepKernel<PtxHistogramSweepPolicy, MAX_PRIVATIZED_SMEM_BINS, NUM_CHANNELS, NUM_ACTIVE_CHANNELS, SampleIteratorT, CounterT, PrivatizedDecodeOpT, OutputDecodeOpT, OffsetT>),
+                sweep_grid_dims, histogram_sweep_config.block_threads, 0, stream,
+                d_samples,
+                num_output_bins_wrapper,
+                num_privatized_bins_wrapper,
+                d_output_histograms_wrapper,
+                d_privatized_histograms_wrapper,
+                output_decode_op_wrapper,
+                privatized_decode_op_wrapper,
+                num_row_pixels,
+                num_rows,
+                row_stride_samples,
+                tiles_per_row,
+                tile_queue);
+
+
+
+            }
+#else
+            // Invoke histogram_sweep_kernel
+            hipLaunchKernelGGL(histogram_sweep_kernel, sweep_grid_dims, histogram_sweep_config.block_threads, 0, stream,
+                d_samples,
+                num_output_bins_wrapper,
+                num_privatized_bins_wrapper,
+                d_output_histograms_wrapper,
+                d_privatized_histograms_wrapper,
+                output_decode_op_wrapper,
+                privatized_decode_op_wrapper,
+                num_row_pixels,
+                num_rows,
+                row_stride_samples,
+                tiles_per_row,
+                tile_queue);
+#endif
 
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;
