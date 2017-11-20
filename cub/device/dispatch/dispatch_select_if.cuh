@@ -421,10 +421,20 @@ struct DispatchSelectIf
 
             // Invoke scan_init_kernel to initialize tile descriptors
             static auto const tmp = make_forwarder(scan_init_kernel);
-            hipLaunchKernelGGL(tmp, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
+#ifdef __HIP_PLATFORM_NVCC__
+            hipLaunchKernelGGL(scan_init_kernel, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
                 tile_status,
                 num_tiles,
                 d_num_selected_out);
+#elif defined (__HIP_PLATFORM_HCC__)
+            hipLaunchKernelGGL(
+                (DeviceCompactInitKernel<ScanTileStateT, NumSelectedIteratorT>),
+                init_grid_size, INIT_KERNEL_THREADS, 0, stream,
+                tile_status,
+                num_tiles,
+                d_num_selected_out);
+#endif
+
 
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;
@@ -458,8 +468,8 @@ struct DispatchSelectIf
                 scan_grid_size.x, scan_grid_size.y, scan_grid_size.z, select_if_config.block_threads, (long long) stream, select_if_config.items_per_thread, range_select_sm_occupancy);
 
             // Invoke select_if_kernel
-            static const auto tmp1 = make_forwarder(select_if_kernel);
-            hipLaunchKernelGGL(tmp1, scan_grid_size, select_if_config.block_threads, 0, stream,
+#ifdef __HIP_PLATFORM_NVCC__
+            hipLaunchKernelGGL(select_if_kernel, scan_grid_size, select_if_config.block_threads, 0, stream,
                 d_in,
                 d_flags,
                 d_selected_out,
@@ -469,6 +479,20 @@ struct DispatchSelectIf
                 equality_op,
                 num_items,
                 num_tiles);
+#elif defined (__HIP_PLATFORM_HCC__)
+            hipLaunchKernelGGL(
+                (DeviceSelectSweepKernel<PtxSelectIfPolicyT, InputIteratorT, FlagsInputIteratorT, SelectedOutputIteratorT, NumSelectedIteratorT, ScanTileStateT, SelectOpT, EqualityOpT, OffsetT, KEEP_REJECTS>),
+                scan_grid_size, select_if_config.block_threads, 0, stream,
+                d_in,
+                d_flags,
+                d_selected_out,
+                d_num_selected_out,
+                tile_status,
+                select_op,
+                equality_op,
+                num_items,
+                num_tiles);
+#endif
 
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;
