@@ -1031,7 +1031,7 @@ int main(int argc, char** argv)
         Test<uint4>(num_items);
         Test<ulonglong4>(num_items);
 
-        Test<TestFoo>(num_items);
+      //  Test<TestFoo>(num_items);
         Test<TestBar>(num_items);
     }
 
