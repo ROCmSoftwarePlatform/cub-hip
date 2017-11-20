@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <iterator>
 
+#include "hip/hip_runtime_api.h"
 #include "dispatch_scan.cuh"
 #include "../../agent/agent_rle.cuh"
 #include "../../thread/thread_operators.cuh"
@@ -420,11 +421,20 @@ struct DeviceRleDispatch
             if (debug_synchronous) _CubLog("Invoking device_scan_init_kernel<<<%d, %d, 0, %lld>>>()\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
 
             // Invoke device_scan_init_kernel to initialize tile descriptors and queue descriptors
-            static auto const tmp = make_forwarder(device_scan_init_kernel);
-            hipLaunchKernelGGL(tmp, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
+#ifdef __HIP_PLATFORM_NVCC__
+            hipLaunchKernelGGL(device_scan_init_kernel, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
                 tile_status,
                 num_tiles,
                 d_num_runs_out);
+#elif defined (__HIP_PLATFORM_HCC__)
+            hipLaunchKernelGGL(
+                (DeviceCompactInitKernel<ScanTileStateT, NumRunsOutputIteratorT>),
+                init_grid_size, INIT_KERNEL_THREADS, 0, stream,
+                tile_status,
+                num_tiles,
+                d_num_runs_out);
+
+#endif
 
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;
@@ -458,8 +468,8 @@ struct DeviceRleDispatch
                 scan_grid_size.x, scan_grid_size.y, scan_grid_size.z, device_rle_config.block_threads, (long long) stream, device_rle_config.items_per_thread, device_rle_kernel_sm_occupancy);
 
             // Invoke device_rle_sweep_kernel
-            static auto const tmp1 = make_forwarder(device_rle_sweep_kernel);
-            hipLaunchKernelGGL(tmp1, scan_grid_size, device_rle_config.block_threads, 0, stream,
+#ifdef __HIP_PLATFORM_NVCC__
+            hipLaunchKernelGGL(device_rle_sweep_kernel, scan_grid_size, device_rle_config.block_threads, 0, stream,
                 d_in,
                 d_offsets_out,
                 d_lengths_out,
@@ -468,6 +478,19 @@ struct DeviceRleDispatch
                 equality_op,
                 num_items,
                 num_tiles);
+#elif defined (__HIP_PLATFORM_HCC__)
+            hipLaunchKernelGGL(
+                (DeviceRleSweepKernel<PtxRleSweepPolicy, InputIteratorT, OffsetsOutputIteratorT, LengthsOutputIteratorT, NumRunsOutputIteratorT, ScanTileStateT, EqualityOpT, OffsetT>),
+                scan_grid_size, 256, 0, stream,
+                d_in,
+                d_offsets_out,
+                d_lengths_out,
+                d_num_runs_out,
+                tile_status,
+                equality_op,
+                num_items,
+                num_tiles);
+#endif
 
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;

@@ -436,11 +436,19 @@ struct DispatchReduceByKey
             if (debug_synchronous) _CubLog("Invoking init_kernel<<<%d, %d, 0, %lld>>>()\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
 
             // Invoke init_kernel to initialize tile descriptors
-            static auto const tmp = make_forwarder(init_kernel);
-            hipLaunchKernelGGL(tmp, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
+#ifdef __HIP_PLATFORM_NVCC__
+            hipLaunchKernelGGL(init_kernel, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
                 tile_state,
                 num_tiles,
                 d_num_runs_out);
+#elif defined (__HIP_PLATFORM_HCC__)
+            hipLaunchKernelGGL( 
+                (DeviceCompactInitKernel<ScanTileStateT, NumRunsOutputIteratorT>),
+                init_grid_size, INIT_KERNEL_THREADS, 0, stream,
+                tile_state,
+                num_tiles,
+                d_num_runs_out);
+#endif
 
             // Check for failure to launch
             if (CubDebug(error = hipPeekAtLastError())) break;
@@ -472,8 +480,8 @@ struct DispatchReduceByKey
                     start_tile, scan_grid_size, reduce_by_key_config.block_threads, (long long) stream, reduce_by_key_config.items_per_thread, reduce_by_key_sm_occupancy);
 
                 // Invoke reduce_by_key_kernel
-                static auto const tmp = make_forwarder(reduce_by_key_kernel);
-                hipLaunchKernelGGL(tmp, scan_grid_size, reduce_by_key_config.block_threads, 0, stream, 
+#ifdef __HIP_PLATFORM_NVCC__
+                hipLaunchKernelGGL(reduce_by_key_kernel, scan_grid_size, reduce_by_key_config.block_threads, 0, stream, 
                     d_keys_in,
                     d_unique_out,
                     d_values_in,
@@ -484,6 +492,22 @@ struct DispatchReduceByKey
                     equality_op,
                     reduction_op,
                     num_items);
+#elif defined (__HIP_PLATFORM_HCC__)
+                hipLaunchKernelGGL( 
+                   (DeviceReduceByKeyKernel<PtxReduceByKeyPolicy, KeysInputIteratorT, UniqueOutputIteratorT, ValuesInputIteratorT, AggregatesOutputIteratorT, NumRunsOutputIteratorT, ScanTileStateT, EqualityOpT, ReductionOpT, OffsetT>),
+                    scan_grid_size, reduce_by_key_config.block_threads, 0, stream, 
+                    d_keys_in,
+                    d_unique_out,
+                    d_values_in,
+                    d_aggregates_out,
+                    d_num_runs_out,
+                    tile_state,
+                    start_tile,
+                    equality_op,
+                    reduction_op,
+                    num_items);
+
+#endif
 
                 // Check for failure to launch
                 if (CubDebug(error = hipPeekAtLastError())) break;
