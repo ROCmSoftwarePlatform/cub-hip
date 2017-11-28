@@ -498,7 +498,7 @@ struct DispatchScan
                 hipLaunchKernelGGL(scan_kernel, scan_grid_size, scan_kernel_config.block_threads, 0, stream, 
 #else
                 hipLaunchKernelGGL(
-                DeviceScanKernel<PtxAgentScanPolicy, InputIteratorT, OutputIteratorT, ScanTileStateT, ScanOpT, InitValueT, OffsetT>,
+                (DeviceScanKernel<PtxAgentScanPolicy, InputIteratorT, OutputIteratorT, ScanTileStateT, ScanOpT, InitValueT, OffsetT>),
                 scan_grid_size, scan_kernel_config.block_threads, 0, stream, 
 
 #endif
