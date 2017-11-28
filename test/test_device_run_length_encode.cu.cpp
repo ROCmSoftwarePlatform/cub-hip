@@ -877,7 +877,7 @@ int main(int argc, char** argv)
         TestSize<uint3,         int, int>(num_items);
         TestSize<uint4,         int, int>(num_items);
         TestSize<ulonglong4,    int, int>(num_items);
-        TestSize<TestFoo,       int, int>(num_items);
+        //TestSize<TestFoo,       int, int>(num_items);
         TestSize<TestBar,       int, int>(num_items);
     }
 

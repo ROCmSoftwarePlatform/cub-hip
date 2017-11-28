@@ -462,8 +462,9 @@ struct DispatchScan
             // Invoke init_kernel to initialize tile descriptors
             hipLaunchKernelGGL(init_kernel, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
 #else
-            static const auto tmp = make_forwarder(init_kernel);
-            hipLaunchKernelGGL(tmp, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
+            hipLaunchKernelGGL(
+                DeviceScanInitKernel<ScanTileStateT>,
+                init_grid_size, INIT_KERNEL_THREADS, 0, stream,
 #endif
                 tile_state,
                 num_tiles);
@@ -496,8 +497,9 @@ struct DispatchScan
 #ifdef __HIP_PLATFORM_NVCC__
                 hipLaunchKernelGGL(scan_kernel, scan_grid_size, scan_kernel_config.block_threads, 0, stream, 
 #else
-                static const auto tmp1 = make_forwarder(scan_kernel);
-                hipLaunchKernelGGL(tmp1, scan_grid_size, scan_kernel_config.block_threads, 0, stream, 
+                hipLaunchKernelGGL(
+                DeviceScanKernel<PtxAgentScanPolicy, InputIteratorT, OutputIteratorT, ScanTileStateT, ScanOpT, InitValueT, OffsetT>,
+                scan_grid_size, scan_kernel_config.block_threads, 0, stream, 
 
 #endif
                     d_in,

@@ -477,7 +477,7 @@ void TestItemsPerThread(
     int grid_size,
     float fraction_valid)
 {
-    Int2Type<BLOCK_THREADS % 32 == 0> is_warp_multiple;
+    Int2Type<BLOCK_THREADS % 64 == 0> is_warp_multiple;
 
     TestStrategy<T, BLOCK_THREADS, 1>(grid_size, fraction_valid, is_warp_multiple);
     TestStrategy<T, BLOCK_THREADS, 3>(grid_size, fraction_valid, is_warp_multiple);
@@ -538,14 +538,14 @@ int main(int argc, char** argv)
 
     // Compile/run thorough tests
     TestThreads<char>(2, 0.8f);
-    TestThreads<int>(2, 0.8f);
-    TestThreads<long>(2, 0.8f);
-    TestThreads<long2>(2, 0.8f);
+    //TestThreads<int>(2, 0.8f);
+    //TestThreads<long>(2, 0.8f);
+    //TestThreads<long2>(2, 0.8f);
 
-    if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
-        TestThreads<double2>(2, 0.8f);
+    //if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
+       // TestThreads<double2>(2, 0.8f);
     //TestThreads<TestFoo>(2, 0.8f);
-//    TestThreads<TestBar>(2, 0.8f);
+    //TestThreads<TestBar>(2, 0.8f);
 
 #endif
 
