@@ -227,7 +227,7 @@ struct AgentRadixSortUpsweep
         UnsignedBits row_offset = digit >> LOG_PACKING_RATIO;
 
         // Increment counter
-        temp_storage.thread_counters[row_offset][hipThreadIdx_x][sub_counter]++;
+        temp_storage.thread_counters[row_offset][threadIdx.x][sub_counter]++;
     }
 
 
@@ -239,7 +239,7 @@ struct AgentRadixSortUpsweep
         #pragma unroll
         for (int LANE = 0; LANE < COUNTER_LANES; LANE++)
         {
-            temp_storage.packed_thread_counters[LANE][hipThreadIdx_x] = 0;
+            temp_storage.packed_thread_counters[LANE][threadIdx.x] = 0;
         }
     }
 
@@ -267,7 +267,7 @@ struct AgentRadixSortUpsweep
      */
     __device__ __forceinline__ void UnpackDigitCounts()
     {
-        unsigned int warp_id = hipThreadIdx_x >> LOG_WARP_THREADS;
+        unsigned int warp_id = threadIdx.x >> LOG_WARP_THREADS;
         unsigned int warp_tid = LaneId();
 
         #pragma unroll
@@ -299,7 +299,7 @@ struct AgentRadixSortUpsweep
         // Tile of keys
         UnsignedBits keys[KEYS_PER_THREAD];
 
-        LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_keys_in + block_offset, keys);
+        LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_keys_in + block_offset, keys);
 
         // Prevent hoisting
         CTA_SYNC();
@@ -317,7 +317,7 @@ struct AgentRadixSortUpsweep
         const OffsetT &block_end)
     {
         // Process partial tile if necessary using single loads
-        block_offset += hipThreadIdx_x;
+        block_offset += threadIdx.x;
         while (block_offset < block_end)
         {
             // Load and bucket key
@@ -407,7 +407,7 @@ struct AgentRadixSortUpsweep
         int         bin_stride = 1,
         int         bin_offset = 0)
     {
-        unsigned int warp_id    = hipThreadIdx_x >> LOG_WARP_THREADS;
+        unsigned int warp_id    = threadIdx.x >> LOG_WARP_THREADS;
         unsigned int warp_tid   = LaneId();
 
         // Place unpacked digit counters in shared memory
@@ -440,7 +440,7 @@ struct AgentRadixSortUpsweep
             (BIN_BASE + BLOCK_THREADS) <= RADIX_DIGITS;
             BIN_BASE += BLOCK_THREADS)
         {
-            int bin_idx = BIN_BASE + hipThreadIdx_x;
+            int bin_idx = BIN_BASE + threadIdx.x;
 
             OffsetT bin_count = 0;
             #pragma unroll
@@ -454,9 +454,9 @@ struct AgentRadixSortUpsweep
         }
 
         // Remainder
-        if ((RADIX_DIGITS % BLOCK_THREADS != 0) && (hipThreadIdx_x < RADIX_DIGITS))
+        if ((RADIX_DIGITS % BLOCK_THREADS != 0) && (threadIdx.x < RADIX_DIGITS))
         {
-            int bin_idx = hipThreadIdx_x;
+            int bin_idx = threadIdx.x;
 
             OffsetT bin_count = 0;
             #pragma unroll
@@ -476,9 +476,9 @@ struct AgentRadixSortUpsweep
      */
     template <int BINS_TRACKED_PER_THREAD>
     __device__ __forceinline__ void ExtractCounts(
-        OffsetT (&bin_count)[BINS_TRACKED_PER_THREAD])  ///< [out] The exclusive prefix sum for the digits [(hipThreadIdx_x * BINS_TRACKED_PER_THREAD) ... (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + BINS_TRACKED_PER_THREAD - 1]
+        OffsetT (&bin_count)[BINS_TRACKED_PER_THREAD])  ///< [out] The exclusive prefix sum for the digits [(threadIdx.x * BINS_TRACKED_PER_THREAD) ... (threadIdx.x * BINS_TRACKED_PER_THREAD) + BINS_TRACKED_PER_THREAD - 1]
     {
-        unsigned int warp_id    = hipThreadIdx_x >> LOG_WARP_THREADS;
+        unsigned int warp_id    = threadIdx.x >> LOG_WARP_THREADS;
         unsigned int warp_tid   = LaneId();
 
         // Place unpacked digit counters in shared memory
@@ -507,7 +507,7 @@ struct AgentRadixSortUpsweep
         #pragma unroll
         for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
         {
-            int bin_idx = (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + track;
+            int bin_idx = (threadIdx.x * BINS_TRACKED_PER_THREAD) + track;
 
             if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
             {

@@ -36,9 +36,17 @@
 #include <stdio.h>
 #include <typeinfo>
 
-#include <thrust/device_ptr.h>
-#include <thrust/reduce.h>
-#include <thrust/iterator/constant_iterator.h>
+#include <hip/hip_runtime_api.h>
+
+#if defined(__HIP_PLATFORM_HCC__)
+    #include <bolt/amp/pair.h>
+    #include <bolt/amp/reduce_by_key.h>
+    #include <bolt/amp/iterator/constant_iterator.h>
+#else
+    #include <thrust/device_ptr.h>
+    #include <thrust/reduce.h>
+    #include <thrust/iterator/constant_iterator.h>
+#endif
 
 #include <cub/util_allocator.cuh>
 #include <cub/iterator/constant_input_iterator.cuh>
@@ -231,24 +239,44 @@ hipError_t Dispatch(
     }
     else
     {
-        thrust::device_ptr<InputT>      d_in_wrapper(d_in);
-        thrust::device_ptr<UniqueT>     d_unique_out_wrapper(d_unique_out);
-        thrust::device_ptr<LengthT>     d_lengths_out_wrapper(d_lengths_out);
+        #if defined(__HIP_PLATFORM_HCC__)
+            bolt::amp::pair<
+                UniqueOutputIteratorT, LengthsOutputIteratorT> d_out_ends;
+            auto d_unique_out_wrapper = d_unique_out;
+        #else
+            thrust::device_ptr<InputT>      d_in_wrapper(d_in);
+            thrust::device_ptr<UniqueT>     d_unique_out_wrapper(d_unique_out);
+            thrust::device_ptr<LengthT>     d_lengths_out_wrapper(d_lengths_out);
 
-        thrust::pair<thrust::device_ptr<UniqueT>, thrust::device_ptr<LengthT> > d_out_ends;
+            thrust::pair<thrust::device_ptr<UniqueT>, thrust::device_ptr<LengthT> > d_out_ends;
+        #endif
 
         LengthT one_val;
         InitValue(INTEGER_SEED, one_val, 1);
-        thrust::constant_iterator<LengthT> constant_one(one_val);
+        #if defined(__HIP_PLATFORM_HCC__)
+            bolt::amp::constant_iterator<LengthT> constant_one(one_val);
+        #else
+            thrust::constant_iterator<LengthT> constant_one(one_val);
+        #endif
 
         for (int i = 0; i < timing_timing_iterations; ++i)
         {
-            d_out_ends = thrust::reduce_by_key(
-                d_in_wrapper,
-                d_in_wrapper + num_items,
-                constant_one,
-                d_unique_out_wrapper,
-                d_lengths_out_wrapper);
+            d_out_ends =
+            #if defined(__HIP_PLATFORM_HCC__)
+                bolt::amp::reduce_by_key(
+                    d_in,
+                    d_in + num_items,
+                    constant_one,
+                    d_unique_out,
+                    d_lengths_out);
+            #else
+                thrust::reduce_by_key(
+                    d_in_wrapper,
+                    d_in_wrapper + num_items,
+                    constant_one,
+                    d_unique_out_wrapper,
+                    d_lengths_out_wrapper);
+            #endif
         }
 
         OffsetT num_runs = OffsetT(d_out_ends.first - d_unique_out_wrapper);
@@ -339,7 +367,9 @@ hipError_t Dispatch(
     bool                        debug_synchronous)
 {
     // Invoke kernel to invoke device-side dispatch
-    CnpDispatchKernel<<<1,1>>>(method, timing_timing_iterations, d_temp_storage_bytes, d_cdp_error,
+    hipLaunchKernelGGL(
+        CnpDispatchKernel, dim3(1), dim3(1), 0, 0,
+        method, timing_timing_iterations, d_temp_storage_bytes, d_cdp_error,
         d_temp_storage, temp_storage_bytes, d_in, d_unique_out, d_offsets_out, d_lengths_out, d_num_runs, equality_op, num_items, 0, debug_synchronous);
 
     // Copy out temp_storage_bytes

@@ -78,7 +78,7 @@ __global__ void DeviceSpmv1ColKernel(
 
     VectorValueIteratorT wrapped_vector_x(spmv_params.d_vector_x);
 
-    int row_idx = (hipBlockIdx_x * hipBlockDim_x) + hipThreadIdx_x;
+    int row_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (row_idx < spmv_params.num_rows)
     {
         OffsetT     end_nonzero_idx = spmv_params.d_row_end_offsets[row_idx];
@@ -123,7 +123,7 @@ __global__ void DeviceSpmvSearchKernel(
         RowOffsetsSearchIteratorT;
 
     // Find the starting coordinate for all tiles (plus the end coordinate of the last one)
-    int tile_idx = (hipBlockIdx_x * hipBlockDim_x) + hipThreadIdx_x;
+    int tile_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (tile_idx < num_merge_tiles + 1)
     {
         OffsetT                         diagonal = (tile_idx * TILE_ITEMS);

@@ -79,7 +79,7 @@ void DeviceSpmv1ColKernel(
 
     VectorValueIteratorT wrapped_vector_x(spmv_params.d_vector_x);
 
-    int row_idx = (hipBlockIdx_x * hipBlockDim_x) + hipThreadIdx_x;
+    int row_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (row_idx < spmv_params.num_rows)
     {
         OffsetT     end_nonzero_idx = spmv_params.d_row_end_offsets[row_idx];
@@ -126,7 +126,7 @@ void DeviceSpmvSearchKernel(
         RowOffsetsSearchIteratorT;
 
     // Find the starting coordinate for all tiles (plus the end coordinate of the last one)
-    int tile_idx = (hipBlockIdx_x * hipBlockDim_x) + hipThreadIdx_x;
+    int tile_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (tile_idx < num_spmv_tiles + 1)
     {
         OffsetT                         diagonal = (tile_idx * TILE_ITEMS);
@@ -184,7 +184,7 @@ void DeviceSpmvKernel(
     __shared__ typename AgentSpmvT::TempStorage temp_storage;
 
     AgentSpmvT(temp_storage, spmv_params).ConsumeTile(
-        hipBlockIdx_x,
+        blockIdx.x,
         rows_per_tile);
 
 /*
@@ -302,7 +302,7 @@ struct DispatchSpmv
     };
 
     /// SM20
-    struct Policy200 
+    struct Policy200
     {
         typedef AgentSpmvPolicy<
                 96,
@@ -329,7 +329,7 @@ struct DispatchSpmv
 
 
     /// SM30
-    struct Policy300 
+    struct Policy300
     {
         typedef AgentSpmvPolicy<
                 96,
@@ -391,7 +391,7 @@ struct DispatchSpmv
                 LOAD_LDG,
                 LOAD_LDG,
                 LOAD_LDG,
-                false, 
+                false,
                 BLOCK_SCAN_WARP_SCANS>
             SpmvPolicyT;
 
@@ -409,7 +409,7 @@ struct DispatchSpmv
     {
         typedef AgentSpmvPolicy<
                 (sizeof(ValueT) > 4) ? 64 : 64,
-                7, 
+                7,
                 LOAD_DEFAULT,
                 LOAD_CA,
                 LOAD_DEFAULT,
@@ -595,7 +595,7 @@ struct DispatchSpmv
                     degen_col_kernel_grid_size, degen_col_kernel_block_size, (long long) stream);
 
                 // Invoke spmv_search_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(spmv_1col_kernel), dim3(degen_col_kernel_grid_size), dim3(degen_col_kernel_block_size), 0, stream, 
+                hipLaunchKernel(HIP_KERNEL_NAME(spmv_1col_kernel), dim3(degen_col_kernel_grid_size), dim3(degen_col_kernel_block_size), 0, stream,
                     spmv_params);
 
                 // Check for failure to launch
@@ -625,7 +625,7 @@ struct DispatchSpmv
                 spmv_sm_occupancy,
                 spmv_kernel,
                 spmv_config.block_threads))) break;
-  
+
             // Tile sizes of kernels
             int spmv_tile_size      = spmv_config.block_threads * spmv_config.items_per_thread;
             int fixup_tile_size     = fixup_config.block_threads * fixup_config.items_per_thread;
@@ -721,7 +721,7 @@ struct DispatchSpmv
                     search_grid_size, search_block_size, (long long) stream);
 
                 // Invoke spmv_search_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(spmv_search_kernel), dim3(search_grid_size), dim3(search_block_size), 0, stream, 
+                hipLaunchKernel(HIP_KERNEL_NAME(spmv_search_kernel), dim3(search_grid_size), dim3(search_block_size), 0, stream,
                     num_spmv_tiles,
                     d_tile_coordinates,
                     spmv_params);
@@ -738,7 +738,7 @@ struct DispatchSpmv
                 spmv_grid_size.x, spmv_grid_size.y, spmv_grid_size.z, spmv_config.block_threads, (long long) stream, spmv_config.items_per_thread, spmv_sm_occupancy);
 
             // Invoke spmv_kernel
-            hipLaunchKernel(HIP_KERNEL_NAME(spmv_kernel), dim3(spmv_grid_size), dim3(spmv_config.block_threads), 0, stream, 
+            hipLaunchKernel(HIP_KERNEL_NAME(spmv_kernel), dim3(spmv_grid_size), dim3(spmv_config.block_threads), 0, stream,
                 spmv_params,
 //                d_tile_coordinates,
 //                d_tile_carry_pairs,
@@ -761,7 +761,7 @@ struct DispatchSpmv
                     fixup_grid_size.x, fixup_grid_size.y, fixup_grid_size.z, fixup_config.block_threads, (long long) stream, fixup_config.items_per_thread, fixup_sm_occupancy);
 
                 // Invoke fixup_kernel
-                hipLaunchKernel(HIP_KERNEL_NAME(fixup_kernel), dim3(fixup_grid_size), dim3(fixup_config.block_threads), 0, stream, 
+                hipLaunchKernel(HIP_KERNEL_NAME(fixup_kernel), dim3(fixup_grid_size), dim3(fixup_config.block_threads), 0, stream,
                     d_tile_carry_pairs,
                     spmv_params.d_vector_y,
                     num_spmv_tiles,

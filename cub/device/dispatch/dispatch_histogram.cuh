@@ -71,10 +71,10 @@ __global__ void DeviceHistogramInitKernel(
     ArrayWrapper<CounterT*, NUM_ACTIVE_CHANNELS>    d_output_histograms_wrapper,    ///< Histogram counter data having logical dimensions <tt>CounterT[NUM_ACTIVE_CHANNELS][num_bins.array[CHANNEL]]</tt>
     GridQueue<int>                                  tile_queue)                     ///< Drain queue descriptor for dynamically mapping tile data onto thread blocks
 {
-    if ((hipThreadIdx_x == 0) && (hipBlockIdx_x == 0))
+    if ((threadIdx.x == 0) && (blockIdx.x == 0))
         tile_queue.ResetDrain();
 
-    int output_bin = (hipBlockIdx_x * hipBlockDim_x) + hipThreadIdx_x;
+    int output_bin = (blockIdx.x * blockDim.x) + threadIdx.x;
 
     #pragma unroll
     for (int CHANNEL = 0; CHANNEL < NUM_ACTIVE_CHANNELS; ++CHANNEL)

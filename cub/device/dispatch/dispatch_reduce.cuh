@@ -97,8 +97,8 @@ __global__ void DeviceReduceKernel(
     OutputT block_aggregate = AgentReduceT(temp_storage, d_in, reduction_op).ConsumeTiles(even_share);
 
     // Output result
-    if (hipThreadIdx_x == 0)
-        d_out[hipBlockIdx_x] = block_aggregate;
+    if (threadIdx.x == 0)
+        d_out[blockIdx.x] = block_aggregate;
 }
 
 
@@ -136,7 +136,7 @@ __global__ void DeviceReduceSingleTileKernel(
     // Check if empty problem
     if (num_items == 0)
     {
-        if (hipThreadIdx_x == 0)
+        if (threadIdx.x == 0)
             *d_out = init;
         return;
     }
@@ -147,7 +147,7 @@ __global__ void DeviceReduceSingleTileKernel(
         num_items);
 
     // Output result
-    if (hipThreadIdx_x == 0)
+    if (threadIdx.x == 0)
         *d_out = reduction_op(init, block_aggregate);
 }
 
@@ -207,14 +207,14 @@ __global__ void DeviceSegmentedReduceKernel(
     // Shared memory storage
     __shared__ typename AgentReduceT::TempStorage temp_storage;
 
-    OffsetT segment_begin   = d_begin_offsets[hipBlockIdx_x];
-    OffsetT segment_end     = d_end_offsets[hipBlockIdx_x];
+    OffsetT segment_begin   = d_begin_offsets[blockIdx.x];
+    OffsetT segment_end     = d_end_offsets[blockIdx.x];
 
     // Check if empty problem
     if (segment_begin == segment_end)
     {
-        if (hipThreadIdx_x == 0)
-            d_out[hipBlockIdx_x] = init;
+        if (threadIdx.x == 0)
+            d_out[blockIdx.x] = init;
         return;
     }
 
@@ -226,8 +226,8 @@ __global__ void DeviceSegmentedReduceKernel(
     // Normalize as needed
     NormalizeReductionOutput(block_aggregate, segment_begin, d_in);
 
-    if (hipThreadIdx_x == 0)
-        d_out[hipBlockIdx_x] = reduction_op(init, block_aggregate);
+    if (threadIdx.x == 0)
+        d_out[blockIdx.x] = reduction_op(init, block_aggregate);
 }
 
 
@@ -808,8 +808,8 @@ struct DispatchSegmentedReduce :
             // Invoke DeviceReduceKernel
             hipLaunchKernelGGL(
                 segmented_reduce_kernel,
-                dim3{num_segments},
-                dim3{ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS},
+                dim3(num_segments),
+                dim3(ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS),
                 0,
                 stream,
                 d_in,

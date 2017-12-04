@@ -99,7 +99,7 @@ __device__ __forceinline__ void ParallelMergePathSearch(
     {
         OffsetT a_distance       = a_split_max - a_split_min;
         OffsetT a_slice          = (a_distance + BLOCK_THREADS - 1) >> Log2<BLOCK_THREADS>::VALUE;
-        OffsetT a_split_pivot    = CUB_MIN(a_split_min + (hipThreadIdx_x * a_slice), end.a_idx - 1);
+        OffsetT a_split_pivot    = CUB_MIN(a_split_min + (threadIdx.x * a_slice), end.a_idx - 1);
 
         int move_up = (a[a_split_pivot] <= b[diagonal - a_split_pivot - 1]);
         int num_up = __syncthreads_count(move_up);
@@ -380,7 +380,7 @@ struct BlockSegReduceRegion
 
         // Load a tile's worth of values (using identity for out-of-bounds items)
         Value values[ITEMS_PER_THREAD];
-        LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_values + block_idx.b_idx, values, tile_values, identity);
+        LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_values + block_idx.b_idx, values, tile_values, identity);
 
         // Barrier for smem reuse
         __syncthreads();
@@ -390,7 +390,7 @@ struct BlockSegReduceRegion
         tile_aggregate.key      = block_idx.a_idx;
         tile_aggregate.value    = BlockReduce(temp_storage.reduce).Reduce(values, reduction_op);
 
-        if (hipThreadIdx_x == 0)
+        if (threadIdx.x == 0)
         {
             prefix_op.running_total = scan_op(prefix_op.running_total, tile_aggregate);
         }
@@ -406,7 +406,7 @@ struct BlockSegReduceRegion
     {
         Value segment_reductions[ITEMS_PER_THREAD];
 
-        if (hipThreadIdx_x == 0)
+        if (threadIdx.x == 0)
         {
             // The first segment gets the running segment total
             segment_reductions[0] = prefix_op.running_total.value;
@@ -428,7 +428,7 @@ struct BlockSegReduceRegion
 
         // Store reductions
         OffsetT tile_segments = next_tile_idx.a_idx - block_idx.a_idx;
-        StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_output + block_idx.a_idx, segment_reductions, tile_segments);
+        StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_output + block_idx.a_idx, segment_reductions, tile_segments);
     }
 
 
@@ -514,10 +514,10 @@ struct BlockSegReduceRegion
             OffsetT tile_values = next_tile_idx.b_idx - block_idx.b_idx;
 
             // Load a tile's worth of values (using identity for out-of-bounds items)
-            LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_values + block_idx.b_idx, values, tile_values, identity);
+            LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_values + block_idx.b_idx, values, tile_values, identity);
 
             // Store to shared
-            StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, temp_storage.cached_values, values, tile_values);
+            StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, temp_storage.cached_values, values, tile_values);
 
             // Barrier for smem reuse
             __syncthreads();
@@ -684,25 +684,25 @@ struct BlockSegReduceRegion
         KeyValuePair    &last_tuple)        // [Out] Valid in thread-0
     {
         // Thread block initialization
-        if (hipThreadIdx_x < 2)
+        if (threadIdx.x < 2)
         {
             // Retrieve block starting and ending indices
             IndexPair block_idx = {0, 0};
-            if (hipGridDim_x > 1)
+            if (gridDim.x > 1)
             {
-                block_idx = d_block_idx[hipBlockIdx_x + hipThreadIdx_x];
+                block_idx = d_block_idx[blockIdx.x + threadIdx.x];
             }
-            else if (hipThreadIdx_x > 0)
+            else if (threadIdx.x > 0)
             {
                 block_idx.a_idx = num_segments;
                 block_idx.b_idx = num_values;
             }
 
             // Share block starting and ending indices
-            temp_storage.block_region_idx[hipThreadIdx_x] = block_idx;
+            temp_storage.block_region_idx[threadIdx.x] = block_idx;
 
             // Initialize the block's running prefix
-            if (hipThreadIdx_x == 0)
+            if (threadIdx.x == 0)
             {
                 prefix_op.running_total.key    = block_idx.a_idx;
                 prefix_op.running_total.value  = identity;
@@ -739,14 +739,14 @@ struct BlockSegReduceRegion
 
                 // Load global
                 SegmentOffset segment_offsets[ITEMS_PER_THREAD];
-                LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_segment_end_offsets + block_idx.a_idx, segment_offsets, num_segments, num_values);
+                LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_segment_end_offsets + block_idx.a_idx, segment_offsets, num_segments, num_values);
 
                 // Store to shared
-                StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, temp_storage.cached_segment_end_offsets, segment_offsets);
+                StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, temp_storage.cached_segment_end_offsets, segment_offsets);
 
                 __syncthreads();
 
-                OffsetT next_thread_diagonal = block_diagonal + ((hipThreadIdx_x + 1) * ITEMS_PER_THREAD);
+                OffsetT next_thread_diagonal = block_diagonal + ((threadIdx.x + 1) * ITEMS_PER_THREAD);
 
                 MergePathSearch(
                     next_thread_diagonal,                       // Next thread diagonal
@@ -760,7 +760,7 @@ struct BlockSegReduceRegion
             {
                 // Search in global
 
-                OffsetT next_thread_diagonal = block_diagonal + ((hipThreadIdx_x + 1) * ITEMS_PER_THREAD);
+                OffsetT next_thread_diagonal = block_diagonal + ((threadIdx.x + 1) * ITEMS_PER_THREAD);
 
                 MergePathSearch(
                     next_thread_diagonal,                       // Next thread diagonal
@@ -815,7 +815,7 @@ struct BlockSegReduceRegion
         }
 
         // Get first and last tuples for the region
-        if (hipThreadIdx_x == 0)
+        if (threadIdx.x == 0)
         {
             first_tuple = temp_storage.first_tuple;
             last_tuple = prefix_op.running_total;
@@ -1081,7 +1081,7 @@ struct BlockSegReduceRegionByKey
         OffsetT first_segment_idx,
         OffsetT last_segment_idx)
     {
-        if (hipThreadIdx_x == 0)
+        if (threadIdx.x == 0)
         {
             // Initialize running prefix to the first segment index paired with identity
             prefix_op.running_total.key    = first_segment_idx;
@@ -1140,7 +1140,7 @@ __global__ void SegReducePartitionKernel(
     CountingIterator d_value_offsets(0);
 
     // Initialize even-share to tell us where to start and stop our tile-processing
-    int partition_id = (hipBlockDim_x * hipBlockIdx_x) + hipThreadIdx_x;
+    int partition_id = (blockDim.x * blockIdx.x) + threadIdx.x;
     even_share.Init(partition_id);
 
     // Search for block starting and ending indices
@@ -1180,7 +1180,7 @@ __global__ void SegReduceRegionKernel(
     SegmentOffsetIterator       d_segment_end_offsets,  ///< [in] A sequence of \p num_segments segment end-offsets
     ValueIterator               d_values,               ///< [in] A sequence of \p num_values values
     OutputIteratorT              d_output,               ///< [out] A sequence of \p num_segments segment totals
-    KeyValuePair<OffsetT, Value> *d_tuple_partials,      ///< [out] A sequence of (hipGridDim_x * 2) partial reduction tuples
+    KeyValuePair<OffsetT, Value> *d_tuple_partials,      ///< [out] A sequence of (gridDim.x * 2) partial reduction tuples
     IndexPair<OffsetT>          *d_block_idx,
     OffsetT                     num_values,             ///< [in] Number of values to reduce
     OffsetT                     num_segments,           ///< [in] Number of segments being reduced
@@ -1228,9 +1228,9 @@ __global__ void SegReduceRegionKernel(
         first_tuple,
         last_tuple);
 
-    if (hipThreadIdx_x == 0)
+    if (threadIdx.x == 0)
     {
-        if (hipGridDim_x > 1)
+        if (gridDim.x > 1)
         {
             // Special case where the first segment written and the carry-out are for the same segment
             if (first_tuple.key == last_tuple.key)
@@ -1240,8 +1240,8 @@ __global__ void SegReduceRegionKernel(
 
             // Write the first and last partial products from this thread block so
             // that they can be subsequently "fixed up" in the next kernel.
-            d_tuple_partials[hipBlockIdx_x * 2]          = first_tuple;
-            d_tuple_partials[(hipBlockIdx_x * 2) + 1]    = last_tuple;
+            d_tuple_partials[blockIdx.x * 2]          = first_tuple;
+            d_tuple_partials[(blockIdx.x * 2) + 1]    = last_tuple;
         }
     }
 

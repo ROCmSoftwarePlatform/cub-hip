@@ -126,7 +126,7 @@ __global__ void BlockPrefixSumKernel(
     BlockStoreT(temp_storage.store).Store(d_out, data);
 
     // Store aggregate and elapsed clocks
-    if (hipThreadIdx_x == 0)
+    if (threadIdx.x == 0)
     {
         *d_elapsed = (start > stop) ? start - stop : stop - start;
         d_out[BLOCK_THREADS * ITEMS_PER_THREAD] = aggregate;

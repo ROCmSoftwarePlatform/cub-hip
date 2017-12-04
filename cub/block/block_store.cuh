@@ -74,7 +74,7 @@ template <
     int                 ITEMS_PER_THREAD,
     typename            OutputIteratorT>
 __device__ __forceinline__ void StoreDirectBlocked(
-    int                 linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
+    int                 linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
     OutputIteratorT     block_itr,                  ///< [in] The thread block's base output iterator for storing to
     T                   (&items)[ITEMS_PER_THREAD]) ///< [in] Data to store
 {
@@ -103,7 +103,7 @@ template <
     int                 ITEMS_PER_THREAD,
     typename            OutputIteratorT>
 __device__ __forceinline__ void StoreDirectBlocked(
-    int                 linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
+    int                 linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
     OutputIteratorT     block_itr,                  ///< [in] The thread block's base output iterator for storing to
     T                   (&items)[ITEMS_PER_THREAD], ///< [in] Data to store
     int                 valid_items)                ///< [in] Number of valid items to write
@@ -143,7 +143,7 @@ template <
     typename            T,
     int                 ITEMS_PER_THREAD>
 __device__ __forceinline__ void StoreDirectBlockedVectorized(
-    int                 linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
+    int                 linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
     T                   *block_ptr,                 ///< [in] Input pointer for storing from
     T                   (&items)[ITEMS_PER_THREAD]) ///< [in] Data to store
 {
@@ -206,7 +206,7 @@ template <
     int                 ITEMS_PER_THREAD,
     typename            OutputIteratorT>
 __device__ __forceinline__ void StoreDirectStriped(
-    int                 linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
+    int                 linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
     OutputIteratorT     block_itr,                  ///< [in] The thread block's base output iterator for storing to
     T                   (&items)[ITEMS_PER_THREAD]) ///< [in] Data to store
 {
@@ -237,7 +237,7 @@ template <
     int                 ITEMS_PER_THREAD,
     typename            OutputIteratorT>
 __device__ __forceinline__ void StoreDirectStriped(
-    int                 linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
+    int                 linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
     OutputIteratorT     block_itr,                  ///< [in] The thread block's base output iterator for storing to
     T                   (&items)[ITEMS_PER_THREAD], ///< [in] Data to store
     int                 valid_items)                ///< [in] Number of valid items to write
@@ -281,7 +281,7 @@ template <
     int                 ITEMS_PER_THREAD,
     typename            OutputIteratorT>
 __device__ __forceinline__ void StoreDirectWarpStriped(
-    int                 linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
+    int                 linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
     OutputIteratorT     block_itr,                  ///< [in] The thread block's base output iterator for storing to
     T                   (&items)[ITEMS_PER_THREAD]) ///< [out] Data to load
 {
@@ -317,7 +317,7 @@ template <
     int                 ITEMS_PER_THREAD,
     typename            OutputIteratorT>
 __device__ __forceinline__ void StoreDirectWarpStriped(
-    int                 linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(hipThreadIdx_y * hipBlockDim_x) + linear_tid</tt> for 2D thread blocks)
+    int                 linear_tid,                 ///< [in] A suitable 1D thread-identifier for the calling thread (e.g., <tt>(threadIdx.y * blockDim.x) + linear_tid</tt> for 2D thread blocks)
     OutputIteratorT     block_itr,                  ///< [in] The thread block's base output iterator for storing to
     T                   (&items)[ITEMS_PER_THREAD], ///< [in] Data to store
     int                 valid_items)                ///< [in] Number of valid items to write

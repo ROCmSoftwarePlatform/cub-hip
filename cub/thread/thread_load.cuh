@@ -89,20 +89,20 @@ enum CacheLoadModifier
  *
  * // 32-bit load using cache-global modifier:
  * int *d_in;
- * int val = cub::ThreadLoad<cub::LOAD_CA>(d_in + hipThreadIdx_x);
+ * int val = cub::ThreadLoad<cub::LOAD_CA>(d_in + threadIdx.x);
  *
  * // 16-bit load using default modifier
  * short *d_in;
- * short val = cub::ThreadLoad<cub::LOAD_DEFAULT>(d_in + hipThreadIdx_x);
+ * short val = cub::ThreadLoad<cub::LOAD_DEFAULT>(d_in + threadIdx.x);
  *
  * // 256-bit load using cache-volatile modifier
  * double4 *d_in;
- * double4 val = cub::ThreadLoad<cub::LOAD_CV>(d_in + hipThreadIdx_x);
+ * double4 val = cub::ThreadLoad<cub::LOAD_CV>(d_in + threadIdx.x);
  *
  * // 96-bit load using cache-streaming modifier
  * struct TestFoo { bool a; short b; };
  * TestFoo *d_struct;
- * TestFoo val = cub::ThreadLoad<cub::LOAD_CS>(d_in + hipThreadIdx_x);
+ * TestFoo val = cub::ThreadLoad<cub::LOAD_CS>(d_in + threadIdx.x);
  * \endcode
  *
  * \tparam MODIFIER             <b>[inferred]</b> CacheLoadModifier enumeration

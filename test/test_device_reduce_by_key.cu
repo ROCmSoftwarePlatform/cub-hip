@@ -36,9 +36,17 @@
 #include <stdio.h>
 #include <typeinfo>
 
-#include <thrust/device_ptr.h>
-#include <thrust/reduce.h>
-#include <thrust/iterator/constant_iterator.h>
+#include <hip/hip_runtime_api.h>
+
+#if defined(__HIP_PLATFORM_HCC__)
+    #include <bolt/amp/pair.h>
+    #include <bolt/amp/reduce_by_key.h>
+    #include <bolt/amp/iterator/constant_iterator.h>
+#else
+    #include <thrust/device_ptr.h>
+    #include <thrust/reduce.h>
+    #include <thrust/iterator/constant_iterator.h>
+#endif
 
 #include <cub/util_allocator.cuh>
 #include <cub/iterator/constant_input_iterator.cuh>
@@ -182,22 +190,37 @@ hipError_t Dispatch(
     }
     else
     {
-        thrust::device_ptr<KeyInputT> d_keys_in_wrapper(d_keys_in);
-        thrust::device_ptr<KeyOutputT> d_keys_out_wrapper(d_keys_out);
+        #if defined(__HIP_PLATFORM_HCC__)
+            auto d_keys_out_wrapper = d_keys_out;
+            bolt::amp::pair<KeyOutputIteratorT, ValueOutputIteratorT> d_out_ends;
+        #else
+            thrust::device_ptr<KeyInputT> d_keys_in_wrapper(d_keys_in);
+            thrust::device_ptr<KeyOutputT> d_keys_out_wrapper(d_keys_out);
 
-        thrust::device_ptr<ValueInputT> d_values_in_wrapper(d_values_in);
-        thrust::device_ptr<ValueOuputT> d_values_out_wrapper(d_values_out);
+            thrust::device_ptr<ValueInputT> d_values_in_wrapper(d_values_in);
+            thrust::device_ptr<ValueOuputT> d_values_out_wrapper(d_values_out);
 
-        thrust::pair<thrust::device_ptr<KeyOutputT>, thrust::device_ptr<ValueOuputT> > d_out_ends;
+            thrust::pair<thrust::device_ptr<KeyOutputT>, thrust::device_ptr<ValueOuputT> > d_out_ends;
+        #endif
 
         for (int i = 0; i < timing_timing_iterations; ++i)
         {
-            d_out_ends = thrust::reduce_by_key(
-                d_keys_in_wrapper,
-                d_keys_in_wrapper + num_items,
-                d_values_in_wrapper,
-                d_keys_out_wrapper,
-                d_values_out_wrapper);
+            d_out_ends =
+            #if defined(__HIP_PLATFORM_HCC__)
+                bolt::amp::reduce_by_key(
+                    d_keys_in,
+                    d_keys_in + num_items,
+                    d_values_in,
+                    d_keys_out,
+                    d_values_out);
+            #else
+                thrust::reduce_by_key(
+                    d_keys_in_wrapper,
+                    d_keys_in_wrapper + num_items,
+                    d_values_in_wrapper,
+                    d_keys_out_wrapper,
+                    d_values_out_wrapper);
+            #endif
         }
 
         OffsetT num_segments = OffsetT(d_out_ends.first - d_keys_out_wrapper);
@@ -285,11 +308,13 @@ hipError_t Dispatch(
     EqualityOpT                 equality_op,
     ReductionOpT                reduction_op,
     OffsetT                     num_items,
-    hipStream_t                stream,
+    hipStream_t                 stream,
     bool                        debug_synchronous)
 {
     // Invoke kernel to invoke device-side dispatch
-    CnpDispatchKernel<<<1,1>>>(timing_timing_iterations, d_temp_storage_bytes, d_cdp_error,
+    hipLaunchKernelGGL(
+        CnpDispatchKernel, dim3(1), dim3(1), 0, 0,
+        timing_timing_iterations, d_temp_storage_bytes, d_cdp_error,
         d_temp_storage, temp_storage_bytes, d_keys_in, d_keys_out, d_values_in, d_values_out, d_num_runs, equality_op, reduction_op, num_items, 0, debug_synchronous);
 
     // Copy out temp_storage_bytes

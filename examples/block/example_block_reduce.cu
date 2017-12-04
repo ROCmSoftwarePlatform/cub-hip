@@ -89,7 +89,7 @@ __global__ void BlockSumKernel(
 
     // Per-thread tile data
     int data[ITEMS_PER_THREAD];
-    LoadDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_in, data);
+    LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_in, data);
 
     // Start cycle timer
     clock_t start = clock();
@@ -101,7 +101,7 @@ __global__ void BlockSumKernel(
     clock_t stop = clock();
 
     // Store aggregate and elapsed clocks
-    if (hipThreadIdx_x == 0)
+    if (threadIdx.x == 0)
     {
         *d_elapsed = (start > stop) ? start - stop : stop - start;
         *d_out = aggregate;

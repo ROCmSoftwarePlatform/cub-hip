@@ -100,14 +100,14 @@ __global__ void Kernel(
         typename BlockLoad::TempStorage     load;
         typename BlockStore::TempStorage    store;
 
-        __host__ __device__ ~TempStorage() {}
+        ~TempStorage() {}
     };
 
     // Allocate temp storage in shared memory
     __shared__ TempStorage temp_storage;
 
     // Threadblock work bounds
-    int block_offset = hipBlockIdx_x * TILE_SIZE;
+    int block_offset = blockIdx.x * TILE_SIZE;
     int guarded_elements = num_items - block_offset;
 
     // Tile of items

@@ -254,7 +254,7 @@ __global__ void WarpScanKernel(
     __shared__ typename WarpScanT::TempStorage temp_storage;
 
     // Per-thread tile data
-    T data = d_in[hipThreadIdx_x];
+    T data = d_in[threadIdx.x];
 
     // Start cycle timer
     __threadfence_block();      // workaround to prevent clock hoisting
@@ -280,16 +280,16 @@ __global__ void WarpScanKernel(
     __threadfence_block();      // workaround to prevent clock hoisting
 
     // Store data
-    d_out[hipThreadIdx_x] = data;
+    d_out[threadIdx.x] = data;
 
     if (TEST_MODE != BASIC)
     {
         // Store aggregate
-        d_aggregate[hipThreadIdx_x] = aggregate;
+        d_aggregate[threadIdx.x] = aggregate;
     }
 
     // Store time
-    if (hipThreadIdx_x == 0)
+    if (threadIdx.x == 0)
     {
         *d_elapsed = (start > stop) ? start - stop : stop - start;
     }

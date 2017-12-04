@@ -75,8 +75,8 @@ __device__ __forceinline__ void TestBlockSort(
 {
     BlockRadixSort(temp_storage).SortDescending(keys, values, begin_bit, end_bit);
     stop = clock();
-    StoreDirectBlocked(hipThreadIdx_x, d_keys, keys);
-    StoreDirectBlocked(hipThreadIdx_x, d_values, values);
+    StoreDirectBlocked(threadIdx.x, d_keys, keys);
+    StoreDirectBlocked(threadIdx.x, d_values, values);
 }
 
 /// Specialized descending, blocked -> striped
@@ -95,8 +95,8 @@ __device__ __forceinline__ void TestBlockSort(
 {
     BlockRadixSort(temp_storage).SortDescendingBlockedToStriped(keys, values, begin_bit, end_bit);
     stop = clock();
-    StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_keys, keys);
-    StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_values, values);
+    StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_keys, keys);
+    StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_values, values);
 }
 
 /// Specialized ascending, blocked -> blocked
@@ -115,8 +115,8 @@ __device__ __forceinline__ void TestBlockSort(
 {
     BlockRadixSort(temp_storage).Sort(keys, values, begin_bit, end_bit);
     stop = clock();
-    StoreDirectBlocked(hipThreadIdx_x, d_keys, keys);
-    StoreDirectBlocked(hipThreadIdx_x, d_values, values);
+    StoreDirectBlocked(threadIdx.x, d_keys, keys);
+    StoreDirectBlocked(threadIdx.x, d_values, values);
 }
 
 /// Specialized ascending, blocked -> striped
@@ -135,8 +135,8 @@ __device__ __forceinline__ void TestBlockSort(
 {
     BlockRadixSort(temp_storage).SortBlockedToStriped(keys, values, begin_bit, end_bit);
     stop = clock();
-    StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_keys, keys);
-    StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_values, values);
+    StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_keys, keys);
+    StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_values, values);
 }
 
 
@@ -182,8 +182,8 @@ __global__ void Kernel(
     Key     keys[ITEMS_PER_THREAD];
     Value   values[ITEMS_PER_THREAD];
 
-    LoadDirectBlocked(hipThreadIdx_x, d_keys, keys);
-    LoadDirectBlocked(hipThreadIdx_x, d_values, values);
+    LoadDirectBlocked(threadIdx.x, d_keys, keys);
+    LoadDirectBlocked(threadIdx.x, d_values, values);
 
     // Start cycle timer
     clock_t stop;
@@ -193,7 +193,7 @@ __global__ void Kernel(
         temp_storage, keys, values, d_keys, d_values, begin_bit, end_bit, stop, Int2Type<DESCENDING>(), Int2Type<BLOCKED_OUTPUT>());
 
     // Store time
-    if (hipThreadIdx_x == 0)
+    if (threadIdx.x == 0)
         *d_elapsed = (start > stop) ? start - stop : stop - start;
 }
 

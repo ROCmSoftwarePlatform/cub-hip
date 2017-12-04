@@ -1056,8 +1056,6 @@ struct TestFoo
         if (z > b.z) return true; else if (b.z > z) return false;
         return w > b.w;
     }
-
-    __host__ __device__ ~TestFoo() {}
 };
 
 /**
@@ -1175,8 +1173,6 @@ struct TestBar
         if (x > b.x) return true; else if (b.x > x) return false;
         return y > b.y;
     }
-
-    __host__ __device__ ~TestBar() {}
 };
 
 

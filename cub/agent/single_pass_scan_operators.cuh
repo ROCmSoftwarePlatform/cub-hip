@@ -206,7 +206,7 @@ struct ScanTileState<T, true>
      */
     __device__ __forceinline__ void InitializeStatus(int num_tiles)
     {
-        int tile_idx = (hipBlockIdx_x * hipBlockDim_x) + hipThreadIdx_x;
+        int tile_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
 
         TxnWord val = TxnWord();
         TileDescriptor *descriptor = reinterpret_cast<TileDescriptor*>(&val);
@@ -218,11 +218,11 @@ struct ScanTileState<T, true>
             d_tile_descriptors[TILE_STATUS_PADDING + tile_idx] = val;
         }
 
-        if ((hipBlockIdx_x == 0) && (hipThreadIdx_x < TILE_STATUS_PADDING))
+        if ((blockIdx.x == 0) && (threadIdx.x < TILE_STATUS_PADDING))
         {
             // Padding
             descriptor->status = StatusWord(SCAN_TILE_OOB);
-            d_tile_descriptors[hipThreadIdx_x] = val;
+            d_tile_descriptors[threadIdx.x] = val;
         }
     }
 
@@ -368,17 +368,17 @@ struct ScanTileState<T, false>
      */
     __device__ __forceinline__ void InitializeStatus(int num_tiles)
     {
-        int tile_idx = (hipBlockIdx_x * hipBlockDim_x) + hipThreadIdx_x;
+        int tile_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
         if (tile_idx < num_tiles)
         {
             // Not-yet-set
             d_tile_status[TILE_STATUS_PADDING + tile_idx] = StatusWord(SCAN_TILE_INVALID);
         }
 
-        if ((hipBlockIdx_x == 0) && (hipThreadIdx_x < TILE_STATUS_PADDING))
+        if ((blockIdx.x == 0) && (threadIdx.x < TILE_STATUS_PADDING))
         {
             // Padding
-            d_tile_status[hipThreadIdx_x] = StatusWord(SCAN_TILE_OOB);
+            d_tile_status[threadIdx.x] = StatusWord(SCAN_TILE_OOB);
         }
     }
 
@@ -573,7 +573,7 @@ struct ReduceByKeyScanTileState<ValueT, KeyT, true>
      */
     __device__ __forceinline__ void InitializeStatus(int num_tiles)
     {
-        int             tile_idx    = (hipBlockIdx_x * hipBlockDim_x) + hipThreadIdx_x;
+        int             tile_idx    = (blockIdx.x * blockDim.x) + threadIdx.x;
         TxnWord         val         = TxnWord();
         TileDescriptor  *descriptor = reinterpret_cast<TileDescriptor*>(&val);
 
@@ -584,11 +584,11 @@ struct ReduceByKeyScanTileState<ValueT, KeyT, true>
             d_tile_descriptors[TILE_STATUS_PADDING + tile_idx] = val;
         }
 
-        if ((hipBlockIdx_x == 0) && (hipThreadIdx_x < TILE_STATUS_PADDING))
+        if ((blockIdx.x == 0) && (threadIdx.x < TILE_STATUS_PADDING))
         {
             // Padding
             descriptor->status = StatusWord(SCAN_TILE_OOB);
-            d_tile_descriptors[hipThreadIdx_x] = val;
+            d_tile_descriptors[threadIdx.x] = val;
         }
     }
 
@@ -748,13 +748,13 @@ struct TilePrefixCallbackOp
     {
 
         // Update our status with our tile-aggregate
-        if (hipThreadIdx_x == 0)
+        if (threadIdx.x == 0)
         {
             temp_storage.block_aggregate = block_aggregate;
             tile_status.SetPartial(tile_idx, block_aggregate);
         }
 
-        int         predecessor_idx = tile_idx - hipThreadIdx_x - 1;
+        int         predecessor_idx = tile_idx - threadIdx.x - 1;
         StatusWord  predecessor_status;
         T           window_aggregate;
 
@@ -775,7 +775,7 @@ struct TilePrefixCallbackOp
         }
 
         // Compute the inclusive tile prefix and update the status for this tile
-        if (hipThreadIdx_x == 0)
+        if (threadIdx.x == 0)
         {
             inclusive_prefix = scan_op(exclusive_prefix, block_aggregate);
             tile_status.SetInclusive(tile_idx, inclusive_prefix);
@@ -808,8 +808,6 @@ struct TilePrefixCallbackOp
     {
         return temp_storage.block_aggregate;
     }
-
-    __host__ __device__ ~TilePrefixCallbackOp() {}
 };
 
 

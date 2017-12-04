@@ -88,23 +88,23 @@ enum CacheStoreModifier
  * // 32-bit store using cache-global modifier:
  * int *d_out;
  * int val;
- * cub::ThreadStore<cub::STORE_CG>(d_out + hipThreadIdx_x, val);
+ * cub::ThreadStore<cub::STORE_CG>(d_out + threadIdx.x, val);
  *
  * // 16-bit store using default modifier
  * short *d_out;
  * short val;
- * cub::ThreadStore<cub::STORE_DEFAULT>(d_out + hipThreadIdx_x, val);
+ * cub::ThreadStore<cub::STORE_DEFAULT>(d_out + threadIdx.x, val);
  *
  * // 256-bit store using write-through modifier
  * double4 *d_out;
  * double4 val;
- * cub::ThreadStore<cub::STORE_WT>(d_out + hipThreadIdx_x, val);
+ * cub::ThreadStore<cub::STORE_WT>(d_out + threadIdx.x, val);
  *
  * // 96-bit store using cache-streaming cache modifier
  * struct TestFoo { bool a; short b; };
  * TestFoo *d_struct;
  * TestFoo val;
- * cub::ThreadStore<cub::STORE_CS>(d_out + hipThreadIdx_x, val);
+ * cub::ThreadStore<cub::STORE_CS>(d_out + threadIdx.x, val);
  * \endcode
  *
  * \tparam MODIFIER             <b>[inferred]</b> CacheStoreModifier enumeration

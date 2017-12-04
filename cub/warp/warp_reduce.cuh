@@ -96,7 +96,7 @@ namespace cub {
  *     int thread_data = ...
  *
  *     // Return the warp-wide sums to each lane0 (threads 0, 32, 64, and 96)
- *     int warp_id = hipThreadIdx_x / 32;
+ *     int warp_id = threadIdx.x / 32;
  *     int aggregate = WarpReduce(temp_storage[warp_id]).Sum(thread_data);
  *
  * \endcode
@@ -122,7 +122,7 @@ namespace cub {
  *     ...
  *
  *     // Only the first warp performs a reduction
- *     if (hipThreadIdx_x < 32)
+ *     if (threadIdx.x < 32)
  *     {
  *         // Obtain one input item per thread
  *         int thread_data = ...
@@ -200,7 +200,7 @@ public:
 
 
     /**
-     * \brief Collective constructor using the specified memory allocation as temporary storage.  Logical warp and lane identifiers are constructed from <tt>hipThreadIdx_x</tt>.
+     * \brief Collective constructor using the specified memory allocation as temporary storage.  Logical warp and lane identifiers are constructed from <tt>threadIdx.x</tt>.
      */
     __device__ __forceinline__ WarpReduce(
         TempStorage &temp_storage)             ///< [in] Reference to memory allocation having layout type TempStorage
@@ -240,7 +240,7 @@ public:
      *     int thread_data = ...
      *
      *     // Return the warp-wide sums to each lane0
-     *     int warp_id = hipThreadIdx_x / 32;
+     *     int warp_id = threadIdx.x / 32;
      *     int aggregate = WarpReduce(temp_storage[warp_id]).Sum(thread_data);
      *
      * \endcode
@@ -280,8 +280,8 @@ public:
      *
      *     // Obtain one input item per thread if in range
      *     int thread_data;
-     *     if (hipThreadIdx_x < valid_items)
-     *         thread_data = d_data[hipThreadIdx_x];
+     *     if (threadIdx.x < valid_items)
+     *         thread_data = d_data[threadIdx.x];
      *
      *     // Return the warp-wide sums to each lane0
      *     int aggregate = WarpReduce(temp_storage).Sum(
@@ -431,7 +431,7 @@ public:
      *     int thread_data = ...
      *
      *     // Return the warp-wide reductions to each lane0
-     *     int warp_id = hipThreadIdx_x / 32;
+     *     int warp_id = threadIdx.x / 32;
      *     int aggregate = WarpReduce(temp_storage[warp_id]).Reduce(
      *         thread_data, cub::Max());
      *
@@ -477,8 +477,8 @@ public:
      *
      *     // Obtain one input item per thread if in range
      *     int thread_data;
-     *     if (hipThreadIdx_x < valid_items)
-     *         thread_data = d_data[hipThreadIdx_x];
+     *     if (threadIdx.x < valid_items)
+     *         thread_data = d_data[threadIdx.x];
      *
      *     // Return the warp-wide reductions to each lane0
      *     int aggregate = WarpReduce(temp_storage).Reduce(

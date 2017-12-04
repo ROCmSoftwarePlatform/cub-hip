@@ -99,14 +99,14 @@ __global__ void BlockSortKernel(
         typename BlockLoadT::TempStorage        load;
         typename BlockRadixSortT::TempStorage   sort;
 
-        __host__ __device__ ~TempStorage() {}
+        __host__ __device__ ~TempStorage() { using T = typename BlockLoadT::TempStorage; load.~T(); }
     } temp_storage;
 
     // Per-thread tile items
     Key items[ITEMS_PER_THREAD];
 
     // Our current block's offset
-    int block_offset = hipBlockIdx_x * TILE_SIZE;
+    int block_offset = blockIdx.x * TILE_SIZE;
 
     // Load items into a blocked arrangement
     BlockLoadT(temp_storage.load).Load(d_in + block_offset, items);
@@ -124,12 +124,12 @@ __global__ void BlockSortKernel(
     clock_t stop = clock();
 
     // Store output in striped fashion
-    StoreDirectStriped<BLOCK_THREADS>(hipThreadIdx_x, d_out + block_offset, items);
+    StoreDirectStriped<BLOCK_THREADS>(threadIdx.x, d_out + block_offset, items);
 
     // Store elapsed clocks
-    if (hipThreadIdx_x == 0)
+    if (threadIdx.x == 0)
     {
-        d_elapsed[hipBlockIdx_x] = (start > stop) ? start - stop : stop - start;
+        d_elapsed[blockIdx.x] = (start > stop) ? start - stop : stop - start;
     }
 }
 

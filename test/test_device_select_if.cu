@@ -89,8 +89,6 @@ struct LessThan
     bool operator()(const T &a) const {
         return (a < compare);
     }
-
-    __host__ __device__ ~LessThan() {}
 };
 
 //---------------------------------------------------------------------

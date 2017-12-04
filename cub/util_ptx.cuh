@@ -446,9 +446,9 @@ __device__ __forceinline__ inline void ThreadTrap() {
  */
 __device__ __forceinline__ inline int RowMajorTid(int block_dim_x, int block_dim_y, int block_dim_z)
 {
-    return ((block_dim_z == 1) ? 0 : (hipThreadIdx_z * block_dim_x * block_dim_y)) +
-            ((block_dim_y == 1) ? 0 : (hipThreadIdx_y * block_dim_x)) +
-            hipThreadIdx_x;
+    return ((block_dim_z == 1) ? 0 : (threadIdx.z * block_dim_x * block_dim_y)) +
+            ((block_dim_y == 1) ? 0 : (threadIdx.y * block_dim_x)) +
+            threadIdx.x;
 }
 
 

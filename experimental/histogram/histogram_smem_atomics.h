@@ -74,17 +74,17 @@ namespace histogram_smem_atomics
         unsigned int *out)
     {
         // global position and size
-        int x = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        int y = hipBlockIdx_y * hipBlockDim_y + hipThreadIdx_y;
-        int nx = hipBlockDim_x * hipGridDim_x;
-        int ny = hipBlockDim_y * hipGridDim_y;
+        int x = blockIdx.x * blockDim.x + threadIdx.x;
+        int y = blockIdx.y * blockDim.y + threadIdx.y;
+        int nx = blockDim.x * gridDim.x;
+        int ny = blockDim.y * gridDim.y;
 
         // threads in workgroup
-        int t = hipThreadIdx_x + hipThreadIdx_y * hipBlockDim_x; // thread index in workgroup, linear in 0..nt-1
-        int nt = hipBlockDim_x * hipBlockDim_y; // total threads in workgroup
+        int t = threadIdx.x + threadIdx.y * blockDim.x; // thread index in workgroup, linear in 0..nt-1
+        int nt = blockDim.x * blockDim.y; // total threads in workgroup
 
         // group index in 0..ngroups-1
-        int g = hipBlockIdx_x + hipBlockIdx_y * hipGridDim_x;
+        int g = blockIdx.x + blockIdx.y * gridDim.x;
 
         // initialize smem
         __shared__ unsigned int smem[ACTIVE_CHANNELS * NUM_BINS + 3];
@@ -133,7 +133,7 @@ namespace histogram_smem_atomics
         int n,
         unsigned int *out)
     {
-        int i = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        int i = blockIdx.x * blockDim.x + threadIdx.x;
         if (i > ACTIVE_CHANNELS * NUM_BINS) return; // out of range
         unsigned int total = 0;
         for (int j = 0; j < n; j++)

@@ -11,7 +11,7 @@ endif()
 project(cub_hip LANGUAGES CXX)
 
 #------------------------------------HIP---------------------------------------#
-find_program(hipcc NAMES hipcc PATHS /opt/rocm/bin)
+find_program(hipcc NAMES hipcc PATHS ${HIP_PATH}/bin)
 set(CMAKE_CXX_COMPILER ${hipcc})
 
 add_library(hip INTERFACE)
@@ -19,9 +19,9 @@ target_include_directories(
     hip SYSTEM INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR}/external/boost
         ${CMAKE_CURRENT_SOURCE_DIR}/external/bolt/include
-        /opt/rocm/include/hip)
+        ${HIP_PATH}/include/hip)
 target_link_libraries(hip INTERFACE rt)
-link_directories(/opt/rocm/lib)
+link_directories(${HIP_PATH}/lib /opt/rocm/lib)
 add_library(external::hip ALIAS hip)
 #-------------------------------------HIP--------------------------------------#
 
@@ -310,8 +310,6 @@ set_property(
     TEST test_block_radix_sort
     PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
 
-# TODO: 27/06/2017 TestFoo test fails in SROA pass.
-#       char{2, 4} and short{2, 4} cause invalid addrspacecast errors.
 add_executable(
     test_block_reduce ${CMAKE_CURRENT_SOURCE_DIR}/test/test_block_reduce.cu)
 target_include_directories(test_block_reduce PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -362,49 +360,44 @@ set_property(
     TEST test_device_radix_sort
     PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
 
-# TODO: 27/06/2017 - fails in InferAddressSpaces.
-#add_executable(
-#    test_device_reduce ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_reduce.cpp)
-#target_include_directories(
-#    test_device_reduce PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-#target_link_libraries(test_device_reduce PUBLIC external::hip)
-#add_test(
-#    NAME test_device_reduce
-#    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_device_reduce)
-#set_property(
-#    TEST test_device_reduce
-#    PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
+add_executable(
+   test_device_reduce ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_reduce.cu)
+target_include_directories(
+   test_device_reduce PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(test_device_reduce PUBLIC external::hip)
+add_test(
+   NAME test_device_reduce
+   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_device_reduce)
+set_property(
+   TEST test_device_reduce
+   PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
 
-# TODO: 27/06/2017 - invalid addrspacecast error.
-#add_executable(
-#    test_device_reduce_by_key
-#        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_reduce_by_key.cpp)
-#target_include_directories(
-#    test_device_reduce_by_key PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-#target_link_libraries(test_device_reduce_by_key PUBLIC external::hip)
-#add_test(
-#    NAME test_device_reduce_by_key
-#    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_device_reduce_by_key)
-#set_property(
-#    TEST test_device_reduce_by_key
-#    PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
+add_executable(
+   test_device_reduce_by_key
+       ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_reduce_by_key.cu)
+target_include_directories(
+   test_device_reduce_by_key PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(test_device_reduce_by_key PUBLIC external::hip)
+add_test(
+   NAME test_device_reduce_by_key
+   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_device_reduce_by_key)
+set_property(
+   TEST test_device_reduce_by_key
+   PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
 
-# TODO: 27/06/2017 - invalid addrspacecast error.
-#add_executable(
-#    test_device_run_length_encode
-#        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_run_length_encode.cpp)
-#target_include_directories(
-#    test_device_run_length_encode PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-#target_link_libraries(test_device_run_length_encode PUBLIC external::hip)
-#add_test(
-#    NAME test_device_run_length_encode
-#    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_device_run_length_encode)
-#set_property(
-#    TEST test_device_run_length_encode
-#    PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
+add_executable(
+   test_device_run_length_encode
+       ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_run_length_encode.cu)
+target_include_directories(
+   test_device_run_length_encode PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(test_device_run_length_encode PUBLIC external::hip)
+add_test(
+   NAME test_device_run_length_encode
+   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_device_run_length_encode)
+set_property(
+   TEST test_device_run_length_encode
+   PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
 
-# TODO: 27/06/2017 TestFoo test fails in SROA pass.
-#       (u)char{2, 4} and ushort2 cause invalid addrspacecast errors.
 add_executable(
     test_device_scan ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_scan.cu)
 target_include_directories(test_device_scan PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -416,7 +409,6 @@ set_property(
     TEST test_device_scan
     PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
 
-# TODO: 27/06/2017 TestFoo test fails in SROA pass.
 add_executable(
     test_device_select_if
         ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_select_if.cu)
@@ -430,7 +422,6 @@ set_property(
     TEST test_device_select_if
     PROPERTY FAIL_REGULAR_EXPRESSION "fail;FAIL;error")
 
-# TODO: 27/06/2017 TestFoo test fails in SROA pass.
 add_executable(
     test_device_select_unique
         ${CMAKE_CURRENT_SOURCE_DIR}/test/test_device_select_unique.cu)

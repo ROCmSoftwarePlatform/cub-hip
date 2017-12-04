@@ -106,7 +106,7 @@ __global__ void DeviceRadixSortUpsweepKernel(
     CTA_SYNC();
 
     // Write out digit counts (striped)
-    upsweep.template ExtractCounts<IS_DESCENDING>(d_spine, hipGridDim_x, hipBlockIdx_x);
+    upsweep.template ExtractCounts<IS_DESCENDING>(d_spine, gridDim.x, blockIdx.x);
 }
 
 
@@ -300,7 +300,7 @@ __global__ void DeviceRadixSortSingleTileKernel(
     #pragma unroll
     for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
     {
-        int item_offset = ITEM * BLOCK_THREADS + hipThreadIdx_x;
+        int item_offset = ITEM * BLOCK_THREADS + threadIdx.x;
         if (item_offset < num_items)
         {
             d_keys_out[item_offset] = keys[ITEM];
@@ -392,8 +392,8 @@ __global__ void DeviceSegmentedRadixSortKernel(
         __host__ __device__ ~Tmp() {}
     } temp_storage;
 
-    OffsetT segment_begin   = d_begin_offsets[hipBlockIdx_x];
-    OffsetT segment_end     = d_end_offsets[hipBlockIdx_x];
+    OffsetT segment_begin   = d_begin_offsets[blockIdx.x];
+    OffsetT segment_end     = d_end_offsets[blockIdx.x];
     OffsetT num_items       = segment_end - segment_begin;
 
     // Check if empty segment
@@ -418,7 +418,7 @@ __global__ void DeviceSegmentedRadixSortKernel(
         #pragma unroll
         for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
         {
-            int bin_idx = (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + track;
+            int bin_idx = (threadIdx.x * BINS_TRACKED_PER_THREAD) + track;
 
             if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
                 temp_storage.reverse_counts_in[bin_idx] = bin_count[track];
@@ -429,7 +429,7 @@ __global__ void DeviceSegmentedRadixSortKernel(
         #pragma unroll
         for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
         {
-            int bin_idx = (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + track;
+            int bin_idx = (threadIdx.x * BINS_TRACKED_PER_THREAD) + track;
 
             if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
                 bin_count[track] = temp_storage.reverse_counts_in[RADIX_DIGITS - bin_idx - 1];
@@ -452,10 +452,10 @@ __global__ void DeviceSegmentedRadixSortKernel(
         #pragma unroll
         for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
         {
-            int bin_idx = (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + track;
+            int bin_idx = (threadIdx.x * BINS_TRACKED_PER_THREAD) + track;
 
             if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
-                temp_storage.reverse_counts_out[hipThreadIdx_x] = bin_offset[track];
+                temp_storage.reverse_counts_out[threadIdx.x] = bin_offset[track];
         }
 
         CTA_SYNC();
@@ -463,7 +463,7 @@ __global__ void DeviceSegmentedRadixSortKernel(
         #pragma unroll
         for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
         {
-            int bin_idx = (hipThreadIdx_x * BINS_TRACKED_PER_THREAD) + track;
+            int bin_idx = (threadIdx.x * BINS_TRACKED_PER_THREAD) + track;
 
             if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
                 bin_offset[track] = temp_storage.reverse_counts_out[RADIX_DIGITS - bin_idx - 1];

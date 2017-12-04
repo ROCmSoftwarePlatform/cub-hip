@@ -86,7 +86,7 @@ __global__ void DeviceCompactInitKernel(
     tile_state.InitializeStatus(num_tiles);
 
     // Initialize d_num_selected_out
-    if ((hipBlockIdx_x == 0) && (hipThreadIdx_x == 0))
+    if ((blockIdx.x == 0) && (threadIdx.x == 0))
         *d_num_selected_out = 0;
 }
 

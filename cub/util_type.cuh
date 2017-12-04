@@ -476,8 +476,6 @@ struct CubVector<T, 1>
 
     typedef T BaseType;
     typedef CubVector<T, 1> Type;
-
-    __host__ __device__ ~CubVector() {}
 };
 
 /**
@@ -491,8 +489,6 @@ struct CubVector<T, 2>
 
     typedef T BaseType;
     typedef CubVector<T, 2> Type;
-
-    __host__ __device__ ~CubVector() {}
 };
 
 /**
@@ -507,8 +503,6 @@ struct CubVector<T, 3>
 
     typedef T BaseType;
     typedef CubVector<T, 3> Type;
-
-    __host__ __device__ ~CubVector() {}
 };
 
 /**
@@ -524,8 +518,6 @@ struct CubVector<T, 4>
 
     typedef T BaseType;
     typedef CubVector<T, 4> Type;
-
-    __host__ __device__ ~CubVector() {}
 };
 
 

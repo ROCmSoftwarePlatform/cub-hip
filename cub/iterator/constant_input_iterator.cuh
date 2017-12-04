@@ -225,8 +225,6 @@ public:
         os << "[" << itr.val << "," << itr.offset << "]";
         return os;
     }
-
-    __host__ __device__ ~ConstantInputIterator() {}
 };
 
 

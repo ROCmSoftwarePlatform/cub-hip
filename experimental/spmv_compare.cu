@@ -118,7 +118,7 @@ __global__ void NonZeroIoKernel(
 
     ValueT nonzero = 0.0;
 
-    int tile_idx = hipBlockIdx_x;
+    int tile_idx = blockIdx.x;
 
     OffsetT block_offset = tile_idx * TILE_ITEMS;
 
@@ -128,7 +128,7 @@ __global__ void NonZeroIoKernel(
     #pragma unroll
     for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
     {
-        OffsetT nonzero_idx = block_offset + (ITEM * BLOCK_THREADS) + hipThreadIdx_x;
+        OffsetT nonzero_idx = block_offset + (ITEM * BLOCK_THREADS) + threadIdx.x;
 
         OffsetT* ci = params.d_column_indices + nonzero_idx;
         ValueT*a = params.d_values + nonzero_idx;
@@ -154,7 +154,7 @@ __global__ void NonZeroIoKernel(
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
-            OffsetT row_idx = block_offset + (ITEM * BLOCK_THREADS) + hipThreadIdx_x;
+            OffsetT row_idx = block_offset + (ITEM * BLOCK_THREADS) + threadIdx.x;
             if (row_idx < params.num_rows)
             {
                 OffsetT row_end_offset = ThreadLoad<LOAD_DEFAULT>(params.d_row_end_offsets + row_idx);

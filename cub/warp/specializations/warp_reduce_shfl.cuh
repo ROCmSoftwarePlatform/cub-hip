@@ -174,7 +174,7 @@ struct WarpReduceShfl
 	 int lane_id;
 	 bool pred = false;
 	r0 = __shfl_down((int)input, offset);
-	lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize);
+	lane_id = (((threadIdx.z * blockDim.x * blockDim.y) + (threadIdx.y * blockDim.x) + threadIdx.x) % warpSize);
 	if (offset + lane_id <= last_lane)
             output = r0 + input;
         else
@@ -222,7 +222,7 @@ struct WarpReduceShfl
          int lane_id;
          bool pred = false;
         r0 = __shfl_down(input, offset);
-	lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize);
+	lane_id = (((threadIdx.z * blockDim.x * blockDim.y) + (threadIdx.y * blockDim.x) + threadIdx.x) % warpSize);
         if (offset + lane_id <= last_lane)
             output = r0 + input;
         else
@@ -276,7 +276,7 @@ struct WarpReduceShfl
 	lo = __shfl_down((int)lo, offset);
 	hi = __shfl_down((int)hi, offset);
 	output = ((unsigned long long)hi << 32) | lo;
-	lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) ;
+	lane_id = (((threadIdx.z * blockDim.x * blockDim.y) + (threadIdx.y * blockDim.x) + threadIdx.x) % warpSize) ;
 	if (offset + lane_id <= last_lane)
 		output = output + input;
 	else
@@ -331,7 +331,7 @@ struct WarpReduceShfl
         lo = __shfl_down((int)lo, offset);
         hi = __shfl_down((int)hi, offset);
         output = ((long long)hi << 32) | lo;
-        lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) ;
+        lane_id = (((threadIdx.z * blockDim.x * blockDim.y) + (threadIdx.y * blockDim.x) + threadIdx.x) % warpSize) ;
         if (offset + lane_id <= last_lane)
                 output = output + input;
         else
@@ -400,7 +400,7 @@ struct WarpReduceShfl
 	 long long r0 = 0x0000;
 	output = input ;
 	r0 = ((r0 | hi)<<32) | lo;
-	lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) ;
+	lane_id = (((threadIdx.z * blockDim.x * blockDim.y) + (threadIdx.y * blockDim.x) + threadIdx.x) % warpSize) ;
 	if (offset + lane_id <= last_lane)
 	{
 		s.l = r0;

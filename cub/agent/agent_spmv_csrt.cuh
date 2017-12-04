@@ -281,7 +281,7 @@ struct AgentSpmv
         OffsetT*    s_tile_row_end_offsets  = &temp_storage.merge_items[0].row_end_offset;
 
         // Gather the row end-offsets for the merge tile into shared memory
-        for (int item = hipThreadIdx_x; item <= tile_num_rows; item += BLOCK_THREADS)
+        for (int item = threadIdx.x; item <= tile_num_rows; item += BLOCK_THREADS)
         {
             s_tile_row_end_offsets[item] = wd_row_end_offsets[tile_start_coord.x + item];
         }
@@ -293,7 +293,7 @@ struct AgentSpmv
         CoordinateT                     thread_start_coord;
 
         MergePathSearch(
-            OffsetT(hipThreadIdx_x * ITEMS_PER_THREAD),    // Diagonal
+            OffsetT(threadIdx.x * ITEMS_PER_THREAD),    // Diagonal
             s_tile_row_end_offsets,                     // List A
             tile_nonzero_indices,                       // List B
             tile_num_rows,
@@ -351,7 +351,7 @@ struct AgentSpmv
 
         if (tile_num_rows > 0)
         {
-            if (hipThreadIdx_x == 0)
+            if (threadIdx.x == 0)
                 scan_item.key = -1;
 
             // Direct scatter
@@ -408,7 +408,7 @@ struct AgentSpmv
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
-            int nonzero_idx = hipThreadIdx_x + (ITEM * BLOCK_THREADS);
+            int nonzero_idx = threadIdx.x + (ITEM * BLOCK_THREADS);
 
             ValueIteratorT a                = wd_values + tile_start_coord.y + nonzero_idx;
             ColumnIndicesIteratorT ci       = wd_column_indices + tile_start_coord.y + nonzero_idx;
@@ -438,7 +438,7 @@ struct AgentSpmv
             #pragma unroll
             for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
             {
-                int     nonzero_idx             = hipThreadIdx_x + (ITEM * BLOCK_THREADS);
+                int     nonzero_idx             = threadIdx.x + (ITEM * BLOCK_THREADS);
                 nonzero_idx                     = CUB_MIN(nonzero_idx, tile_num_nonzeros - 1);
 
                 OffsetT column_idx              = wd_column_indices[tile_start_coord.y + nonzero_idx];
@@ -455,7 +455,7 @@ struct AgentSpmv
 
         // Gather the row end-offsets for the merge tile into shared memory
         #pragma unroll 1
-        for (int item = hipThreadIdx_x; item <= tile_num_rows; item += BLOCK_THREADS)
+        for (int item = threadIdx.x; item <= tile_num_rows; item += BLOCK_THREADS)
         {
             s_tile_row_end_offsets[item] = wd_row_end_offsets[tile_start_coord.x + item];
         }
@@ -467,7 +467,7 @@ struct AgentSpmv
         CoordinateT                     thread_start_coord;
 
         MergePathSearch(
-            OffsetT(hipThreadIdx_x * ITEMS_PER_THREAD),    // Diagonal
+            OffsetT(threadIdx.x * ITEMS_PER_THREAD),    // Diagonal
             s_tile_row_end_offsets,                     // List A
             tile_nonzero_indices,                       // List B
             tile_num_rows,
@@ -519,7 +519,7 @@ struct AgentSpmv
 
         BlockScanT(temp_storage.scan).ExclusiveScan(scan_item, scan_item, scan_op, tile_carry);
 
-        if (hipThreadIdx_x == 0)
+        if (threadIdx.x == 0)
         {
             scan_item.key = thread_start_coord.x;
             scan_item.value = 0.0;
@@ -558,7 +558,7 @@ struct AgentSpmv
             __syncthreads();
 
             #pragma unroll 1
-            for (int item = hipThreadIdx_x; item < tile_num_rows; item += BLOCK_THREADS)
+            for (int item = threadIdx.x; item < tile_num_rows; item += BLOCK_THREADS)
             {
                 spmv_params.d_vector_y[tile_start_coord.x + item] = s_partials[item];
             }
@@ -577,10 +577,10 @@ struct AgentSpmv
         KeyValuePairT*  d_tile_carry_pairs)     ///< [out] Pointer to the temporary array carry-out dot product row-ids, one per block
     {
         // Read our starting coordinates
-        if (hipThreadIdx_x == 0)
+        if (threadIdx.x == 0)
         {
             // Search our starting coordinates
-            OffsetT                         diagonal = hipBlockIdx_x * merge_items_per_block;
+            OffsetT                         diagonal = blockIdx.x * merge_items_per_block;
             CoordinateT                     tile_coord;
             CountingInputIterator<OffsetT>  nonzero_indices(0);
 
@@ -607,18 +607,18 @@ struct AgentSpmv
 
 
         // Turnstile
-        if (hipThreadIdx_x == 0)
+        if (threadIdx.x == 0)
         {
             __threadfence();
             temp_storage.turnstile = atomicAdd(spmv_params.d_row_end_offsets - 1, 1);
         }
-        
+
         __syncthreads();
 
         // Last block through turnstile does fixup
-        if (temp_storage.turnstile == hipGridDim_x - 1)
+        if (temp_storage.turnstile == gridDim.x - 1)
         {
-            if (hipThreadIdx_x == 0)
+            if (threadIdx.x == 0)
             {
                 spmv_params.d_row_end_offsets[-1] = 0;
             }

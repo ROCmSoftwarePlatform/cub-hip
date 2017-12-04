@@ -24,6 +24,8 @@
 #if !defined( BOLT_AMP_DEVICE_VECTOR_H )
 #define BOLT_AMP_DEVICE_VECTOR_H
 
+#include <hc.hpp>
+
 #include <iterator>
 #include <type_traits>
 #include <numeric>
