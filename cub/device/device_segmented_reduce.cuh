@@ -412,7 +412,7 @@ struct DeviceSegmentedReduce
         ArgIndexInputIteratorT d_indexed_in(d_in);
 
         // Initial value
-        OutputTupleT initial_value(1, Traits<InputValueT>::Max());   // replace with std::numeric_limits<T>::max() when C++11 support is more prevalent
+        OutputTupleT initial_value(1, std::numeric_limits<InputValueT>::max()); // when C++11 support is more prevalent
 
         return DispatchSegmentedReduce<ArgIndexInputIteratorT,  OutputIteratorT, OffsetIteratorT, OffsetT, cub::ArgMin>::Dispatch(
             d_temp_storage,
