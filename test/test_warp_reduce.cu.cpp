@@ -759,7 +759,7 @@ void Test(GenMode gen_mode)
 
     // complex
     Test<WARPS, LOGICAL_WARP_THREADS, TestFoo>(             gen_mode, Sum());
-    Test<WARPS, LOGICAL_WARP_THREADS, TestBar>(             gen_mode, Sum());
+   // Test<WARPS, LOGICAL_WARP_THREADS, TestBar>(             gen_mode, Sum());
 }
 
 

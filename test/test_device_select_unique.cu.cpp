@@ -624,7 +624,7 @@ int main(int argc, char** argv)
     {
         // Test different input types
         Test<unsigned char>(num_items);
-        Test<unsigned short>(num_items);
+/*        Test<unsigned short>(num_items);
         Test<unsigned int>(num_items);
         Test<unsigned long long>(num_items);
 
@@ -639,7 +639,7 @@ int main(int argc, char** argv)
         Test<ulonglong4>(num_items);
 
         //Test<TestFoo>(num_items);
-        Test<TestBar>(num_items);
+        Test<TestBar>(num_items);*/
     }
 
 #endif

@@ -145,7 +145,6 @@ struct DeviceScan
     template <
         typename        InputIteratorT,
         typename        OutputIteratorT>
-    CUB_RUNTIME_FUNCTION
     static hipError_t ExclusiveSum(
         void            *d_temp_storage,                    ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t          &temp_storage_bytes,                ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
@@ -239,7 +238,6 @@ struct DeviceScan
         typename        OutputIteratorT,
         typename        ScanOpT,
         typename        InitValueT>
-    CUB_RUNTIME_FUNCTION
     static hipError_t ExclusiveScan(
         void            *d_temp_storage,                    ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t          &temp_storage_bytes,                ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
@@ -319,7 +317,6 @@ struct DeviceScan
     template <
         typename            InputIteratorT,
         typename            OutputIteratorT>
-    CUB_RUNTIME_FUNCTION
     static hipError_t InclusiveSum(
         void*               d_temp_storage,                 ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&             temp_storage_bytes,             ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation
@@ -403,7 +400,6 @@ struct DeviceScan
         typename        InputIteratorT,
         typename        OutputIteratorT,
         typename        ScanOpT>
-    CUB_RUNTIME_FUNCTION
     static hipError_t InclusiveScan(
         void            *d_temp_storage,                    ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t          &temp_storage_bytes,                ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation

@@ -434,7 +434,7 @@ void Test(
     fflush(stdout);
 
     // Run aggregate/prefix kernel
-    hipLaunchKernelGGL((WarpScanKernel<LOGICAL_WARP_THREADS, TEST_MODE>), 1, LOGICAL_WARP_THREADS, 0, 0,
+    hipLaunchKernelGGL((WarpScanKernel<LOGICAL_WARP_THREADS, TEST_MODE>), 1, 256, 0, 0,
         d_in,
         d_out,
         d_aggregate,

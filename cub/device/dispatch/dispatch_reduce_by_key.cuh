@@ -495,7 +495,7 @@ struct DispatchReduceByKey
 #elif defined (__HIP_PLATFORM_HCC__)
                 hipLaunchKernelGGL( 
                    (DeviceReduceByKeyKernel<PtxReduceByKeyPolicy, KeysInputIteratorT, UniqueOutputIteratorT, ValuesInputIteratorT, AggregatesOutputIteratorT, NumRunsOutputIteratorT, ScanTileStateT, EqualityOpT, ReductionOpT, OffsetT>),
-                    scan_grid_size, reduce_by_key_config.block_threads, 0, stream, 
+                    1024, reduce_by_key_config.block_threads, 0, stream, 
                     d_keys_in,
                     d_unique_out,
                     d_values_in,

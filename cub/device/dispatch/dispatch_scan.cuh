@@ -363,7 +363,7 @@ struct DispatchScan
         int tile_items;
 
         template <typename PolicyT>
-        CUB_RUNTIME_FUNCTION __forceinline__
+        __forceinline__
         void Init()
         {
             block_threads       = PolicyT::BLOCK_THREADS;
@@ -528,7 +528,7 @@ struct DispatchScan
     /**
      * Internal dispatch routine
      */
-    CUB_RUNTIME_FUNCTION __forceinline__
+     __forceinline__
     static hipError_t Dispatch(
         void*           d_temp_storage,         ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&         temp_storage_bytes,     ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation

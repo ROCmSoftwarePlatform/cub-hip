@@ -571,11 +571,9 @@ __host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, T &value, i
 {
     switch (gen_mode)
     {
-#if (CUB_PTX_ARCH == 0)
     case RANDOM:
          RandomBits(value);
          break;
-#endif
      case UNIFORM:
         value = 2;
         break;
@@ -594,13 +592,11 @@ __host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, bool &value
 {
     switch (gen_mode)
     {
-#if (CUB_PTX_ARCH == 0)
     case RANDOM:
         char c;
         RandomBits(c, 0, 0, 1);
         value = (c > 0);
         break;
-#endif
      case UNIFORM:
         value = true;
         break;

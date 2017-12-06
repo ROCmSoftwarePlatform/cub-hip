@@ -99,7 +99,7 @@ struct WrapperFunctor
  * Dispatch to exclusive scan entrypoint
  */
 template <typename IsPrimitiveT, typename InputIteratorT, typename OutputIteratorT, typename ScanOpT, typename InitialValueT, typename OffsetT>
-CUB_RUNTIME_FUNCTION __forceinline__
+__forceinline__
 hipError_t Dispatch(
     Int2Type<CUB>       dispatch_to,
     IsPrimitiveT        is_primitive,
@@ -130,7 +130,7 @@ hipError_t Dispatch(
  * Dispatch to exclusive sum entrypoint
  */
 template <typename InputIteratorT, typename OutputIteratorT, typename InitialValueT, typename OffsetT>
-CUB_RUNTIME_FUNCTION __forceinline__
+__forceinline__
 hipError_t Dispatch(
     Int2Type<CUB>       dispatch_to,
     Int2Type<true>      is_primitive,
@@ -161,7 +161,7 @@ hipError_t Dispatch(
  * Dispatch to inclusive scan entrypoint
  */
 template <typename IsPrimitiveT, typename InputIteratorT, typename OutputIteratorT, typename ScanOpT, typename OffsetT>
-CUB_RUNTIME_FUNCTION __forceinline__
+__forceinline__
 hipError_t Dispatch(
     Int2Type<CUB>       dispatch_to,
     IsPrimitiveT        is_primitive,
@@ -192,7 +192,7 @@ hipError_t Dispatch(
  * Dispatch to inclusive sum entrypoint
  */
 template <typename InputIteratorT, typename OutputIteratorT, typename OffsetT>
-CUB_RUNTIME_FUNCTION __forceinline__
+__forceinline__
 hipError_t Dispatch(
     Int2Type<CUB>       dispatch_to,
     Int2Type<true>      is_primitive,

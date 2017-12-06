@@ -98,8 +98,6 @@ template <
     typename                                            OffsetT>                        ///< Signed integer type for global offsets
 #ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(AgentHistogramPolicyT::BLOCK_THREADS))
-#elif defined(__HIP_PLATFORM_HCC__)
-__launch_bounds__ (256)
 #endif
 __global__ void DeviceHistogramSweepKernel(
     SampleIteratorT                                         d_samples,                          ///< Input data to reduce
@@ -352,7 +350,7 @@ struct DipatchHistogram
     {
         // HistogramSweepPolicy
         typedef AgentHistogramPolicy<
-                512,
+                256,
                 (NUM_CHANNELS == 1) ? 8 : 2,
                 BLOCK_LOAD_DIRECT,
                 LOAD_DEFAULT,
@@ -382,7 +380,7 @@ struct DipatchHistogram
     {
         // HistogramSweepPolicy
         typedef AgentHistogramPolicy<
-                512,
+                256,
                 (NUM_CHANNELS == 1) ? 8 : 2,
                 BLOCK_LOAD_DIRECT,
                 LOAD_DEFAULT,
@@ -412,7 +410,7 @@ struct DipatchHistogram
     {
         // HistogramSweepPolicy
         typedef AgentHistogramPolicy<
-                384,
+                256,
                 TScale<16>::VALUE,
                 BLOCK_LOAD_DIRECT,
                 LOAD_LDG,
@@ -658,19 +656,18 @@ struct DipatchHistogram
             // Log DeviceHistogramInitKernel configuration
             if (debug_synchronous) _CubLog("Invoking DeviceHistogramInitKernel<<<%d, %d, 0, %lld>>>()\n",
                 histogram_init_grid_dims, histogram_init_block_threads, (long long) stream);
-
             // Invoke histogram_init_kernel
 #ifdef __HIP_PLATFORM_HCC__
             hipLaunchKernelGGL(
             (DeviceHistogramInitKernel<NUM_ACTIVE_CHANNELS, CounterT, OffsetT>),
-            histogram_init_grid_dims, histogram_init_block_threads, 0, stream,
+            1, 128, 0, stream,
 #else
             hipLaunchKernelGGL(histogram_init_kernel, histogram_init_grid_dims, histogram_init_block_threads, 0, stream,
 #endif
                 num_output_bins_wrapper,
                 d_output_histograms_wrapper,
                 tile_queue);
-
+            
             // Return if empty problem
             if ((blocks_per_row == 0) || (blocks_per_col == 0))
                 break;

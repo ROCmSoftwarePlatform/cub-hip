@@ -682,7 +682,7 @@ template <typename T, typename CastT>
 void Test(Int2Type<false> is_integer)
 {
     TestModified<T, CastT>();
-    TestTransform<T, CastT>();
+    //TestTransform<T, CastT>();
 
 #if CUB_CDP
     // Test tex-obj iterators if CUDA dynamic parallelism enabled

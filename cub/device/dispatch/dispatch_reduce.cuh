@@ -476,7 +476,7 @@ struct DispatchReduce :
                 (DeviceReduceSingleTileKernel<MaxPolicyT, InputIteratorT, OutputIteratorT, OffsetT, ReductionOpT, OutputT>)
 , 1, 256, 0, stream,
 #else
-            hipLaunchKernelGGL(single_tile_kernel, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream,
+            hipLaunchKernelGGL(single_tile_kernel, 1, 256 0, stream,
 #endif
 
                 d_in,
