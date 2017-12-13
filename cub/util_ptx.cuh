@@ -818,28 +818,20 @@ T ShuffleIndex(
     ShuffleWord     *input_alias    = reinterpret_cast<ShuffleWord *>(&input);
 
     unsigned int shuffle_word;
-#ifdef __HIP_PLATFORM_NVCC__
     shuffle_word = SHFL_IDX_SYNC((unsigned int)input_alias[0],
                                  src_lane,
                                  logical_warp_threads - 1,
                                  member_mask);
-#elif defined(__HIP_PLATFORM_HCC__)
-    shuffle_word = __shfl((int) input_alias[0], src_lane);
-#endif
 
     output_alias[0] = shuffle_word;
 
     #pragma unroll
     for (int WORD = 1; WORD < WORDS; ++WORD)
     {
-#ifdef __HIP_PLATFORM_NVCC__
         shuffle_word = SHFL_IDX_SYNC((unsigned int)input_alias[WORD],
                                      src_lane,
                                      logical_warp_threads - 1,
                                      member_mask);
-#elif defined(__HIP_PLATFORM_HCC__)
-        shuffle_word = __shfl((int) input_alias[WORD], src_lane);
-#endif
 
         output_alias[WORD] = shuffle_word;
     }
@@ -847,15 +839,6 @@ T ShuffleIndex(
     return output;
 }
 
-template <typename T>
-__device__ __forceinline__
-static
-T ShuffleIndex(
-    T               input,              ///< [in] The value to broadcast
-    int             src_lane)           ///< [in] Which warp lane is to do the broadcasting
-{
-    return ShuffleIndex(input, src_lane, CUB_PTX_WARP_THREADS);
-}
 
 
 
