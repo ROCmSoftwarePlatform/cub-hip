@@ -1225,7 +1225,7 @@ int main(int argc, char** argv)
 {
     typedef int OffsetT;
 
-    OffsetT max_items       = 27000000;
+    OffsetT max_items       = 2700000;
     OffsetT max_segments    = 34000;
 
     // Initialize command line
