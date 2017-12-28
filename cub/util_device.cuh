@@ -273,7 +273,7 @@ hipError_t MaxSmOccupancy(
 #ifdef __HIP_PLATFORM_NVCC__
     return hipOccupancyMaxActiveBlocksPerMultiprocessor (
         &max_sm_occupancy,
-        kernel_ptr,
+        (const void *)kernel_ptr,
         block_threads,
         dynamic_smem_bytes);
 #elif defined(__HIP_PLATFORM_HCC__)
