@@ -53,7 +53,7 @@ COMMA = ,
 ifdef sm
 	SM_ARCH = $(subst $(COMMA),-,$(sm))
 else 
-    SM_ARCH = 200
+    SM_ARCH = 520
 endif
 
 ifeq (${HIP_PLATFORM}, nvcc)
