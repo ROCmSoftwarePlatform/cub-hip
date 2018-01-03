@@ -656,6 +656,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
  * Vector1 overloads
  */
 #define CUB_VEC_OVERLOAD_1(T, BaseT)                        \
+namespace cub {						    \
     /* Ostream output */                                    \
     std::ostream& operator<<(                               \
         std::ostream& os,                                   \
@@ -705,7 +706,6 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
         T retval = make_##T(a.x + b.x);                     \
         return retval;                                      \
     }                                                       \
-    namespace cub {                                         \
     template<>                                              \
     struct NumericTraits<T>                                 \
     {                                                       \
@@ -727,7 +727,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
             return retval;                                  \
         }                                                   \
     };                                                      \
-    } /* namespace std */
+} /* namespace std */
 
 
 
@@ -735,6 +735,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
  * Vector2 overloads
  */
 #define CUB_VEC_OVERLOAD_2(T, BaseT)                        \
+namespace cub {                                             \
     /* Ostream output */                                    \
     std::ostream& operator<<(                               \
         std::ostream& os,                                   \
@@ -793,7 +794,6 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
             a.y + b.y);                                     \
         return retval;                                      \
     }                                                       \
-    namespace cub {                                         \
     template<>                                              \
     struct NumericTraits<T>                                 \
     {                                                       \
@@ -817,7 +817,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
             return retval;                                  \
         }                                                   \
     };                                                      \
-    } /* namespace cub */
+} /* namespace cub */
 
 
 
@@ -825,6 +825,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
  * Vector3 overloads
  */
 #define CUB_VEC_OVERLOAD_3(T, BaseT)                        \
+namespace cub {                                             \
     /* Ostream output */                                    \
     std::ostream& operator<<(                               \
         std::ostream& os,                                   \
@@ -890,7 +891,6 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
             a.z + b.z);                                     \
         return retval;                                      \
     }                                                       \
-    namespace cub {                                         \
     template<>                                              \
     struct NumericTraits<T>                                 \
     {                                                       \
@@ -916,13 +916,14 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
             return retval;                                  \
         }                                                   \
     };                                                      \
-    } /* namespace cub */
+} /* namespace cub */
 
 
 /**
  * Vector4 overloads
  */
 #define CUB_VEC_OVERLOAD_4(T, BaseT)                        \
+namespace cub {                                             \
     /* Ostream output */                                    \
     std::ostream& operator<<(                               \
         std::ostream& os,                                   \
@@ -995,7 +996,6 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
             a.w + b.w);                                     \
         return retval;                                      \
     }                                                       \
-    namespace cub {                                         \
     template<>                                              \
     struct NumericTraits<T>                                 \
     {                                                       \
@@ -1023,7 +1023,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
             return retval;                                  \
         }                                                   \
     };                                                      \
-    } /* namespace cub */
+} /* namespace cub */
 
 /**
  * All vector overloads
