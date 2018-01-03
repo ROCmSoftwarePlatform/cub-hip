@@ -709,8 +709,8 @@ void TestSize(
     {
         TestDispatch<KeyT, ValueT>(1,        reduction_op);
         TestDispatch<KeyT, ValueT>(100,      reduction_op);
-        TestDispatch<KeyT, ValueT>(10000,    reduction_op);
-        TestDispatch<KeyT, ValueT>(1000000,  reduction_op);
+        TestDispatch<KeyT, ValueT>(1000,    reduction_op);
+ //       TestDispatch<KeyT, ValueT>(2000,  reduction_op);
     }
     else
     {
@@ -821,26 +821,26 @@ int main(int argc, char** argv)
 
         // Test different input types
         TestOp<int, char>(num_items);
-/*       TestOp<int, short>(num_items);
+       TestOp<int, short>(num_items);
         TestOp<int, int>(num_items);
         TestOp<int, long>(num_items);
         TestOp<int, long long>(num_items);
         TestOp<int, float>(num_items);
         if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
-            TestOp<int, double>(num_items);*/
+            TestOp<int, double>(num_items);
 
-/*        TestOp<int, uchar2>(num_items);
-        TestOp<int, uint2>(num_items);
-        TestOp<int, uint3>(num_items);
+//        TestOp<int, uchar2>(num_items);
+//        TestOp<int, uint2>(num_items);
+/*        TestOp<int, uint3>(num_items);
         TestOp<int, uint4>(num_items);
         TestOp<int, ulonglong4>(num_items);
-        TestOp<int, TestFoo>(num_items);
-        TestOp<int, TestBar>(num_items);
+//        TestOp<int, TestFoo>(num_items);
+//        TestOp<int, TestBar>(num_items);
 
         TestOp<char, int>(num_items);
         TestOp<long long, int>(num_items);*/
 //        TestOp<TestFoo, int>(num_items);
-        TestOp<TestBar, int>(num_items);
+//        TestOp<TestBar, int>(num_items);
 
     }
 

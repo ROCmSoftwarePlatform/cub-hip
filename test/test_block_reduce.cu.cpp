@@ -793,24 +793,24 @@ int main(int argc, char** argv)
     for (int i = 0; i <= g_repeat; ++i)
     {
         // primitives
-/*        Test<char>();
+        Test<char>();
         Test<short>();
         Test<int>();
         Test<long long>();
         Test<double>();
 
-        Test<float>();*/
+        Test<float>();
 
         // vector types
-//        Test<char2>();
+        Test<char2>();
         Test<short2>();
-/*        Test<int2>();
+        Test<int2>();
         Test<longlong2>();
 
         Test<char4>();
         Test<short4>();
         Test<int4>();
-        Test<longlong4>();*/
+        Test<longlong4>();
 
         // Complex types
 /*        Test<TestFoo>();

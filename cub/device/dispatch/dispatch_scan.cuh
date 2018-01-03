@@ -246,7 +246,7 @@ struct DispatchScan
     struct Policy130
     {
         typedef AgentScanPolicy<
-                CUB_NOMINAL_CONFIG(96, 21, OutputT),      ///< Threads per block, items per thread
+                CUB_NOMINAL_CONFIG(196, 8, OutputT),      ///< Threads per block, items per thread
                 BLOCK_LOAD_WARP_TRANSPOSE,
                 LOAD_DEFAULT,
                 BLOCK_STORE_WARP_TRANSPOSE,
@@ -258,7 +258,7 @@ struct DispatchScan
     struct Policy100
     {
         typedef AgentScanPolicy<
-                CUB_NOMINAL_CONFIG(64, 9, OutputT),      ///< Threads per block, items per thread
+                CUB_NOMINAL_CONFIG(128, 9, OutputT),      ///< Threads per block, items per thread
                 BLOCK_LOAD_WARP_TRANSPOSE,
                 LOAD_DEFAULT,
                 BLOCK_STORE_WARP_TRANSPOSE,

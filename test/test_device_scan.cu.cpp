@@ -876,8 +876,8 @@ void TestSize(
         TestOp<InputT>(0,        identity, initial_value);
         TestOp<InputT>(1,        identity, initial_value);
         TestOp<InputT>(100,      identity, initial_value);
-        TestOp<InputT>(10000,    identity, initial_value);
-        TestOp<InputT>(1000000,  identity, initial_value);
+        TestOp<InputT>(1000,    identity, initial_value);
+        //TestOp<InputT>(1000000,  identity, initial_value);
 
         // Randomly select problem size between 1:10,000,000
         unsigned int max_int = (unsigned int) -1;
@@ -885,7 +885,7 @@ void TestSize(
         {
             unsigned int num_items;
             RandomBits(num_items);
-            num_items = (unsigned int) ((double(num_items) * double(10000000)) / double(max_int));
+            num_items = (unsigned int) ((double(num_items) * double(100)) / double(max_int));
             num_items = CUB_MAX(1, num_items);
             TestOp<InputT>(num_items,  identity, initial_value);
         }
@@ -988,9 +988,9 @@ int main(int argc, char** argv)
         TestSize<char>(num_items,               (char) 0,               (char) 99);
         TestSize<unsigned short>(num_items,     (unsigned short) 0,     (unsigned short)99);
         TestSize<unsigned int>(num_items,       (unsigned int) 0,       (unsigned int) 99);
-        TestSize<unsigned long long>(num_items, (unsigned long long) 0, (unsigned long long) 99);
+//        TestSize<unsigned long long>(num_items, (unsigned long long) 0, (unsigned long long) 99);
 
-        TestSize<uchar2>(num_items,     make_uchar2(0, 0),              make_uchar2(17, 21));
+/*        TestSize<uchar2>(num_items,     make_uchar2(0, 0),              make_uchar2(17, 21));
         TestSize<char2>(num_items,      make_char2(0, 0),               make_char2(17, 21));
         TestSize<ushort2>(num_items,    make_ushort2(0, 0),             make_ushort2(17, 21));
         TestSize<uint2>(num_items,      make_uint2(0, 0),               make_uint2(17, 21));
@@ -1002,13 +1002,13 @@ int main(int argc, char** argv)
         TestSize<uint4>(num_items,      make_uint4(0, 0, 0, 0),         make_uint4(17, 21, 32, 85));
         TestSize<ulonglong4>(num_items, make_ulonglong4(0, 0, 0, 0),    make_ulonglong4(17, 21, 32, 85));
 
-        TestSize<TestFoo>(num_items,
-            TestFoo::MakeTestFoo(0, 0, 0, 0),
-            TestFoo::MakeTestFoo(1ll << 63, 1 << 31, short(1 << 15), char(1 << 7)));
+//        TestSize<TestFoo>(num_items,
+//            TestFoo::MakeTestFoo(0, 0, 0, 0),
+//            TestFoo::MakeTestFoo(1ll << 63, 1 << 31, short(1 << 15), char(1 << 7)));
 
         TestSize<TestBar>(num_items,
             TestBar(0, 0),
-            TestBar(1ll << 63, 1 << 31));
+            TestBar(1ll << 63, 1 << 31));*/
     }
 
 #endif

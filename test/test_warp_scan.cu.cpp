@@ -434,7 +434,7 @@ void Test(
     fflush(stdout);
 
     // Run aggregate/prefix kernel
-    hipLaunchKernelGGL((WarpScanKernel<LOGICAL_WARP_THREADS, TEST_MODE>), 1, 256, 0, 0,
+    hipLaunchKernelGGL((WarpScanKernel<LOGICAL_WARP_THREADS, TEST_MODE>), 1, LOGICAL_WARP_THREADS, 0, 0,
         d_in,
         d_out,
         d_aggregate,
@@ -620,6 +620,7 @@ int main(int argc, char** argv)
     for (int i = 0; i <= g_repeat; ++i)
     {
         // Test logical warp sizes
+        Test<64>();
         Test<32>();
         Test<16>();
         Test<9>();
