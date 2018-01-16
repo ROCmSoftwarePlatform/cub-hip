@@ -399,7 +399,7 @@ __global__ void BlockScanKernel(
     T                   *d_out,
     T                   *d_aggregate,
     ScanOpT              scan_op,
-    T                   initial_value,
+    T                   *initial_value,
     clock_t             *d_elapsed)
 {
     const int BLOCK_THREADS     = BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z;
@@ -424,9 +424,9 @@ __global__ void BlockScanKernel(
     // Test scan
     T                                   block_aggregate;
     BlockScanT                          block_scan(temp_storage);
-    BlockPrefixCallbackOp<T, ScanOpT>   prefix_op(linear_tid, initial_value, scan_op);
+    BlockPrefixCallbackOp<T, ScanOpT>   prefix_op(linear_tid, *initial_value, scan_op);
 
-    DeviceTest(block_scan, data, initial_value, scan_op, block_aggregate, prefix_op,
+    DeviceTest(block_scan, data, *initial_value, scan_op, block_aggregate, prefix_op,
         Int2Type<SCAN_MODE>(), Int2Type<TEST_MODE>(), Int2Type<Traits<T>::PRIMITIVE>());
 
     // Stop cycle timer
@@ -599,6 +599,11 @@ void Test(
         printf("\n\n");
     }
 
+    T* d_initial_value;
+    T* h_initial_value = &initial_value;
+    hipMalloc(&d_initial_value, sizeof(T));
+    hipMemcpy(d_initial_value, h_initial_value, sizeof(T), hipMemcpyHostToDevice);
+
     // Run block_aggregate/prefix kernel
     dim3 block_dims(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z);
     hipLaunchKernelGGL((BlockScanKernel<BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z, ITEMS_PER_THREAD, SCAN_MODE, TEST_MODE, ALGORITHM>), 1, block_dims, 0, 0,
@@ -606,8 +611,10 @@ void Test(
         d_out,
         d_aggregate,
         scan_op,
-        initial_value,
+        d_initial_value,
         d_elapsed);
+
+    hipFree(d_initial_value);
 
     CubDebugExit(hipPeekAtLastError());
     CubDebugExit(hipDeviceSynchronize());
