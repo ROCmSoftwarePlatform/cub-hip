@@ -694,13 +694,12 @@ int main(int argc, char** argv)
         typedef float T;
         TestDriver<32, 4, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(INTEGER_SEED, 0, 0, sizeof(T) * 8);
     }
-/*
+
     // Compile/run quick tests
     typedef unsigned int T;
     TestDriver<64, 17, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
     TestDriver<96, 8, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
     TestDriver<128, 2, 4, true, BLOCK_SCAN_WARP_SCANS, hipSharedMemBankSizeFourByte, false, false, T, NullType>(RANDOM, 0, 0, sizeof(T) * 8);
-*/
 
 #else
 

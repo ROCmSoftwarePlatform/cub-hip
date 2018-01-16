@@ -250,7 +250,7 @@ __global__ void WarpScanKernel(
     T               *d_out,
     T               *d_aggregate,
     ScanOpT         scan_op,
-    InitialValueT   initial_value,
+    InitialValueT*   initial_value,
     clock_t         *d_elapsed)
 {
     // Cooperative warp-scan utility type (1 warp)
@@ -274,7 +274,7 @@ __global__ void WarpScanKernel(
     DeviceTest(
         warp_scan,
         data,
-        initial_value,
+        *initial_value,
         scan_op,
         aggregate,
         Int2Type<TEST_MODE>(),
@@ -433,14 +433,23 @@ void Test(
         (int) sizeof(T));
     fflush(stdout);
 
+    InitialValueT* d_initial_value;
+    InitialValueT* h_initial_value = &initial_value;
+
+    hipMalloc(&d_initial_value, sizeof(InitialValueT));
+
+    hipMemcpy(d_initial_value, h_initial_value, sizeof(InitialValueT), hipMemcpyHostToDevice);
+
     // Run aggregate/prefix kernel
     hipLaunchKernelGGL((WarpScanKernel<LOGICAL_WARP_THREADS, TEST_MODE>), 1, LOGICAL_WARP_THREADS, 0, 0,
         d_in,
         d_out,
         d_aggregate,
         scan_op,
-        initial_value,
+        d_initial_value,
         d_elapsed);
+
+    hipFree(d_initial_value);
 
     printf("\tElapsed clocks: ");
     DisplayDeviceResults(d_elapsed, 1);
