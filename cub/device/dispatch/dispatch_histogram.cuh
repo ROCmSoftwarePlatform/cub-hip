@@ -52,6 +52,39 @@ CUB_NS_PREFIX
 namespace cub {
 
 
+// Manual Serialization strategy to bypass the serialization attempted by compiler
+#if defined(__HIP_PLATFORM_HCC__)
+  #include <hip/hip_hcc.h>
+
+  template<typename T>
+    class Magic_wrapper {
+        // TODO: this is temporary, and it has the unpleasant property of
+        //       leaking memory.
+        T* p_ = nullptr;
+    public:
+        Magic_wrapper() = default;
+        explicit
+        Magic_wrapper(const T& x)
+        {
+            hipHostMalloc(&p_, sizeof(T)); new (p_) T{x};
+        }
+
+        operator const T&() const [[hc]] { return p_[0]; }
+    };
+
+  template<typename T>
+  Magic_wrapper<T> make_magic_wrapper(const T& x)
+  {
+    return Magic_wrapper<T>{x};
+  }
+  #define reference_to_const(...) __VA_ARGS__ const&
+#else
+  #define make_magic_wrapper(x) x
+  #define reference_to_const(...) __VA_ARGS__
+#endif
+
+
+
 
 /******************************************************************************
  * Histogram kernel entry points
@@ -65,8 +98,8 @@ template <
     typename                                        CounterT,                       ///< Integer type for counting sample occurrences per histogram bin
     typename                                        OffsetT>                        ///< Signed integer type for global offsets
 __global__ void DeviceHistogramInitKernel( 
-    ArrayWrapper<int, NUM_ACTIVE_CHANNELS>          num_output_bins_wrapper,        ///< Number of output histogram bins per channel
-    ArrayWrapper<CounterT*, NUM_ACTIVE_CHANNELS>    d_output_histograms_wrapper,    ///< Histogram counter data having logical dimensions <tt>CounterT[NUM_ACTIVE_CHANNELS][num_bins.array[CHANNEL]]</tt>
+    reference_to_const(ArrayWrapper<int, NUM_ACTIVE_CHANNELS>)          num_output_bins_wrapper,        ///< Number of output histogram bins per channel
+    reference_to_const(ArrayWrapper<CounterT*, NUM_ACTIVE_CHANNELS>)    d_output_histograms_wrapper,    ///< Histogram counter data having logical dimensions <tt>CounterT[NUM_ACTIVE_CHANNELS][num_bins.array[CHANNEL]]</tt>
     GridQueue<int>                                  tile_queue)                     ///< Drain queue descriptor for dynamically mapping tile data onto thread blocks
 {
     if ((hipThreadIdx_x == 0) && (hipBlockIdx_x == 0))
@@ -78,7 +111,7 @@ __global__ void DeviceHistogramInitKernel(
     for (int CHANNEL = 0; CHANNEL < NUM_ACTIVE_CHANNELS; ++CHANNEL)
     {
         if (output_bin < num_output_bins_wrapper.array[CHANNEL])
-            d_output_histograms_wrapper.array[CHANNEL][output_bin] = 0;
+           d_output_histograms_wrapper.array[CHANNEL][output_bin] = 0;
     }
 }
 
@@ -101,12 +134,12 @@ __launch_bounds__ (int(AgentHistogramPolicyT::BLOCK_THREADS))
 #endif
 __global__ void DeviceHistogramSweepKernel(
     SampleIteratorT                                         d_samples,                          ///< Input data to reduce
-    ArrayWrapper<int, NUM_ACTIVE_CHANNELS>                  num_output_bins_wrapper,            ///< The number bins per final output histogram
-    ArrayWrapper<int, NUM_ACTIVE_CHANNELS>                  num_privatized_bins_wrapper,        ///< The number bins per privatized histogram
-    ArrayWrapper<CounterT*, NUM_ACTIVE_CHANNELS>            d_output_histograms_wrapper,        ///< Reference to final output histograms
-    ArrayWrapper<CounterT*, NUM_ACTIVE_CHANNELS>            d_privatized_histograms_wrapper,    ///< Reference to privatized histograms
-    ArrayWrapper<OutputDecodeOpT, NUM_ACTIVE_CHANNELS>      output_decode_op_wrapper,           ///< The transform operator for determining output bin-ids from privatized counter indices, one for each channel
-    ArrayWrapper<PrivatizedDecodeOpT, NUM_ACTIVE_CHANNELS>  privatized_decode_op_wrapper,       ///< The transform operator for determining privatized counter indices from samples, one for each channel
+    reference_to_const(ArrayWrapper<int, NUM_ACTIVE_CHANNELS>)                  num_output_bins_wrapper,            ///< The number bins per final output histogram
+    reference_to_const(ArrayWrapper<int, NUM_ACTIVE_CHANNELS>)                  num_privatized_bins_wrapper,        ///< The number bins per privatized histogram
+    reference_to_const(ArrayWrapper<CounterT*, NUM_ACTIVE_CHANNELS>)            d_output_histograms_wrapper,        ///< Reference to final output histograms
+    reference_to_const(ArrayWrapper<CounterT*, NUM_ACTIVE_CHANNELS>)            d_privatized_histograms_wrapper,    ///< Reference to privatized histograms
+    reference_to_const(ArrayWrapper<OutputDecodeOpT, NUM_ACTIVE_CHANNELS>)      output_decode_op_wrapper,           ///< The transform operator for determining output bin-ids from privatized counter indices, one for each channel
+    reference_to_const(ArrayWrapper<PrivatizedDecodeOpT, NUM_ACTIVE_CHANNELS>)  privatized_decode_op_wrapper,       ///< The transform operator for determining privatized counter indices from samples, one for each channel
     OffsetT                                                 num_row_pixels,                     ///< The number of multi-channel pixels per row in the region of interest
     OffsetT                                                 num_rows,                           ///< The number of rows in the region of interest
     OffsetT                                                 row_stride_samples,                 ///< The number of samples between starts of consecutive rows in the region of interest
@@ -129,15 +162,22 @@ __global__ void DeviceHistogramSweepKernel(
     // Shared memory for AgentHistogram
     __shared__ typename AgentHistogramT::TempStorage temp_storage;
 
+    int (&num_output_bins_wrapper_array)[NUM_ACTIVE_CHANNELS] = {const_cast<int (&)[NUM_ACTIVE_CHANNELS]>(num_output_bins_wrapper.array)};
+    int (&num_privatized_bins_wrapper_array)[NUM_ACTIVE_CHANNELS] = {const_cast<int (&)[NUM_ACTIVE_CHANNELS]>(num_privatized_bins_wrapper.array)};
+    CounterT* (&d_output_histograms_wrapper_array)[NUM_ACTIVE_CHANNELS] = {const_cast<CounterT* (&) [NUM_ACTIVE_CHANNELS]>(d_output_histograms_wrapper.array)};
+    CounterT* (&d_privatized_histograms_wrapper_array)[NUM_ACTIVE_CHANNELS] = {const_cast<CounterT* (&)[NUM_ACTIVE_CHANNELS]>(d_privatized_histograms_wrapper.array)};
+    OutputDecodeOpT (&output_decode_op_wrapper_array)[NUM_ACTIVE_CHANNELS] = {const_cast<OutputDecodeOpT (&)[NUM_ACTIVE_CHANNELS]>(output_decode_op_wrapper.array)}; 
+    PrivatizedDecodeOpT (&privatized_decode_op_wrapper_array)[NUM_ACTIVE_CHANNELS] = {const_cast<PrivatizedDecodeOpT (&)[NUM_ACTIVE_CHANNELS]>(privatized_decode_op_wrapper.array)}; 
+    
     AgentHistogramT agent(
         temp_storage,
         d_samples,
-        num_output_bins_wrapper.array,
-        num_privatized_bins_wrapper.array,
-        d_output_histograms_wrapper.array,
-        d_privatized_histograms_wrapper.array,
-        output_decode_op_wrapper.array,
-        privatized_decode_op_wrapper.array);
+        num_output_bins_wrapper_array,
+        num_privatized_bins_wrapper_array,
+        d_output_histograms_wrapper_array,
+        d_privatized_histograms_wrapper_array,
+        output_decode_op_wrapper_array,
+        privatized_decode_op_wrapper_array);
 
     // Initialize counters
     agent.InitBinCounters();
@@ -664,8 +704,8 @@ struct DipatchHistogram
 #else
             hipLaunchKernelGGL(histogram_init_kernel, histogram_init_grid_dims, histogram_init_block_threads, 0, stream,
 #endif
-                num_output_bins_wrapper,
-                d_output_histograms_wrapper,
+                make_magic_wrapper(num_output_bins_wrapper),
+                make_magic_wrapper(d_output_histograms_wrapper),
                 tile_queue);
             
             // Return if empty problem
@@ -683,12 +723,12 @@ struct DipatchHistogram
                 (DeviceHistogramSweepKernel<PtxHistogramSweepPolicy, 0, NUM_CHANNELS, NUM_ACTIVE_CHANNELS, SampleIteratorT, CounterT, PrivatizedDecodeOpT, OutputDecodeOpT, OffsetT>),
                 sweep_grid_dims, histogram_sweep_config.block_threads, 0, stream,
                 d_samples,
-                num_output_bins_wrapper,
-                num_privatized_bins_wrapper,
-                d_output_histograms_wrapper,
-                d_privatized_histograms_wrapper,
-                output_decode_op_wrapper,
-                privatized_decode_op_wrapper,
+                make_magic_wrapper(num_output_bins_wrapper),
+                make_magic_wrapper(num_privatized_bins_wrapper),
+                make_magic_wrapper(d_output_histograms_wrapper),
+                make_magic_wrapper(d_privatized_histograms_wrapper),
+                make_magic_wrapper(output_decode_op_wrapper),
+                make_magic_wrapper(privatized_decode_op_wrapper),
                 num_row_pixels,
                 num_rows,
                 row_stride_samples,
@@ -700,12 +740,12 @@ struct DipatchHistogram
                 (DeviceHistogramSweepKernel<PtxHistogramSweepPolicy, MAX_PRIVATIZED_SMEM_BINS, NUM_CHANNELS, NUM_ACTIVE_CHANNELS, SampleIteratorT, CounterT, PrivatizedDecodeOpT, OutputDecodeOpT, OffsetT>),
                 sweep_grid_dims, histogram_sweep_config.block_threads, 0, stream,
                 d_samples,
-                num_output_bins_wrapper,
-                num_privatized_bins_wrapper,
-                d_output_histograms_wrapper,
-                d_privatized_histograms_wrapper,
-                output_decode_op_wrapper,
-                privatized_decode_op_wrapper,
+                make_magic_wrapper(num_output_bins_wrapper),
+                make_magic_wrapper(num_privatized_bins_wrapper),
+                make_magic_wrapper(d_output_histograms_wrapper),
+                make_magic_wrapper(d_privatized_histograms_wrapper),
+                make_magic_wrapper(output_decode_op_wrapper),
+                make_magic_wrapper(privatized_decode_op_wrapper),
                 num_row_pixels,
                 num_rows,
                 row_stride_samples,
