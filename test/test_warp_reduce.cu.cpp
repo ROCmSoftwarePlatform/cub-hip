@@ -759,7 +759,7 @@ void Test(GenMode gen_mode)
 
     // complex
 //    Test<WARPS, LOGICAL_WARP_THREADS, TestFoo>(             gen_mode, Sum());
-   // Test<WARPS, LOGICAL_WARP_THREADS, TestBar>(             gen_mode, Sum());
+    Test<WARPS, LOGICAL_WARP_THREADS, TestBar>(             gen_mode, Sum());
 }
 
 
@@ -827,6 +827,7 @@ int main(int argc, char** argv)
     for (int i = 0; i <= g_repeat; ++i)
     {
         // Test logical warp sizes
+        Test<64>();
         Test<32>();
         Test<16>();
         Test<9>();
