@@ -459,6 +459,7 @@ void Test(
 
     // Copy out and display results
     printf("\tScan results: ");
+
     int compare = CompareDeviceResults(h_reference, d_out, LOGICAL_WARP_THREADS, g_verbose, g_verbose);
     printf("%s\n", compare ? "FAIL" : "PASS");
     AssertEquals(0, compare);
@@ -496,8 +497,9 @@ void Test(
     T           initial_value)
 {
     // Exclusive
-    Test<LOGICAL_WARP_THREADS, BASIC, T>(gen_mode, scan_op, T());
-    Test<LOGICAL_WARP_THREADS, AGGREGATE, T>(gen_mode, scan_op, T());
+    T t = 0;
+    Test<LOGICAL_WARP_THREADS, BASIC, T>(gen_mode, scan_op, t);
+    Test<LOGICAL_WARP_THREADS, AGGREGATE, T>(gen_mode, scan_op, t);
 
     // Exclusive (non-specialized, so we can use initial-value)
     Test<LOGICAL_WARP_THREADS, BASIC, T>(gen_mode, WrapperFunctor<ScanOpT>(scan_op), initial_value);
@@ -561,6 +563,7 @@ void Test(GenMode gen_mode)
     Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_int4(17, 21, 32, 85));
     Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_long4(17, 21, 32, 85));
     Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_longlong4(17, 21, 32, 85));
+
     if (gen_mode != RANDOM) {
         // Only test numerically stable inputs
         Test<LOGICAL_WARP_THREADS>(gen_mode, Sum(), make_float4(17, 21, 32, 85));
