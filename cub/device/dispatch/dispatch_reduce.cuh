@@ -474,9 +474,9 @@ struct DispatchReduce :
             typedef typename DispatchReduce::MaxPolicy          MaxPolicyT;
             hipLaunchKernelGGL(
                 (DeviceReduceSingleTileKernel<MaxPolicyT, InputIteratorT, OutputIteratorT, OffsetT, ReductionOpT, OutputT>)
-, 1, 256, 0, stream,
+, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream,
 #else
-            hipLaunchKernelGGL(single_tile_kernel, 1, 256, 0, stream,
+            hipLaunchKernelGGL(single_tile_kernel, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream,
 #endif
 
                 d_in,
@@ -576,7 +576,7 @@ struct DispatchReduce :
             typedef typename DispatchReduce::MaxPolicy          MaxPolicyT;
             hipLaunchKernelGGL(
             (DeviceReduceKernel<typename DispatchReduce::MaxPolicy, InputIteratorT, OutputT*, OffsetT, ReductionOpT>),
-            reduce_grid_size, 256, 0, stream,
+            reduce_grid_size, ActivePolicyT::ReducePolicy::BLOCK_THREADS, 0, stream,
 #else
             hipLaunchKernelGGL(reduce_kernel, reduce_grid_size, ActivePolicyT::ReducePolicy::BLOCK_THREADS, 0, stream,
 #endif
@@ -603,7 +603,7 @@ struct DispatchReduce :
             typedef typename DispatchReduce::MaxPolicy          MaxPolicyT;
             hipLaunchKernelGGL(
             (DeviceReduceSingleTileKernel<MaxPolicyT, OutputT*, OutputIteratorT, OffsetT, ReductionOpT, OutputT>),
- 1, 256, 0, stream, 
+ 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream, 
 #else
             hipLaunchKernelGGL(single_tile_kernel, 1, ActivePolicyT::SingleTilePolicy::BLOCK_THREADS, 0, stream, 
 #endif
@@ -641,7 +641,7 @@ struct DispatchReduce :
         typedef typename DispatchReduce::MaxPolicy          MaxPolicyT;
 
         // Force kernel code-generation in all compiler passes
-        if (num_items <= (256 * SingleTilePolicyT::ITEMS_PER_THREAD))
+        if (num_items <= (SingleTilePolicyT::BLOCK_THREADS  * SingleTilePolicyT::ITEMS_PER_THREAD))
         {
             // Small, single tile size
             return InvokeSingleTile<ActivePolicyT>(
@@ -828,7 +828,7 @@ struct DispatchSegmentedReduce :
             typedef typename DispatchSegmentedReduce::MaxPolicy MaxPolicyT;
             hipLaunchKernelGGL(
             (DeviceSegmentedReduceKernel<MaxPolicyT, InputIteratorT, OutputIteratorT, OffsetIteratorT, OffsetT, ReductionOpT, OutputT>),
-            num_segments, 256, 0, stream,
+            num_segments, ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS, 0, stream,
 #else
             hipLaunchKernelGGL(segmented_reduce_kernel, num_segments, ActivePolicyT::SegmentedReducePolicy::BLOCK_THREADS, 0, stream,
 #endif
