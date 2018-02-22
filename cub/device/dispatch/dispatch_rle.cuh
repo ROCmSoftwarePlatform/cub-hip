@@ -44,7 +44,7 @@
 #include "../../grid/grid_queue.cuh"
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
-#include "../../../hip_helpers/forwarder.hpp"
+
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -75,8 +75,6 @@ template <
     typename            OffsetT>                    ///< Signed integer type for global offsets
 #ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(AgentRlePolicyT::BLOCK_THREADS))
-#elif defined(__HIP_PLATFORM_HCC__)
-__launch_bounds__ (256)
 #endif
 __global__ void DeviceRleSweepKernel(
     InputIteratorT              d_in,               ///< [in] Pointer to input sequence of data items

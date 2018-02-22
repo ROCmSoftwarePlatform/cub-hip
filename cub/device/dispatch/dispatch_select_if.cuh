@@ -43,7 +43,7 @@
 #include "../../grid/grid_queue.cuh"
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
-#include "../../../hip_helpers/forwarder.hpp"
+
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
 
@@ -74,7 +74,6 @@ template <
     bool                KEEP_REJECTS>               ///< Whether or not we push rejected items to the back of the output
 #ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(AgentSelectIfPolicyT::BLOCK_THREADS))
-#elif defined(__HIP_PLATFORM_HCC__)
 #endif
 __global__ void DeviceSelectSweepKernel(
     InputIteratorT          d_in,                   ///< [in] Pointer to the input sequence of data items
@@ -420,7 +419,6 @@ struct DispatchSelectIf
             if (debug_synchronous) _CubLog("Invoking scan_init_kernel<<<%d, %d, 0, %lld>>>()\n", init_grid_size, INIT_KERNEL_THREADS, (long long) stream);
 
             // Invoke scan_init_kernel to initialize tile descriptors
-            static auto const tmp = make_forwarder(scan_init_kernel);
 #ifdef __HIP_PLATFORM_NVCC__
             hipLaunchKernelGGL(scan_init_kernel, init_grid_size, INIT_KERNEL_THREADS, 0, stream,
                 tile_status,

@@ -44,9 +44,6 @@
 #include "../../util_debug.cuh"
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
-#ifdef __HIP_PLATFORM_HCC__
-#include "../../../hip_helpers/forwarder.hpp"
-#endif
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -105,8 +102,6 @@ template <
     typename            OffsetT>            ///< Signed integer type for global offsets
 #ifdef __HIP_PLATFORM_NVCC__
   __launch_bounds__ (int(ScanPolicyT::BLOCK_THREADS))
-#elif defined(__HIP_PLATFORM_HCC__)
-  __launch_bounds__ (256)
 #endif 
 __global__ void DeviceScanKernel(
     InputIteratorT      d_in,               ///< Input data
@@ -161,7 +156,7 @@ struct DispatchScan
 
     enum
     {
-        INIT_KERNEL_THREADS = 128
+        INIT_KERNEL_THREADS = 256
     };
 
     // The output value type
@@ -181,7 +176,7 @@ struct DispatchScan
     struct Policy600
     {
         typedef AgentScanPolicy<
-            CUB_NOMINAL_CONFIG(128, 15, OutputT),      ///< Threads per block, items per thread
+            CUB_NOMINAL_CONFIG(256, 15, OutputT),      ///< Threads per block, items per thread
                 BLOCK_LOAD_TRANSPOSE,
                 LOAD_DEFAULT,
                 BLOCK_STORE_TRANSPOSE,
@@ -195,7 +190,7 @@ struct DispatchScan
     {
         // Titan X: 32.47B items/s @ 48M 32-bit T
         typedef AgentScanPolicy<
-                CUB_NOMINAL_CONFIG(128, 12, OutputT),      ///< Threads per block, items per thread
+                CUB_NOMINAL_CONFIG(256, 24, OutputT),      ///< Threads per block, items per thread
                 BLOCK_LOAD_DIRECT,
                 LOAD_LDG,
                 BLOCK_STORE_WARP_TRANSPOSE,
@@ -209,7 +204,7 @@ struct DispatchScan
     {
         // GTX Titan: 29.5B items/s (232.4 GB/s) @ 48M 32-bit T
         typedef AgentScanPolicy<
-                CUB_NOMINAL_CONFIG(128, 12, OutputT),      ///< Threads per block, items per thread
+                CUB_NOMINAL_CONFIG(256, 12, OutputT),      ///< Threads per block, items per thread
                 BLOCK_LOAD_DIRECT,
                 LOAD_LDG,
                 BLOCK_STORE_WARP_TRANSPOSE_TIMESLICED,
@@ -234,7 +229,7 @@ struct DispatchScan
     {
         // GTX 580: 20.3B items/s (162.3 GB/s) @ 48M 32-bit T
         typedef AgentScanPolicy<
-                CUB_NOMINAL_CONFIG(128, 12, OutputT),      ///< Threads per block, items per thread
+                CUB_NOMINAL_CONFIG(256, 12, OutputT),      ///< Threads per block, items per thread
                 BLOCK_LOAD_WARP_TRANSPOSE,
                 LOAD_DEFAULT,
                 BLOCK_STORE_WARP_TRANSPOSE,
@@ -246,7 +241,7 @@ struct DispatchScan
     struct Policy130
     {
         typedef AgentScanPolicy<
-                CUB_NOMINAL_CONFIG(196, 8, OutputT),      ///< Threads per block, items per thread
+                CUB_NOMINAL_CONFIG(256, 21, OutputT),      ///< Threads per block, items per thread
                 BLOCK_LOAD_WARP_TRANSPOSE,
                 LOAD_DEFAULT,
                 BLOCK_STORE_WARP_TRANSPOSE,
@@ -258,7 +253,7 @@ struct DispatchScan
     struct Policy100
     {
         typedef AgentScanPolicy<
-                CUB_NOMINAL_CONFIG(128, 9, OutputT),      ///< Threads per block, items per thread
+                CUB_NOMINAL_CONFIG(256, 9, OutputT),      ///< Threads per block, items per thread
                 BLOCK_LOAD_WARP_TRANSPOSE,
                 LOAD_DEFAULT,
                 BLOCK_STORE_WARP_TRANSPOSE,

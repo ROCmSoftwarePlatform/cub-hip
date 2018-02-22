@@ -74,8 +74,6 @@ template <
     typename            OffsetT>                                ///< Signed integer type for global offsets
 #ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (int(AgentReduceByKeyPolicyT::BLOCK_THREADS))
-#elif defined(__HIP_PLATFORM_HCC__)
-__launch_bounds__(256)
 #endif
 __global__ void DeviceReduceByKeyKernel(
     KeysInputIteratorT          d_keys_in,                      ///< Pointer to the input sequence of keys
@@ -495,7 +493,7 @@ struct DispatchReduceByKey
 #elif defined (__HIP_PLATFORM_HCC__)
                 hipLaunchKernelGGL( 
                    (DeviceReduceByKeyKernel<PtxReduceByKeyPolicy, KeysInputIteratorT, UniqueOutputIteratorT, ValuesInputIteratorT, AggregatesOutputIteratorT, NumRunsOutputIteratorT, ScanTileStateT, EqualityOpT, ReductionOpT, OffsetT>),
-                    1024, reduce_by_key_config.block_threads, 0, stream, 
+                    scan_grid_size, reduce_by_key_config.block_threads, 0, stream, 
                     d_keys_in,
                     d_unique_out,
                     d_values_in,
