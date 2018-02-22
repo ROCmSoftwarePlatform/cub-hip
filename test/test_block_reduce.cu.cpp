@@ -719,11 +719,11 @@ void Test(
     ReductionOp     reduction_op)
 {
     Test<7,   T>(reduction_op);
-/*    Test<32,  T>(reduction_op);
+    Test<32,  T>(reduction_op);
     Test<63,  T>(reduction_op);
     Test<97,  T>(reduction_op);
     Test<128, T>(reduction_op);
-    Test<238, T>(reduction_op);*/
+    Test<238, T>(reduction_op);
 }
 
 

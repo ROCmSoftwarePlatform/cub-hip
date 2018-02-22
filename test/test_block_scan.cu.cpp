@@ -391,8 +391,6 @@ template <
     typename            ScanOpT>
 #ifdef __HIP_PLATFORM_NVCC__
 __launch_bounds__ (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z)
-#else
-__launch_bounds__ (256 * 256 * 256)
 #endif
 __global__ void BlockScanKernel(
     T                   *d_in,

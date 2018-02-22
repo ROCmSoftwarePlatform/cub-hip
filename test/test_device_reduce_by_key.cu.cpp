@@ -781,7 +781,7 @@ int main(int argc, char** argv)
 #ifdef QUICKER_TEST
 
     // Compile/run basic CUB test
-    if (num_items < 0) num_items = 32000000;
+    if (num_items < 0) num_items = 32000;
 
     TestPointer<CUB, int, double>(num_items, entropy_reduction, maxseg, cub::Sum());
     TestPointer<CUB, int, int>(num_items, entropy_reduction, maxseg, cub::Sum());
@@ -821,13 +821,13 @@ int main(int argc, char** argv)
 
         // Test different input types
         TestOp<int, char>(num_items);
-       TestOp<int, short>(num_items);
+/*       TestOp<int, short>(num_items);
         TestOp<int, int>(num_items);
         TestOp<int, long>(num_items);
         TestOp<int, long long>(num_items);
         TestOp<int, float>(num_items);
         if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
-            TestOp<int, double>(num_items);
+            TestOp<int, double>(num_items);*/
 
 //        TestOp<int, uchar2>(num_items);
 //        TestOp<int, uint2>(num_items);

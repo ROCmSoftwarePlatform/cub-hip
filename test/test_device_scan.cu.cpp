@@ -658,6 +658,14 @@ void Test(
         0,
         true));
 
+
+    OutputT* h_out = (OutputT*) malloc(sizeof(OutputT) * num_items);
+    hipMemcpy(h_out, d_out, sizeof(OutputT) * num_items, hipMemcpyDeviceToHost);
+
+    for(int i =0; i < num_items; i++) {
+//      printf("\n res[%d]: %d\t ref[%d]: %d",i, h_out[i], i, h_reference[i]);
+    }
+
     // Check for correctness (and display results, if specified)
     int compare = CompareDeviceResults(h_reference, d_out, num_items, true, g_verbose);
     printf("\t%s", compare ? "FAIL" : "PASS");
@@ -876,8 +884,9 @@ void TestSize(
         TestOp<InputT>(0,        identity, initial_value);
         TestOp<InputT>(1,        identity, initial_value);
         TestOp<InputT>(100,      identity, initial_value);
-        TestOp<InputT>(1000,    identity, initial_value);
-        //TestOp<InputT>(1000000,  identity, initial_value);
+		TestOp<InputT>(1000,      identity, initial_value);
+        TestOp<InputT>(10000,    identity, initial_value);
+        TestOp<InputT>(1000000,  identity, initial_value);
 
         // Randomly select problem size between 1:10,000,000
         unsigned int max_int = (unsigned int) -1;
@@ -885,7 +894,7 @@ void TestSize(
         {
             unsigned int num_items;
             RandomBits(num_items);
-            num_items = (unsigned int) ((double(num_items) * double(100)) / double(max_int));
+            num_items = (unsigned int) ((double(num_items) * double(10000000)) / double(max_int));
             num_items = CUB_MAX(1, num_items);
             TestOp<InputT>(num_items,  identity, initial_value);
         }
@@ -981,14 +990,14 @@ int main(int argc, char** argv)
     for (int i = 0; i <= g_repeat; ++i)
     {
         // Test different input+output data types
-        TestSize<unsigned char>(num_items,      (int) 0, (int) 99);
+//        TestSize<unsigned char>(num_items,      (int) 0, (int) 99);
 
         // Test same intput+output data types
-        TestSize<unsigned char>(num_items,      (unsigned char) 0,      (unsigned char) 99);
+/*        TestSize<unsigned char>(num_items,      (unsigned char) 0,      (unsigned char) 99);
         TestSize<char>(num_items,               (char) 0,               (char) 99);
         TestSize<unsigned short>(num_items,     (unsigned short) 0,     (unsigned short)99);
-        TestSize<unsigned int>(num_items,       (unsigned int) 0,       (unsigned int) 99);
-//        TestSize<unsigned long long>(num_items, (unsigned long long) 0, (unsigned long long) 99);
+        TestSize<unsigned int>(num_items,       (unsigned int) 0,       (unsigned int) 99);*/
+        TestSize<unsigned long long>(num_items, (unsigned long long) 0, (unsigned long long) 99);
 
 /*        TestSize<uchar2>(num_items,     make_uchar2(0, 0),              make_uchar2(17, 21));
         TestSize<char2>(num_items,      make_char2(0, 0),               make_char2(17, 21));

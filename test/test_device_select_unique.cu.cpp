@@ -522,7 +522,7 @@ void Test(
         TestOp<T>(1);
         TestOp<T>(100);
         TestOp<T>(10000);
-       // TestOp<T>(1000000);
+        TestOp<T>(1000000);
     }
     else
     {

@@ -772,8 +772,8 @@ void TestSize(
         TestDispatch<T, OffsetT, LengthT>(0);
         TestDispatch<T, OffsetT, LengthT>(1);
         TestDispatch<T, OffsetT, LengthT>(100);
-        TestDispatch<T, OffsetT, LengthT>(1000);
-      //  TestDispatch<T, OffsetT, LengthT>(1000);
+        TestDispatch<T, OffsetT, LengthT>(10000);
+        TestDispatch<T, OffsetT, LengthT>(1000000);
 
         // Randomly select problem size between 1:10,000,000
         unsigned int max_int = (unsigned int) -1;
@@ -781,7 +781,7 @@ void TestSize(
         {
             unsigned int num_items;
             RandomBits(num_items);
-            num_items = (unsigned int) ((double(num_items) * double(1000)) / double(max_int));
+            num_items = (unsigned int) ((double(num_items) * double(10000000)) / double(max_int));
             num_items = CUB_MAX(1, num_items);
             TestDispatch<T, OffsetT, LengthT>(num_items);
         }
@@ -865,7 +865,7 @@ int main(int argc, char** argv)
     {
         // Test different input types
         TestSize<char,          int, int>(num_items);
-/*        TestSize<short,         int, int>(num_items);
+        TestSize<short,         int, int>(num_items);
         TestSize<int,           int, int>(num_items);
         TestSize<long,          int, int>(num_items);
         TestSize<long long,     int, int>(num_items);
@@ -878,7 +878,7 @@ int main(int argc, char** argv)
         TestSize<uint4,         int, int>(num_items);
         TestSize<ulonglong4,    int, int>(num_items);
         //TestSize<TestFoo,       int, int>(num_items);
-        TestSize<TestBar,       int, int>(num_items);*/
+        TestSize<TestBar,       int, int>(num_items);
     }
 
 #endif
