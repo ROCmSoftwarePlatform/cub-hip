@@ -156,7 +156,7 @@ struct DispatchScan
 
     enum
     {
-        INIT_KERNEL_THREADS = 256
+        INIT_KERNEL_THREADS = 128
     };
 
     // The output value type
@@ -176,7 +176,7 @@ struct DispatchScan
     struct Policy600
     {
         typedef AgentScanPolicy<
-            CUB_NOMINAL_CONFIG(256, 15, OutputT),      ///< Threads per block, items per thread
+            CUB_NOMINAL_CONFIG(128, 15, OutputT),      ///< Threads per block, items per thread
                 BLOCK_LOAD_TRANSPOSE,
                 LOAD_DEFAULT,
                 BLOCK_STORE_TRANSPOSE,
@@ -190,7 +190,7 @@ struct DispatchScan
     {
         // Titan X: 32.47B items/s @ 48M 32-bit T
         typedef AgentScanPolicy<
-                CUB_NOMINAL_CONFIG(256, 24, OutputT),      ///< Threads per block, items per thread
+                CUB_NOMINAL_CONFIG(128, 12, OutputT),      ///< Threads per block, items per thread
                 BLOCK_LOAD_DIRECT,
                 LOAD_LDG,
                 BLOCK_STORE_WARP_TRANSPOSE,
