@@ -504,7 +504,6 @@ int RowMajorTid(int block_dim_x, int block_dim_y, int block_dim_z)
  */
 __device__
 __forceinline__
-inline
 unsigned int LaneId()
 {
     unsigned int ret;
@@ -523,7 +522,6 @@ unsigned int LaneId()
  */
 __device__
 __forceinline__
-inline
 unsigned int WarpId()
 {
     unsigned int ret;
