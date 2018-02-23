@@ -314,10 +314,10 @@ int g_num_rand_samples = 0;
 
 
 template <typename T>
-__host__ __device__ bool IsNaN(T val) { return false; }
+bool IsNaN(T val) { return false; }
 
 template<>
-__host__ __device__ __noinline__ bool IsNaN<float>(float val)
+__noinline__ bool IsNaN<float>(float val)
 {
     volatile unsigned int bits = reinterpret_cast<unsigned int &>(val);
 
@@ -326,31 +326,31 @@ __host__ __device__ __noinline__ bool IsNaN<float>(float val)
 }
 
 template<>
-__host__ __device__ __noinline__ bool IsNaN<float1>(float1 val)
+__noinline__ bool IsNaN<float1>(float1 val)
 {
     return (IsNaN(val.x));
 }
 
 template<>
-__host__ __device__ __noinline__ bool IsNaN<float2>(float2 val)
+__noinline__ bool IsNaN<float2>(float2 val)
 {
     return (IsNaN(val.y) || IsNaN(val.x));
 }
 
 template<>
-__host__ __device__ __noinline__ bool IsNaN<float3>(float3 val)
+__noinline__ bool IsNaN<float3>(float3 val)
 {
     return (IsNaN(val.z) || IsNaN(val.y) || IsNaN(val.x));
 }
 
 template<>
-__host__ __device__ __noinline__ bool IsNaN<float4>(float4 val)
+__noinline__ bool IsNaN<float4>(float4 val)
 {
     return (IsNaN(val.y) || IsNaN(val.x) || IsNaN(val.w) || IsNaN(val.z));
 }
 
 template<>
-__host__ __device__ __noinline__ bool IsNaN<double>(double val)
+__noinline__ bool IsNaN<double>(double val)
 {
     volatile unsigned long long bits = *reinterpret_cast<unsigned long long *>(&val);
 
@@ -359,25 +359,25 @@ __host__ __device__ __noinline__ bool IsNaN<double>(double val)
 }
 
 template<>
-__host__ __device__ __noinline__ bool IsNaN<double1>(double1 val)
+__noinline__ bool IsNaN<double1>(double1 val)
 {
     return (IsNaN(val.x));
 }
 
 template<>
-__host__ __device__ __noinline__ bool IsNaN<double2>(double2 val)
+__noinline__ bool IsNaN<double2>(double2 val)
 {
     return (IsNaN(val.y) || IsNaN(val.x));
 }
 
 template<>
-__host__ __device__ __noinline__ bool IsNaN<double3>(double3 val)
+__noinline__ bool IsNaN<double3>(double3 val)
 {
     return (IsNaN(val.z) || IsNaN(val.y) || IsNaN(val.x));
 }
 
 template<>
-__host__ __device__ __noinline__ bool IsNaN<double4>(double4 val)
+__noinline__ bool IsNaN<double4>(double4 val)
 {
     return (IsNaN(val.y) || IsNaN(val.x) || IsNaN(val.w) || IsNaN(val.z));
 }
@@ -571,9 +571,11 @@ __host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, T &value, i
 {
     switch (gen_mode)
     {
+#if (CUB_PTX_ARCH == 0)
     case RANDOM:
          RandomBits(value);
          break;
+#endif
      case UNIFORM:
         value = 2;
         break;
@@ -592,11 +594,13 @@ __host__ __device__ __forceinline__ void InitValue(GenMode gen_mode, bool &value
 {
     switch (gen_mode)
     {
+#if (CUB_PTX_ARCH == 0)
     case RANDOM:
         char c;
         RandomBits(c, 0, 0, 1);
         value = (c > 0);
         break;
+#endif
      case UNIFORM:
         value = true;
         break;
