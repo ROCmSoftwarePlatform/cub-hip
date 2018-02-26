@@ -497,7 +497,7 @@ void Test(
     T           initial_value)
 {
     // Exclusive
-    T t = 0;
+    T t = (T)0;
     Test<LOGICAL_WARP_THREADS, BASIC, T>(gen_mode, scan_op, t);
     Test<LOGICAL_WARP_THREADS, AGGREGATE, T>(gen_mode, scan_op, t);
 
