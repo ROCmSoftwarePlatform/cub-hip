@@ -1255,7 +1255,7 @@ int main(int argc, char** argv)
     // Compile/run thorough tests
     for (int i = 0; i <= g_repeat; ++i)
     {
-/*        TestGen<bool>                 (num_items, num_segments);
+        TestGen<bool>                 (num_items, num_segments);
 
         TestGen<char>                 (num_items, num_segments);
         TestGen<signed char>          (num_items, num_segments);
@@ -1271,7 +1271,7 @@ int main(int argc, char** argv)
         TestGen<unsigned long>        (num_items, num_segments);
 
         TestGen<long long>            (num_items, num_segments);
-        TestGen<unsigned long long>   (num_items, num_segments);*/
+        TestGen<unsigned long long>   (num_items, num_segments);
 
         TestGen<float>                (num_items, num_segments);
 
