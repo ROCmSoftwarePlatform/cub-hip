@@ -33,6 +33,7 @@
 
 #pragma once
 
+#include "hip/hip_runtime.h"
 #include "util_namespace.cuh"
 
 /// Optional outer namespace(s)
