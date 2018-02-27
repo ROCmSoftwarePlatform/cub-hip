@@ -1026,9 +1026,6 @@ struct DispatchRadixSort :
      * Invoke a three-kernel sorting pass at the current bit.
      */
     template <typename PassConfigT>
-#ifdef __HIP_PLATFORM_NVCC__
-    CUB_RUNTIME_FUNCTION
-#endif
     __forceinline__
     hipError_t  InvokePass(
         KeyT      *d_keys_in,
@@ -1238,9 +1235,6 @@ struct DispatchRadixSort :
         typename            UpsweepKernelT,         ///< Function type of cub::DeviceRadixSortUpsweepKernel
         typename            ScanKernelT,            ///< Function type of cub::SpineScanKernel
         typename            DownsweepKernelT>       ///< Function type of cub::DeviceRadixSortDownsweepKernel
-#ifdef __HIP_PLATFORM_NVCC__
-    CUB_RUNTIME_FUNCTION
-#endif
     __forceinline__
     hipError_t InvokePasses(
         UpsweepKernelT      upsweep_kernel,         ///< [in] Kernel function pointer to parameterization of cub::DeviceRadixSortUpsweepKernel
@@ -1532,9 +1526,6 @@ struct DispatchSegmentedRadixSort :
 
     /// Invoke a three-kernel sorting pass at the current bit.
     template <typename PassConfigT>
-#ifdef __HIP_PLATFORM_NVCC__
-    CUB_RUNTIME_FUNCTION
-#endif
     __forceinline__
     hipError_t InvokePass(
         const KeyT      *d_keys_in,
