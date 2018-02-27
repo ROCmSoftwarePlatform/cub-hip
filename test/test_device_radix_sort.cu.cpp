@@ -859,7 +859,7 @@ void Test(
     if (d_temp_storage_bytes) CubDebugExit(g_allocator.DeviceFree(d_temp_storage_bytes));
 
     // Correctness asserts
-    //AssertEquals(0, compare);
+    AssertEquals(0, compare);
 }
 
 
@@ -1247,7 +1247,7 @@ int main(int argc, char** argv)
     {
         TestGen<bool>                 (num_items, num_segments);
 
-/*        TestGen<char>                 (num_items, num_segments);
+        TestGen<char>                 (num_items, num_segments);
         TestGen<signed char>          (num_items, num_segments);
         TestGen<unsigned char>        (num_items, num_segments);
 
@@ -1265,8 +1265,13 @@ int main(int argc, char** argv)
 
         TestGen<float>                (num_items, num_segments);
 
+#ifdef __HIP_PLATFORM_NVCC__
         if (ptx_version > 120)                          // Don't check doubles on PTX120 or below because they're down-converted
-            TestGen<double>           (num_items, num_segments);*/
+            TestGen<double>           (num_items, num_segments);
+#else
+
+        TestGen<double>           (num_items, num_segments);
+#endif
 
     }
 
