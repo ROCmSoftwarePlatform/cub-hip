@@ -45,9 +45,7 @@
 #include "../../util_debug.cuh"
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
-#ifdef __HIP_PLATFORM_HCC__
-#include "../../../hip_helpers/forwarder.hpp"
-#endif
+
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
