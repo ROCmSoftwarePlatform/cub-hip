@@ -39,7 +39,7 @@
 #include <stdio.h>
 #include "util_namespace.cuh"
 #include "util_arch.cuh"
-#include "hip/hip_runtime_api.h"
+#include "hip/hip_runtime.h"
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
