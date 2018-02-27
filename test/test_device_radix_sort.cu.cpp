@@ -37,15 +37,15 @@
 #include <algorithm>
 #include <typeinfo>
 
-#include <thrust/device_ptr.h>
-#include <thrust/sort.h>
-#include <thrust/reverse.h>
-
 #include <cub/util_allocator.cuh>
 #include <cub/device/device_radix_sort.cuh>
 #include <cub/device/device_segmented_radix_sort.cuh>
 
 #include "test_util.h"
+
+#include <thrust/device_ptr.h>
+#include <thrust/sort.h>
+#include <thrust/reverse.h>
 
 using namespace cub;
 
@@ -933,18 +933,20 @@ void TestValueTypes(
     KeyT *h_reference_keys = NULL;
     InitializeSolution<IS_DESCENDING>(h_keys, num_items, num_segments, h_segment_offsets, begin_bit, end_bit, h_reference_ranks, h_reference_keys);
 
-    // Test value types
+    // Test keys-only
+    TestBackend<IS_DESCENDING, KeyT, NullType>          (h_keys, num_items, num_segments, h_segment_offsets, begin_bit, end_bit, h_reference_keys, h_reference_ranks);
 
-    TestBackend<IS_DESCENDING, KeyT, NullType>              (h_keys, num_items, num_segments, h_segment_offsets, begin_bit, end_bit, h_reference_keys, h_reference_ranks);
-    TestBackend<IS_DESCENDING, KeyT, KeyT>                  (h_keys, num_items, num_segments, h_segment_offsets, begin_bit, end_bit, h_reference_keys, h_reference_ranks);
+    // Test with 8b value
+    TestBackend<IS_DESCENDING, KeyT, unsigned char>     (h_keys, num_items, num_segments, h_segment_offsets, begin_bit, end_bit, h_reference_keys, h_reference_ranks);
 
-    if (!Equals<KeyT, unsigned int>::VALUE)
-        TestBackend<IS_DESCENDING, KeyT, unsigned int>      (h_keys, num_items, num_segments, h_segment_offsets, begin_bit, end_bit, h_reference_keys, h_reference_ranks);
+    // Test with 32b value
+    TestBackend<IS_DESCENDING, KeyT, unsigned int>      (h_keys, num_items, num_segments, h_segment_offsets, begin_bit, end_bit, h_reference_keys, h_reference_ranks);
 
-    if (!Equals<KeyT, unsigned long long>::VALUE)
-        TestBackend<IS_DESCENDING, KeyT, unsigned long long>(h_keys, num_items, num_segments, h_segment_offsets, begin_bit, end_bit, h_reference_keys, h_reference_ranks);
+    // Test with 64b value
+    TestBackend<IS_DESCENDING, KeyT, unsigned long long>(h_keys, num_items, num_segments, h_segment_offsets, begin_bit, end_bit, h_reference_keys, h_reference_ranks);
 
-   // TestBackend<IS_DESCENDING, KeyT, TestFoo>               (h_keys, num_items, num_segments, h_segment_offsets, begin_bit, end_bit, h_reference_keys, h_reference_ranks);
+    // Test with non-trivially-constructable value
+    TestBackend<IS_DESCENDING, KeyT, TestBar>           (h_keys, num_items, num_segments, h_segment_offsets, begin_bit, end_bit, h_reference_keys, h_reference_ranks);
 
     // Cleanup
     if (h_reference_ranks) delete[] h_reference_ranks;
@@ -1000,6 +1002,14 @@ void TestBits(
 }
 
 
+// Deciding Segment offset multiple
+#ifdef __HIP_PLATFORM_HCC__
+  #define SEGMENT_MULTIPLE 64
+#elif defined(__HIP_PLATFORM_NVCC__)
+  #define SEGMENT_MULTIPLE 32
+#endif
+
+
 /**
  * Test different segment compositions
  */
@@ -1011,7 +1021,7 @@ void TestSegments(
 {
     int *h_segment_offsets = new int[max_segments + 1];
 
-    for (int num_segments = max_segments; num_segments > 1; num_segments = (num_segments + 64 - 1) / 64)
+    for (int num_segments = max_segments; num_segments > 1; num_segments = (num_segments + SEGMENT_MULTIPLE - 1) / SEGMENT_MULTIPLE)
     {
         if (num_items / num_segments < 128 * 1000) {
             // Right now we assign a single thread block to each segment, so lets keep it to under 128K items per segment
@@ -1040,7 +1050,7 @@ void TestSizes(
     int     max_items,
     int     max_segments)
 {
-    for (int num_items = max_items; num_items > 1; num_items = (num_items + 64 - 1) / 64)
+    for (int num_items = max_items; num_items > 1; num_items = (num_items + SEGMENT_MULTIPLE - 1) / SEGMENT_MULTIPLE)
     {
         TestSegments(h_keys, num_items, max_segments);
     }
@@ -1245,7 +1255,7 @@ int main(int argc, char** argv)
     // Compile/run thorough tests
     for (int i = 0; i <= g_repeat; ++i)
     {
-        TestGen<bool>                 (num_items, num_segments);
+/*        TestGen<bool>                 (num_items, num_segments);
 
         TestGen<char>                 (num_items, num_segments);
         TestGen<signed char>          (num_items, num_segments);
@@ -1261,7 +1271,7 @@ int main(int argc, char** argv)
         TestGen<unsigned long>        (num_items, num_segments);
 
         TestGen<long long>            (num_items, num_segments);
-        TestGen<unsigned long long>   (num_items, num_segments);
+        TestGen<unsigned long long>   (num_items, num_segments);*/
 
         TestGen<float>                (num_items, num_segments);
 
