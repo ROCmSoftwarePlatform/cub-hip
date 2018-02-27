@@ -88,12 +88,6 @@ namespace cub {
     #define CUB_WARP_THREADS(arch)        32
     #define CUB_PTX_LOG_WARP_THREADS   5
 #endif
-
-    #define CUB_LOG_WARP_THREADS(arch)    6                  
-    #define CUB_PTX_WARP_THREADS        64
-    #define CUB_WARP_THREADS(arch)        64
-    #define CUB_PTX_LOG_WARP_THREADS   6
-
 #endif
 
 
