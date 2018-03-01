@@ -171,8 +171,6 @@ struct AgentRadixSortDownsweep
         ITEMS_PER_THREAD,
         LOAD_ALGORITHM> BlockLoadValuesT;
 
-    // Value exchange array type
-    typedef ValueT ValueExchangeT[TILE_ITEMS];
 
     /**
      * Shared memory storage layout
@@ -193,7 +191,7 @@ struct AgentRadixSortDownsweep
             OffsetT                             relative_bin_offsets[RADIX_DIGITS];
         };
 
-        Uninitialized<ValueExchangeT>           exchange_values;
+        ValueT                                  exchange_values[TILE_ITEMS];
 
         OffsetT                                 exclusive_digit_prefix[RADIX_DIGITS];
     };
@@ -282,12 +280,10 @@ struct AgentRadixSortDownsweep
     {
         CTA_SYNC();
 
-        ValueExchangeT &exchange_values = temp_storage.exchange_values.Alias();
-
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
-            exchange_values[ranks[ITEM]] = values[ITEM];
+            temp_storage.exchange_values[ranks[ITEM]] = values[ITEM];
         }
 
         CTA_SYNC();
@@ -295,7 +291,7 @@ struct AgentRadixSortDownsweep
         #pragma unroll
         for (int ITEM = 0; ITEM < ITEMS_PER_THREAD; ++ITEM)
         {
-            ValueT value = exchange_values[hipThreadIdx_x + (ITEM * BLOCK_THREADS)];
+            ValueT value = temp_storage.exchange_values[hipThreadIdx_x + (ITEM * BLOCK_THREADS)];
 
             if (FULL_TILE || 
                 (static_cast<OffsetT>(hipThreadIdx_x + (ITEM * BLOCK_THREADS)) < valid_items))
