@@ -430,6 +430,9 @@ struct DeviceHistogram
         typename            CounterT,
         typename            LevelT,
         typename            OffsetT>
+#ifdef __HIP_PLATFORM_NVCC__
+    CUB_RUNTIME_FUNCTION
+#endif
     static hipError_t MultiHistogramEven(
         void*               d_temp_storage,                             ///< [in] %Device-accessible allocation of temporary storage.  When NULL, the required allocation size is written to \p temp_storage_bytes and no work is done.
         size_t&             temp_storage_bytes,                        ///< [in,out] Reference to size in bytes of \p d_temp_storage allocation

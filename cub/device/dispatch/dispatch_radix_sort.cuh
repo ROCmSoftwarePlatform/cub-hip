@@ -396,6 +396,21 @@ __global__ void DeviceSegmentedRadixSortKernel(
     //
 
     // Shared memory storage
+#ifdef __HIP_PLATFORM_NVCC__
+    __shared__ union
+    {
+        typename BlockUpsweepT::TempStorage     upsweep;
+        typename BlockDownsweepT::TempStorage   downsweep;
+        struct
+        {
+            volatile OffsetT                        reverse_counts_in[RADIX_DIGITS];
+            volatile OffsetT                        reverse_counts_out[RADIX_DIGITS];
+            typename DigitScanT::TempStorage        scan;
+        };
+
+    } temp_storage;
+
+#elif defined(__HIP_PLATFORM_HCC__)
     __shared__ union TS
     {
         typename BlockUpsweepT::TempStorage     upsweep;
@@ -411,6 +426,7 @@ __global__ void DeviceSegmentedRadixSortKernel(
         ~TS() {}
 
     } temp_storage;
+#endif
 
     OffsetT segment_begin   = d_begin_offsets[hipBlockIdx_x];
     OffsetT segment_end     = d_end_offsets[hipBlockIdx_x];
