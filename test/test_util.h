@@ -1041,6 +1041,7 @@ std::ostream& operator<<(std::ostream& os, const cub::KeyValuePair<Key, Value> &
 /**
  * Define for types
  */
+ #ifdef __HIP_PLATFORM_NVCC__
 CUB_VEC_OVERLOAD(char, char)
 CUB_VEC_OVERLOAD(short, short)
 CUB_VEC_OVERLOAD(int, int)
@@ -1053,6 +1054,7 @@ CUB_VEC_OVERLOAD(ulong, unsigned long)
 CUB_VEC_OVERLOAD(ulonglong, unsigned long long)
 CUB_VEC_OVERLOAD(float, float)
 CUB_VEC_OVERLOAD(double, double)
+#endif
 
 
 //---------------------------------------------------------------------
