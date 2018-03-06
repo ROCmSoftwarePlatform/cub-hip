@@ -286,7 +286,7 @@ struct CommandLineArgs
                 printf(
                         "Using device %d: %s (PTX version %d, SM%d, %d SMs, "
                         "%lld free / %lld total MB physmem, "
-                        "%.3f GB/s @ %d kHz mem clock, ECC)\n",
+                        "%.3f GB/s @ %d kHz mem clock)\n",
                     dev,
                     deviceProp.name,
                     ptx_version,
@@ -295,7 +295,7 @@ struct CommandLineArgs
                     (unsigned long long) device_free_physmem / 1024 / 1024,
                     (unsigned long long) device_total_physmem / 1024 / 1024,
                     device_giga_bandwidth,
-                    deviceProp.memoryClockRate, "off");
+                    deviceProp.memoryClockRate);
                     //(deviceProp.ECCEnabled) ? "on" : "off"); Disabled by Neel
                 fflush(stdout);
             }
