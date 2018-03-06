@@ -164,9 +164,18 @@ private:
     };
 
     /// Internal specialization.  Use SHFL-based scan if (architecture is >= SM30) and (LOGICAL_WARP_THREADS is a power-of-two)
+    // Shfl based scanning enabled only for NV stack presently. ROCM is gonna use Sharemem for all cases even when LOGICAL_WARP_THREADS is a power of two : Neel 
+
+#ifdef __HIP_PLATFORM_HCC__
     typedef typename If<(PTX_ARCH >= 300) && (IS_POW_OF_TWO),
         WarpScanSmem<T, LOGICAL_WARP_THREADS, PTX_ARCH>,
         WarpScanSmem<T, LOGICAL_WARP_THREADS, PTX_ARCH> >::Type InternalWarpScan;
+#elif defined (__HIP_PLATFORM_NVCC__)
+    typedef typename If<(PTX_ARCH >= 300) && (IS_POW_OF_TWO),
+        WarpScanShfl<T, LOGICAL_WARP_THREADS, PTX_ARCH>,
+        WarpScanSmem<T, LOGICAL_WARP_THREADS, PTX_ARCH> >::Type InternalWarpScan;
+#endif
+
 
     /// Shared memory storage layout type for WarpScan
     typedef typename InternalWarpScan::TempStorage _TempStorage;
