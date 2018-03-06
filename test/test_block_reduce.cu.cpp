@@ -823,7 +823,7 @@ int main(int argc, char** argv)
         Test<float>();
 
         // vector types
-/*        Test<char2>();
+        Test<char2>();
         Test<short2>();
         Test<int2>();
         Test<longlong2>();
@@ -831,11 +831,13 @@ int main(int argc, char** argv)
         Test<char4>();
         Test<short4>();
         Test<int4>();
-        Test<longlong4>();*/
+        Test<longlong4>();
 
         // Complex types
-/*        Test<TestFoo>();
-        Test<TestBar>();*/
+#ifdef __HIP_PLATFORM_NVCC__
+        Test<TestFoo>();
+#endif
+        Test<TestBar>();
     }
 
 #endif
