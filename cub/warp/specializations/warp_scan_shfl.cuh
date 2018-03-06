@@ -46,6 +46,8 @@ namespace cub {
 
 /**
  * \brief WarpScanShfl provides SHFL-based variants of parallel prefix scan of items partitioned across a CUDA thread warp.
+ *
+ * LOGICAL_WARP_THREADS must be a power-of-two
  */
 template <
     typename    T,                      ///< Data type being scanned
@@ -66,7 +68,7 @@ struct WarpScanShfl
         STEPS = Log2<LOGICAL_WARP_THREADS>::VALUE,
 
         /// The 5-bit SHFL mask for logically splitting warps into sub-segments starts 8-bits up
-        SHFL_C = ((-1 << STEPS) & 31) << 8,
+        SHFL_C = ((0xFFFFFFFFU << STEPS) & 31) << 8,
     };
 
     template <typename S>
@@ -98,12 +100,11 @@ struct WarpScanShfl
     __device__ __forceinline__ WarpScanShfl(
         TempStorage &/*temp_storage*/)
     :
-        lane_id(IS_ARCH_WARP ?
-            LaneId() :
-            LaneId() % LOGICAL_WARP_THREADS),
-        member_mask(IS_ARCH_WARP ?
-             0xffffffff :
-             (0xffffffff >> (32 - LOGICAL_WARP_THREADS)) << (LaneId() / LOGICAL_WARP_THREADS))
+        lane_id(LaneId()),
+
+        member_mask((0xffffffff >> (32 - LOGICAL_WARP_THREADS)) << ((IS_ARCH_WARP) ?
+            0 : // arch-width subwarps need not be tiled within the arch-warp
+            ((lane_id / LOGICAL_WARP_THREADS) * LOGICAL_WARP_THREADS)))
     {}
 
 
@@ -518,8 +519,7 @@ struct WarpScanShfl
         if (static_cast<int>(lane_id) < first_lane + offset)
            output = input;
 
-        
-        return LaneId() < first_lane + offset ? input : output;
+        return output;
     }
 
 
@@ -607,10 +607,10 @@ struct WarpScanShfl
         int segment_first_lane = 0;
 
         // Iterate scan steps
-        InclusiveScanStep(inclusive_output, scan_op, segment_first_lane, Int2Type<0>());
+//        InclusiveScanStep(inclusive_output, scan_op, segment_first_lane, Int2Type<0>());
 
         // Iterate scan steps
-/*        #pragma unroll
+        #pragma unroll
         for (int STEP = 0; STEP < STEPS; STEP++)
         {
             inclusive_output = InclusiveScanStep(
@@ -620,7 +620,7 @@ struct WarpScanShfl
                 (1 << STEP),
                 Int2Type<IntegerTraits<T>::IS_SMALL_UNSIGNED>());
         }
-*/
+
     }
 
     /// Inclusive scan, specialized for reduce-value-by-key
@@ -634,7 +634,7 @@ struct WarpScanShfl
 
         KeyT pred_key = ShuffleUp(inclusive_output.key, 1, 0, member_mask);
 
-        unsigned int ballot = __ballot((pred_key != inclusive_output.key), member_mask);
+        unsigned int ballot = WARP_BALLOT((pred_key != inclusive_output.key), member_mask);
 
         // Mask away all lanes greater than ours
         ballot = ballot & LaneMaskLe();
@@ -643,7 +643,7 @@ struct WarpScanShfl
         int segment_first_lane = CUB_MAX(0, 31 - __clz(ballot));
 
         // Iterate scan steps
-        InclusiveScanStep(inclusive_output.value, scan_op.op, segment_first_lane, Int2Type<0>());
+//        InclusiveScanStep(inclusive_output.value, scan_op.op, segment_first_lane, Int2Type<0>());
 
         // Iterate scan steps
         #pragma unroll
@@ -716,7 +716,10 @@ struct WarpScanShfl
     {
         inclusive = scan_op(initial_value, inclusive);
         exclusive = ShuffleUp(inclusive, 1, 0, member_mask);
-        if (lane_id == 0)
+        unsigned int segment_id = (IS_ARCH_WARP) ?
+            lane_id :
+            lane_id % LOGICAL_WARP_THREADS;
+        if (segment_id == 0)
             exclusive = initial_value;
     }
 
