@@ -429,7 +429,9 @@ void ThreadExit() {
 __device__ __forceinline__
 static
 void ThreadTrap() {
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("trap;");
+#endif
 }
 
 
@@ -1108,7 +1110,9 @@ __device__ __forceinline__ void ThreadExit() {
  * \brief  Abort execution and generate an interrupt to the host CPU
  */
 __device__ __forceinline__ void ThreadTrap() {
+#ifdef __HIP_PLATFORM_NVCC__
     asm volatile("trap;");
+#endif
 }
 
 
