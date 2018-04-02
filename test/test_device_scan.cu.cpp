@@ -990,13 +990,13 @@ int main(int argc, char** argv)
     for (int i = 0; i <= g_repeat; ++i)
     {
         // Test different input+output data types
-//        TestSize<unsigned char>(num_items,      (int) 0, (int) 99);
+        TestSize<unsigned char>(num_items,      (int) 0, (int) 99);
 
         // Test same intput+output data types
-/*        TestSize<unsigned char>(num_items,      (unsigned char) 0,      (unsigned char) 99);
+        TestSize<unsigned char>(num_items,      (unsigned char) 0,      (unsigned char) 99);
         TestSize<char>(num_items,               (char) 0,               (char) 99);
         TestSize<unsigned short>(num_items,     (unsigned short) 0,     (unsigned short)99);
-        TestSize<unsigned int>(num_items,       (unsigned int) 0,       (unsigned int) 99);*/
+        TestSize<unsigned int>(num_items,       (unsigned int) 0,       (unsigned int) 99);
         TestSize<unsigned long long>(num_items, (unsigned long long) 0, (unsigned long long) 99);
 
 /*        TestSize<uchar2>(num_items,     make_uchar2(0, 0),              make_uchar2(17, 21));
@@ -1009,7 +1009,7 @@ int main(int argc, char** argv)
 
         TestSize<ushort4>(num_items,    make_ushort4(0, 0, 0, 0),       make_ushort4(17, 21, 32, 85));
         TestSize<uint4>(num_items,      make_uint4(0, 0, 0, 0),         make_uint4(17, 21, 32, 85));
-        TestSize<ulonglong4>(num_items, make_ulonglong4(0, 0, 0, 0),    make_ulonglong4(17, 21, 32, 85));
+        TestSize<ulonglong4>(num_items, make_ulonglong4(0, 0, 0, 0),    make_ulonglong4(17, 21, 32, 85));*/
 
 //        TestSize<TestFoo>(num_items,
 //            TestFoo::MakeTestFoo(0, 0, 0, 0),
@@ -1017,7 +1017,7 @@ int main(int argc, char** argv)
 
         TestSize<TestBar>(num_items,
             TestBar(0, 0),
-            TestBar(1ll << 63, 1 << 31));*/
+            TestBar(1ll << 63, 1 << 31));
     }
 
 #endif
