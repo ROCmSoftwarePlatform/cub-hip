@@ -1,5 +1,6 @@
 #pragma once
-
+#ifndef HELPER_FORWARDER
+#define HELPER_FORWARDER
 #include <type_traits>
 #include <utility>
 
@@ -44,3 +45,4 @@ namespace
         return Forwarder<F>{std::move(f)};
     }
 }
+#endif
