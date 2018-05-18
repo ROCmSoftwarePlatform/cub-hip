@@ -148,7 +148,7 @@ struct WarpScanShfl
 	 int r0;
          int lane_id;
          bool pred = false ;
-        r0 = __shfl_up(input, offset, shfl_c);
+        r0 = hc::__shfl_up(input, offset, shfl_c);
         lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
 	if (lane_id >=0)
           pred = true;
@@ -198,7 +198,7 @@ struct WarpScanShfl
 	 unsigned int r0;
          int lane_id;
          bool pred = false ;
-        r0 = __shfl_up((int)input, offset, shfl_c);
+        r0 = hc::__shfl_up((int)input, offset, shfl_c);
         lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
         if (lane_id >=0)
           pred = true;
@@ -252,7 +252,7 @@ struct WarpScanShfl
          float r0;
          int lane_id;
          bool pred = false;
-        r0 = __shfl_up(input, offset, shfl_c);
+        r0 = hc::__shfl_up(input, offset, shfl_c);
         lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
         if (lane_id >= 0 )//&& lane_id <= shfl_c)
           pred = true;
@@ -319,8 +319,8 @@ struct WarpScanShfl
          bool pred = false;
         lo = 0xFFFFFFFF & input;
         hi = 0xFFFFFFFF & (input >> 32);
-        lo = __shfl_up((int)lo, offset, shfl_c);
-        hi = __shfl_up((int)hi, offset, shfl_c);
+        lo = hc::__shfl_up((int)lo, offset, shfl_c);
+        hi = hc::__shfl_up((int)hi, offset, shfl_c);
          long long r0 = 0x0000;
         r0 = ((r0 | hi) << 32) | lo;
         lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
@@ -389,8 +389,8 @@ struct WarpScanShfl
          bool pred = false;
         lo = 0xFFFFFFFF & input;
         hi = 0xFFFFFFFF & (input >> 32);
-        lo = __shfl_up((int)lo, offset, shfl_c);
-        hi = __shfl_up((int)hi, offset, shfl_c);
+        lo = hc::__shfl_up((int)lo, offset, shfl_c);
+        hi = hc::__shfl_up((int)hi, offset, shfl_c);
          long long r0 = 0x0000;
         r0 = ((r0 | hi) << 32) | lo;
         lane_id = (((hipThreadIdx_z * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x) % warpSize) - offset ;
@@ -464,8 +464,8 @@ struct WarpScanShfl
          bool pred = false;
         lo = 0xFFFFFFFF & s.l;
         hi = 0xFFFFFFFF & (s.l >> 32);
-        lo = __shfl_up((int)lo, offset,shfl_c );
-        hi = __shfl_up((int)hi, offset, shfl_c);
+        lo = hc::__shfl_up((int)lo, offset,shfl_c );
+        hi = hc::__shfl_up((int)hi, offset, shfl_c);
          long long r0 = 0x0000;
         output = input ;
         r0 = ((r0 | hi) << 32) | lo;

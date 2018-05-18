@@ -382,7 +382,7 @@ static unsigned int SHFL_UP_SYNC(unsigned int word, int src_offset, int first_la
     asm volatile("shfl.up.b32 %0, %1, %2, %3;"
         : "=r"(word) : "r"(word), "r"(src_offset), "r"(first_lane));
 #else
-    word = __shfl_up((int)word, (unsigned int)src_offset, first_lane);
+    word = hc::__shfl_up((int)word, (unsigned int)src_offset, first_lane);
 #endif
     return word;
 }
@@ -404,7 +404,7 @@ static unsigned int SHFL_DOWN_SYNC(unsigned int word, int src_offset, int last_l
     asm volatile("shfl.down.b32 %0, %1, %2, %3;"
         : "=r"(word) : "r"(word), "r"(src_offset), "r"(last_lane));
 #else
-    word = __shfl_down((int)word, (unsigned int)src_offset, last_lane);
+    word = hc::__shfl_down((int)word, (unsigned int)src_offset, last_lane);
 #endif
     return word;
 }
@@ -426,7 +426,7 @@ static unsigned int SHFL_IDX_SYNC(unsigned int word, int src_lane, int last_lane
     asm volatile("shfl.idx.b32 %0, %1, %2, %3;"
         : "=r"(word) : "r"(word), "r"(src_lane), "r"(last_lane));
 #else
-    word = __shfl((int)word, src_lane, last_lane);
+    word = hc::__shfl((int)word, src_lane, last_lane);
 #endif
     return word;
 }
@@ -504,7 +504,7 @@ int RowMajorTid(int block_dim_x, int block_dim_y, int block_dim_z)
  */
 __device__
 __forceinline__
-inline
+//inline
 unsigned int LaneId()
 {
     unsigned int ret;
@@ -523,7 +523,7 @@ unsigned int LaneId()
  */
 __device__
 __forceinline__
-inline
+//inline
 unsigned int WarpId()
 {
     unsigned int ret;
@@ -681,7 +681,7 @@ T ShuffleUp(
 #ifdef __HIP_PLATFORM_NVCC__
     shuffle_word = SHFL_UP_SYNC((unsigned int)input_alias[0], src_offset, first_lane, member_mask);
 #elif defined(__HIP_PLATFORM_HCC__)
-    shuffle_word = __shfl_up((int) input_alias[0], (unsigned int)src_offset, first_lane);
+    shuffle_word = hc::__shfl_up((int) input_alias[0], (unsigned int)src_offset, first_lane);
 #endif
     output_alias[0] = shuffle_word;
 
@@ -691,7 +691,7 @@ T ShuffleUp(
 #ifdef __HIP_PLATFORM_NVCC__
         shuffle_word       = SHFL_UP_SYNC((unsigned int)input_alias[WORD], src_offset, first_lane, member_mask);
 #elif defined(__HIP_PLATFORM_HCC__)
-        shuffle_word = __shfl_up((int) input_alias[WORD], (unsigned int)src_offset, first_lane);
+        shuffle_word = hc::__shfl_up((int) input_alias[WORD], (unsigned int)src_offset, first_lane);
 #endif
         output_alias[WORD] = shuffle_word;
     }
@@ -749,7 +749,7 @@ T ShuffleDown(
 #ifdef __HIP_PLATFORM_NVCC__
     shuffle_word    = SHFL_DOWN_SYNC((unsigned int)input_alias[0], src_offset, last_lane, member_mask);
 #elif defined(__HIP_PLATFORM_HCC__)
-    shuffle_word = __shfl_down((int) input_alias[0], (unsigned int)src_offset);
+    shuffle_word = hc::__shfl_down((int) input_alias[0], (unsigned int)src_offset);
 
 #endif
     output_alias[0] = shuffle_word;
@@ -760,7 +760,7 @@ T ShuffleDown(
 #ifdef __HIP_PLATFORM_NVCC__
         shuffle_word       = SHFL_DOWN_SYNC((unsigned int)input_alias[WORD], src_offset, last_lane, member_mask);
 #else
-        shuffle_word = __shfl_down((int) input_alias[WORD], (unsigned int)src_offset);
+        shuffle_word = hc::__shfl_down((int) input_alias[WORD], (unsigned int)src_offset);
 #endif
         output_alias[WORD] = shuffle_word;
     }
