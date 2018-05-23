@@ -66,7 +66,7 @@ namespace cub {
  *
  * \return The CUDA error.
  */
-__host__ __device__ __forceinline__ hipError_t Debug(
+__host__ __device__ static __forceinline__ hipError_t Debug(
     hipError_t     error,
     const char*     filename,
     int             line)
