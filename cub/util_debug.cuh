@@ -122,13 +122,13 @@ __host__ __device__ __forceinline__ cudaError_t Debug(
     template <class... Args>
     inline __host__ __device__ void va_printf(char const* format, Args const&... args)
     {
-#ifdef __CUDA_ARCH__
+#ifdef __HIP_DEVICE_COMPILE__
       printf(format, blockIdx.z, blockIdx.y, blockIdx.x, threadIdx.z, threadIdx.y, threadIdx.x, args...);
 #else
       printf(format, args...);
 #endif
     }
-    #ifndef __CUDA_ARCH__
+    #ifndef __HIP_DEVICE_COMPILE__
         #define _CubLog(format, ...) thrust::cuda_cub::cub::va_printf(format,__VA_ARGS__);
     #else
         #define _CubLog(format, ...) thrust::cuda_cub::cub::va_printf("[block (%d,%d,%d), thread (%d,%d,%d)]: " format, __VA_ARGS__);
