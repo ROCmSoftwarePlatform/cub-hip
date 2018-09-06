@@ -1642,7 +1642,11 @@ struct DispatchSegmentedRadixSort :
       (void)alt_segmented_kernel;
 
         // Kernel launch not supported from this device
+#if __HIP__
+        return CubDebug(hipErrorNotInitialized);
+#else
         return CubDebug(cudaErrorNotSupported );
+#endif
 #else
 
         hipError_t error = hipSuccess;
