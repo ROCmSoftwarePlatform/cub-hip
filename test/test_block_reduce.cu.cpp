@@ -438,11 +438,22 @@ void TestFullTile(
     enum 
     {
 #if defined(SM100) || defined(SM110) || defined(SM130)
+#ifdef __HIP_PLATFORM_HCC__
         sufficient_smem       = (sizeof(typename BlockReduceT::TempStorage) <= 4 * 256),
         sufficient_threads    = ((BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z) <= 256),
 #else
+        sufficient_smem       = (sizeof(typename BlockReduceT::TempStorage) <= 16 * 1024),
+        sufficient_threads    = ((BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z) <= 512),
+
+#endif
+#else
+#ifdef __HIP_PLATFORM_HCC__
         sufficient_smem       = (sizeof(typename BlockReduceT::TempStorage) <= 4 * 256),
         sufficient_threads    = ((BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z) <= 256),
+#else
+        sufficient_smem       = (sizeof(typename BlockReduceT::TempStorage) <= 48 * 1024),
+        sufficient_threads    = ((BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z) <= 1024),        
+#endif
 #endif
     };
 
@@ -622,11 +633,21 @@ void TestPartialTile(
     enum 
     {
 #if defined(SM100) || defined(SM110) || defined(SM130)
+#ifdef __HIP_PLATFORM_HCC__
         sufficient_smem       = sizeof(typename BlockReduceT::TempStorage)  <= 4 * 256,
         sufficient_threads    = (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z)   <= 256,
 #else
+        sufficient_smem       = sizeof(typename BlockReduceT::TempStorage)  <= 16 * 1024,
+        sufficient_threads    = (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z)   <= 512,
+#endif
+#else
+#ifdef __HIP_PLATFORM_HCC__
         sufficient_smem       = sizeof(typename BlockReduceT::TempStorage)  <= 4 * 256,
         sufficient_threads    = (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z)   <= 256,
+#else
+        sufficient_smem       = sizeof(typename BlockReduceT::TempStorage)  <= 48 * 1024,
+        sufficient_threads    = (BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z)   <= 1024,
+#endif
 #endif
     };
 
@@ -813,8 +834,10 @@ int main(int argc, char** argv)
         Test<longlong4>();
 
         // Complex types
-/*        Test<TestFoo>();
-        Test<TestBar>();*/
+#ifdef __HIP_PLATFORM_NVCC__
+        Test<TestFoo>();
+#endif
+        Test<TestBar>();
     }
 
 #endif

@@ -78,6 +78,8 @@ struct BlockScanWarpScans
     ///  WarpScan utility type
     typedef WarpScan<T, WARPS, PTX_ARCH> WarpAggregateScan;
 
+
+    /// Shared memory storage layout type
 #ifdef __HIP_PLATFORM_NVCC__
     struct __align__(32) _TempStorage
 #elif defined(__HIP_PLATFORM_HCC__)

@@ -758,7 +758,9 @@ void Test(GenMode gen_mode)
     Test<WARPS, LOGICAL_WARP_THREADS, ulonglong4>(          gen_mode, Sum());
 
     // complex
-//    Test<WARPS, LOGICAL_WARP_THREADS, TestFoo>(             gen_mode, Sum());
+#ifdef __HIP_PLATFORM_NVCC__
+    Test<WARPS, LOGICAL_WARP_THREADS, TestFoo>(             gen_mode, Sum());
+#endif
     Test<WARPS, LOGICAL_WARP_THREADS, TestBar>(             gen_mode, Sum());
 }
 
@@ -786,8 +788,13 @@ void Test()
     Test<1, LOGICAL_WARP_THREADS>();
 
     // Only power-of-two subwarps can be tiled
+#ifdef __HIP_PLATFORM_HCC__
     if ((LOGICAL_WARP_THREADS == 64) || PowerOfTwo<LOGICAL_WARP_THREADS>::VALUE)
         Test<2, LOGICAL_WARP_THREADS>();
+#elif defined (__HIP_PLATFORM_NVCC__)
+    if ((LOGICAL_WARP_THREADS == 32) || PowerOfTwo<LOGICAL_WARP_THREADS>::VALUE)
+        Test<2, LOGICAL_WARP_THREADS>();
+#endif
 }
 
 
@@ -830,7 +837,9 @@ int main(int argc, char** argv)
     for (int i = 0; i <= g_repeat; ++i)
     {
         // Test logical warp sizes
+#ifdef __HIP_PLATFORM_HCC__
         Test<64>();
+#endif
         Test<32>();
         Test<16>();
         Test<9>();

@@ -46,7 +46,6 @@
 #include "../../util_debug.cuh"
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
-#include "../../../hip_helpers/forwarder.hpp" 
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -397,6 +396,21 @@ __global__ void DeviceSegmentedRadixSortKernel(
     //
 
     // Shared memory storage
+#ifdef __HIP_PLATFORM_NVCC__
+    __shared__ union
+    {
+        typename BlockUpsweepT::TempStorage     upsweep;
+        typename BlockDownsweepT::TempStorage   downsweep;
+        struct
+        {
+            volatile OffsetT                        reverse_counts_in[RADIX_DIGITS];
+            volatile OffsetT                        reverse_counts_out[RADIX_DIGITS];
+            typename DigitScanT::TempStorage        scan;
+        };
+
+    } temp_storage;
+
+#elif defined(__HIP_PLATFORM_HCC__)
     __shared__ union TS
     {
         typename BlockUpsweepT::TempStorage     upsweep;
@@ -412,6 +426,7 @@ __global__ void DeviceSegmentedRadixSortKernel(
         ~TS() {}
 
     } temp_storage;
+#endif
 
     OffsetT segment_begin   = d_begin_offsets[hipBlockIdx_x];
     OffsetT segment_end     = d_end_offsets[hipBlockIdx_x];
@@ -707,6 +722,25 @@ struct DeviceRadixSortPolicy
             SEGMENTED_RADIX_BITS    = 6,    // 3.1B 32b segmented keys/s (TitanX)
         };
 
+#ifdef __HIP_PLATFORM_NVCC__
+        // ScanPolicy
+        typedef AgentScanPolicy <512, 23, BLOCK_LOAD_WARP_TRANSPOSE, LOAD_DEFAULT, BLOCK_STORE_WARP_TRANSPOSE, BLOCK_SCAN_RAKING_MEMOIZE> ScanPolicy;
+
+        // Downsweep policies
+        typedef AgentRadixSortDownsweepPolicy <160, CUB_MAX(1, 39 / SCALE_FACTOR_4B),  BLOCK_LOAD_WARP_TRANSPOSE, LOAD_DEFAULT, RADIX_RANK_BASIC, BLOCK_SCAN_WARP_SCANS, PRIMARY_RADIX_BITS>  DownsweepPolicy;
+        typedef AgentRadixSortDownsweepPolicy <256, CUB_MAX(1, 16 / SCALE_FACTOR_4B),  BLOCK_LOAD_DIRECT, LOAD_LDG, RADIX_RANK_MEMOIZE, BLOCK_SCAN_RAKING_MEMOIZE, PRIMARY_RADIX_BITS - 1>   AltDownsweepPolicy;
+
+        // Upsweep policies
+        typedef DownsweepPolicy UpsweepPolicy;
+        typedef AltDownsweepPolicy AltUpsweepPolicy;
+
+        // Single-tile policy
+        typedef AgentRadixSortDownsweepPolicy <256, CUB_MAX(1, 19 / SCALE_FACTOR_4B),  BLOCK_LOAD_DIRECT, LOAD_LDG, RADIX_RANK_MEMOIZE, BLOCK_SCAN_WARP_SCANS, SINGLE_TILE_RADIX_BITS> SingleTilePolicy;
+
+        // Segmented policies
+        typedef AgentRadixSortDownsweepPolicy <192, CUB_MAX(1, 31 / SCALE_FACTOR_4B),  BLOCK_LOAD_WARP_TRANSPOSE, LOAD_DEFAULT, RADIX_RANK_MEMOIZE, BLOCK_SCAN_WARP_SCANS, SEGMENTED_RADIX_BITS>   SegmentedPolicy;
+        typedef AgentRadixSortDownsweepPolicy <256, CUB_MAX(1, 11 / SCALE_FACTOR_4B),  BLOCK_LOAD_WARP_TRANSPOSE, LOAD_DEFAULT, RADIX_RANK_MEMOIZE, BLOCK_SCAN_WARP_SCANS, SEGMENTED_RADIX_BITS - 1>       AltSegmentedPolicy;
+#elif defined(__HIP_PLATFORM_HCC__)
         // ScanPolicy
         typedef AgentScanPolicy <256, 23, BLOCK_LOAD_WARP_TRANSPOSE, LOAD_DEFAULT, BLOCK_STORE_WARP_TRANSPOSE, BLOCK_SCAN_RAKING_MEMOIZE> ScanPolicy;
 
@@ -724,6 +758,8 @@ struct DeviceRadixSortPolicy
         // Segmented policies
         typedef AgentRadixSortDownsweepPolicy <128, CUB_MAX(1, 31 / SCALE_FACTOR_4B),  BLOCK_LOAD_WARP_TRANSPOSE, LOAD_DEFAULT, RADIX_RANK_MEMOIZE, BLOCK_SCAN_WARP_SCANS, SEGMENTED_RADIX_BITS>   SegmentedPolicy;
         typedef AgentRadixSortDownsweepPolicy <256, CUB_MAX(1, 11 / SCALE_FACTOR_4B),  BLOCK_LOAD_WARP_TRANSPOSE, LOAD_DEFAULT, RADIX_RANK_MEMOIZE, BLOCK_SCAN_WARP_SCANS, SEGMENTED_RADIX_BITS - 1>       AltSegmentedPolicy;
+        	
+#endif
     };
 
 
@@ -798,8 +834,8 @@ struct DeviceRadixSortPolicy
         typedef AgentScanPolicy <512, 23, BLOCK_LOAD_WARP_TRANSPOSE, LOAD_DEFAULT, BLOCK_STORE_WARP_TRANSPOSE, BLOCK_SCAN_RAKING_MEMOIZE> ScanPolicy;
 
         // Downsweep policies
-        typedef AgentRadixSortDownsweepPolicy <255, CUB_MAX(1, 16 / SCALE_FACTOR_4B),  BLOCK_LOAD_DIRECT, LOAD_DEFAULT, RADIX_RANK_MEMOIZE, BLOCK_SCAN_RAKING_MEMOIZE, PRIMARY_RADIX_BITS>   DownsweepPolicy;
-        typedef AgentRadixSortDownsweepPolicy <255, CUB_MAX(1, 16 / SCALE_FACTOR_4B),  BLOCK_LOAD_DIRECT, LOAD_DEFAULT, RADIX_RANK_MEMOIZE, BLOCK_SCAN_RAKING_MEMOIZE, ALT_RADIX_BITS>       AltDownsweepPolicy;
+        typedef AgentRadixSortDownsweepPolicy <256, CUB_MAX(1, 16 / SCALE_FACTOR_4B),  BLOCK_LOAD_DIRECT, LOAD_DEFAULT, RADIX_RANK_MEMOIZE, BLOCK_SCAN_RAKING_MEMOIZE, PRIMARY_RADIX_BITS>   DownsweepPolicy;
+        typedef AgentRadixSortDownsweepPolicy <256, CUB_MAX(1, 16 / SCALE_FACTOR_4B),  BLOCK_LOAD_DIRECT, LOAD_DEFAULT, RADIX_RANK_MEMOIZE, BLOCK_SCAN_RAKING_MEMOIZE, ALT_RADIX_BITS>       AltDownsweepPolicy;
 
         // Upsweep policies
         typedef DownsweepPolicy UpsweepPolicy;
@@ -1006,6 +1042,7 @@ struct DispatchRadixSort :
      * Invoke a three-kernel sorting pass at the current bit.
      */
     template <typename PassConfigT>
+    __forceinline__
     hipError_t  InvokePass(
         KeyT      *d_keys_in,
         KeyT            *d_keys_out,
@@ -1605,7 +1642,11 @@ struct DispatchSegmentedRadixSort :
       (void)alt_segmented_kernel;
 
         // Kernel launch not supported from this device
+#if __HIP__
+        return CubDebug(hipErrorNotInitialized);
+#else
         return CubDebug(cudaErrorNotSupported );
+#endif
 #else
 
         hipError_t error = hipSuccess;

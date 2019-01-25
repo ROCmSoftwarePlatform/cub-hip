@@ -68,8 +68,11 @@ namespace cub {
         {
             hipHostMalloc(&p_, sizeof(T)); new (p_) T{x};
         }
-
+#if __HIP__
+        __device__ operator const T&() const { return p_[0]; }
+#else
         operator const T&() const [[hc]] { return p_[0]; }
+#endif
     };
 
   template<typename T>
@@ -596,7 +599,6 @@ struct DipatchHistogram
         return CubDebug(hipErrorNotInitialized);
 
     #else
-
         hipError_t error = hipSuccess;
         do
         {

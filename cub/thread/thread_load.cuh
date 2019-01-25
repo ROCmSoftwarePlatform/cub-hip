@@ -34,7 +34,9 @@
 
 #pragma once
 
+#ifndef __HIP__
 #include <cuda.h>
+#endif
 
 #include <iterator>
 

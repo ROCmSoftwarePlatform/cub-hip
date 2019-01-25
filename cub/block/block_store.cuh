@@ -287,7 +287,6 @@ __device__ __forceinline__ void StoreDirectWarpStriped(
     int wid         = linear_tid >> CUB_PTX_LOG_WARP_THREADS;
     int warp_offset = wid * CUB_PTX_WARP_THREADS * ITEMS_PER_THREAD;
 
-
     OutputIteratorT thread_itr = block_itr + warp_offset + tid;
 
     // Store directly in warp-striped order

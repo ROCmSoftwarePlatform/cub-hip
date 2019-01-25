@@ -115,7 +115,7 @@ __global__ void EmptyKernel(int dummy) { }
 /**
  * \brief Retrieves the PTX version that will be used on the current device (major * 100 + minor * 10)
  */
-CUB_RUNTIME_FUNCTION static __forceinline__ hipError_t PtxVersion(int &ptx_version)
+CUB_RUNTIME_FUNCTION inline hipError_t PtxVersion(int &ptx_version)
 {
     struct Dummy
     {
@@ -173,7 +173,7 @@ CUB_RUNTIME_FUNCTION static __forceinline__ hipError_t PtxVersion(int &ptx_versi
 /**
  * \brief Retrieves the SM version (major * 100 + minor * 10)
  */
-CUB_RUNTIME_FUNCTION static  __forceinline__ hipError_t SmVersion(int &sm_version, int device_ordinal)
+CUB_RUNTIME_FUNCTION inline hipError_t SmVersion(int &sm_version, int device_ordinal)
 {
 #ifndef CUB_RUNTIME_ENABLED
     (void)sm_version;

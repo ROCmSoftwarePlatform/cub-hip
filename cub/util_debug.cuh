@@ -39,7 +39,7 @@
 #include <stdio.h>
 #include "util_namespace.cuh"
 #include "util_arch.cuh"
-#include "hip/hip_runtime_api.h"
+#include "hip/hip_runtime.h"
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -66,7 +66,7 @@ namespace cub {
  *
  * \return The CUDA error.
  */
-__host__ __device__ static __forceinline__ hipError_t Debug(
+__host__ __device__ inline  hipError_t Debug(
     hipError_t     error,
     const char*     filename,
     int             line)
@@ -113,7 +113,7 @@ __host__ __device__ static __forceinline__ hipError_t Debug(
  */
 #if !defined(_CubLog)
     #if !(defined(__clang__) && defined(__CUDA__))
-        #if (CUB_PTX_ARCH == 0)
+        #if (CUB_PTX_ARCH == 0) || __HIP__
             #define _CubLog(format, ...) printf(format,__VA_ARGS__);
         #elif (CUB_PTX_ARCH >= 200)
             #define _CubLog(format, ...) printf("[block (%d,%d,%d), thread (%d,%d,%d)]: " format, hipBlockIdx_z, hipBlockIdx_y, hipBlockIdx_x, hipThreadIdx_z, hipThreadIdx_y, hipThreadIdx_x, __VA_ARGS__);

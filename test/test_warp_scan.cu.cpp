@@ -497,9 +497,14 @@ void Test(
     T           initial_value)
 {
     // Exclusive
-    T t = 0;
+#ifdef __HIP_PLATFORM_HCC__
+    T t = (T)0;
     Test<LOGICAL_WARP_THREADS, BASIC, T>(gen_mode, scan_op, t);
     Test<LOGICAL_WARP_THREADS, AGGREGATE, T>(gen_mode, scan_op, t);
+#elif defined(__HIP_PLATFORM_NVCC__)
+    Test<LOGICAL_WARP_THREADS, BASIC, T>(gen_mode, scan_op, T());
+    Test<LOGICAL_WARP_THREADS, AGGREGATE, T>(gen_mode, scan_op, T());
+#endif
 
     // Exclusive (non-specialized, so we can use initial-value)
     Test<LOGICAL_WARP_THREADS, BASIC, T>(gen_mode, WrapperFunctor<ScanOpT>(scan_op), initial_value);
@@ -632,7 +637,9 @@ int main(int argc, char** argv)
     for (int i = 0; i <= g_repeat; ++i)
     {
         // Test logical warp sizes
+#ifdef __HIP_PLATFORM_HCC__
         Test<64>();
+#endif
         Test<32>();
         Test<16>();
         Test<9>();

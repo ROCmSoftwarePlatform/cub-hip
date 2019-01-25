@@ -52,8 +52,8 @@ const unsigned int MATRIX_A   = 0x9908b0df; /* constant vector a */
 const unsigned int UPPER_MASK = 0x80000000; /* most significant w-r bits */
 const unsigned int LOWER_MASK = 0x7fffffff; /* least significant r bits */
 
-static unsigned int mt[N];  /* the array for the state vector  */
-static int mti = N + 1;     /* mti==N+1 means mt[N] is not initialized */
+__device__ static unsigned int mt[N];  /* the array for the state vector  */
+__device__ static int mti = N + 1;     /* mti==N+1 means mt[N] is not initialized */
 
 /* initializes mt[N] with a seed */
 __host__ __device__ void init_genrand(unsigned int s)

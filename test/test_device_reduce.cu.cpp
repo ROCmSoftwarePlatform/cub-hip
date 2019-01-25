@@ -1311,14 +1311,14 @@ int main(int argc, char** argv)
     for (int i = 0; i <= g_repeat; ++i)
     {
         // Test different input types
-        TestType<char, char>(max_items, max_segments);
+//        TestType<char, char>(max_items, max_segments);
 
-        TestType<unsigned char, unsigned char>(max_items, max_segments);
+//        TestType<unsigned char, unsigned char>(max_items, max_segments);
 
-        TestType<char, int>(max_items, max_segments);
+  //    TestType<char, int>(max_items, max_segments);
 
         TestType<short, short>(max_items, max_segments);
-        TestType<int, int>(max_items, max_segments);
+    /*    TestType<int, int>(max_items, max_segments);
         TestType<long, long>(max_items, max_segments);
         TestType<long long, long long>(max_items, max_segments);
 
@@ -1328,7 +1328,7 @@ int main(int argc, char** argv)
         TestType<ulonglong4, ulonglong4>(max_items, max_segments);
 
 //        TestType<TestFoo, TestFoo>(max_items, max_segments);
-        TestType<TestBar, TestBar>(max_items, max_segments);
+        TestType<TestBar, TestBar>(max_items, max_segments);*/
 
     }
 

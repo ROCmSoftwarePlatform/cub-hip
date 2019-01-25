@@ -45,9 +45,7 @@
 #include "../../util_debug.cuh"
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
-#ifdef __HIP_PLATFORM_HCC__
-#include "../../../hip_helpers/forwarder.hpp"
-#endif
+
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -73,7 +71,9 @@ __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS
 
 #endif
 __global__
+#ifdef __HIP_PLATFORM_HCC__
 __attribute__((weak))
+#endif
 void DeviceReduceKernel(
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate
@@ -122,7 +122,9 @@ __launch_bounds__ (int(ChainedPolicyT::ActivePolicy::SingleTilePolicy::BLOCK_THR
 
 #endif
 __global__
+#ifdef __HIP_PLATFORM_HCC__
 __attribute__((weak))
+#endif
  void DeviceReduceSingleTileKernel(
     InputIteratorT          d_in,                       ///< [in] Pointer to the input sequence of data items
     OutputIteratorT         d_out,                      ///< [out] Pointer to the output aggregate

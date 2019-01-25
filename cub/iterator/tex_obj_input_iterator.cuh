@@ -146,7 +146,7 @@ private:
 
     T*                  ptr;
     difference_type     tex_offset;
-#ifdef __HCC__
+#if defined(__HCC__) || __HIP__
     hipTextureObject_t tex_obj;
 #else
     cudaTextureObject_t tex_obj;

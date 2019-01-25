@@ -1,4 +1,3 @@
-#pragma once
 #ifndef HELPER_FORWARDER
 #define HELPER_FORWARDER
 #include <type_traits>
