@@ -357,6 +357,7 @@ __device__ __forceinline__
 static unsigned int SHFL_UP_SYNC(unsigned int word, int src_offset, int first_lane, unsigned int member_mask)
 {
     word = __shfl_up((int)word, (unsigned int)src_offset, first_lane);
+
     return word;
 }
 
@@ -366,6 +367,7 @@ static unsigned int SHFL_UP_SYNC(unsigned int word, int src_offset, int first_la
 __device__ __forceinline__ 
 static unsigned int SHFL_DOWN_SYNC(unsigned int word, int src_offset, int last_lane, unsigned int member_mask)
 {
+
 
     word = __shfl_down((int)word, (unsigned int)src_offset, last_lane);
     return word;
@@ -378,6 +380,7 @@ __device__ __forceinline__
 static unsigned int SHFL_IDX_SYNC(unsigned int word, int src_lane, int last_lane, unsigned int member_mask)
 {
     word = __shfl((int)word, src_lane, last_lane);
+
     return word;
 }
 
@@ -597,8 +600,8 @@ T ShuffleUp(
     for (int WORD = 1; WORD < WORDS; ++WORD)
     {
         shuffle_word = __shfl_up((int) input_alias[WORD], (unsigned int)src_offset, first_lane);
-        
-	output_alias[WORD] = shuffle_word;
+
+        output_alias[WORD] = shuffle_word;
     }
 
     return output;
@@ -660,8 +663,7 @@ T ShuffleDown(
     for (int WORD = 1; WORD < WORDS; ++WORD)
     {
         shuffle_word = __shfl_down((int) input_alias[WORD], (unsigned int)src_offset);
-        
-	output_alias[WORD] = shuffle_word;
+        output_alias[WORD] = shuffle_word;
     }
 
     return output;
