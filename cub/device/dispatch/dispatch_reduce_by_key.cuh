@@ -43,7 +43,7 @@
 #include "../../grid/grid_queue.cuh"
 #include "../../util_device.cuh"
 #include "../../util_namespace.cuh"
-#include "../../../hip_helpers/forwarder.hpp"
+#include "../../../cub-hip/hip_helpers/forwarder.hpp"
 
 #undef CUB_RUNTIME_FUNCTION
 #define CUB_RUNTIME_FUNCTION  __host__

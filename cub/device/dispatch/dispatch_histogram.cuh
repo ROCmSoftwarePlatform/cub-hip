@@ -44,7 +44,7 @@
 #include "../../thread/thread_search.cuh"
 #include "../../grid/grid_queue.cuh"
 #include "../../util_namespace.cuh"
-#include "../../../hip_helpers/forwarder.hpp"
+#include "../../../cub-hip/hip_helpers/forwarder.hpp"
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
 
