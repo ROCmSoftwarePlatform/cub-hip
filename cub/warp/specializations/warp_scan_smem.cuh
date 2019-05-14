@@ -38,6 +38,7 @@
 #include "../../thread/thread_store.cuh"
 #include "../../util_type.cuh"
 #include "../../util_namespace.cuh"
+#include "../../util_ptx.cuh"
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -108,8 +109,8 @@ struct WarpScanSmem
             LaneId() :
             LaneId() % LOGICAL_WARP_THREADS),
         member_mask(!IS_POW_OF_TWO ?
-            (0xffffffff >> (32 - LOGICAL_WARP_THREADS)) :                                       // non-power-of-two subwarps cannot be tiled
-            (0xffffffff >> (32 - LOGICAL_WARP_THREADS)) << (LaneId() / LOGICAL_WARP_THREADS))
+            (DefaultMask() >> (warpSize - LOGICAL_WARP_THREADS)) :                                       // non-power-of-two subwarps cannot be tiled
+            (DefaultMask() >> (warpSize - LOGICAL_WARP_THREADS)) << (LaneId() / LOGICAL_WARP_THREADS))
     {}
 
 

@@ -38,6 +38,7 @@
 #include "../../thread/thread_store.cuh"
 #include "../../util_type.cuh"
 #include "../../util_namespace.cuh"
+#include "../../util_ptx.cuh"
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
@@ -117,8 +118,8 @@ struct WarpReduceSmem
             LaneId() :
             LaneId() % LOGICAL_WARP_THREADS),
         member_mask(!IS_POW_OF_TWO ?
-            (0xffffffff >> (64 - LOGICAL_WARP_THREADS)) :                                       // non-power-of-two subwarps cannot be tiled
-            (0xffffffff >> (64 - LOGICAL_WARP_THREADS)) << (LaneId() / LOGICAL_WARP_THREADS))
+            (DefaultMask() >> (warpSize - LOGICAL_WARP_THREADS)) :                                       // non-power-of-two subwarps cannot be tiled
+            (DefaultMask() >> (warpSize - LOGICAL_WARP_THREADS)) << (LaneId() / LOGICAL_WARP_THREADS))
     {}
 
     /******************************************************************************
@@ -229,7 +230,7 @@ struct WarpReduceSmem
         #endif
 
         // Clip the next segment at the warp boundary if necessary
-        if (LOGICAL_WARP_THREADS != 32)
+        if (LOGICAL_WARP_THREADS != warpSize)
             next_flag = CUB_MIN(next_flag, LOGICAL_WARP_THREADS);
 
         #pragma unroll

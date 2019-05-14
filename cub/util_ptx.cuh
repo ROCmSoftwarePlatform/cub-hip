@@ -472,7 +472,7 @@ unsigned int WarpId()
 {
     unsigned int ret;
     int Tid = (hipBlockIdx_x * hipBlockDim_x * hipBlockDim_y) + (hipThreadIdx_y * hipBlockDim_x) + hipThreadIdx_x;
-    ret =  Tid / 32;
+    ret =  Tid / warpSize;
 
     return ret;
 }
@@ -486,7 +486,7 @@ unsigned int LaneMaskLt()
 {
     unsigned int ret;
     unsigned int Tid = hipBlockIdx_x * hipBlockDim_x * hipBlockDim_y + hipThreadIdx_y * hipBlockDim_x + hipThreadIdx_x;
-    unsigned int lane = Tid % 32;
+    unsigned int lane = Tid % warpSize;
     ret = (1 << lane) - 1;
 
     return ret;
@@ -501,7 +501,7 @@ unsigned int LaneMaskLe()
 {
     unsigned int ret;
     unsigned int Tid = hipBlockIdx_x * hipBlockDim_x * hipBlockDim_y + hipThreadIdx_y * hipBlockDim_x + hipThreadIdx_x;
-    unsigned int lane = Tid % 32;
+    unsigned int lane = Tid % warpSize;
     ret = (2 << lane) - 1;
 
     return ret;
@@ -543,6 +543,21 @@ unsigned long long LaneMaskGe()
 
 /** @} */       // end group UtilPtx
 
+
+
+
+#ifdef __HIP_PLATFORM_HCC__
+     typedef unsigned long mask_type;
+#else
+     typedef unsigned int mask_type;
+#endif
+/**
+ *  Return a default execution mask (all warp lanes enabled) with correct size for the HIP platform in use
+ */
+__device__ __forceinline__ mask_type DefaultMask()
+{
+	return ((mask_type)-1);
+}
 
 
 

@@ -102,7 +102,7 @@ struct WarpScanShfl
     :
         lane_id(LaneId()),
 
-        member_mask((0xffffffff >> (32 - LOGICAL_WARP_THREADS)) << ((IS_ARCH_WARP) ?
+        member_mask((DefaultMask() >> (warpSize - LOGICAL_WARP_THREADS)) << ((IS_ARCH_WARP) ?
             0 : // arch-width subwarps need not be tiled within the arch-warp
             ((lane_id / LOGICAL_WARP_THREADS) * LOGICAL_WARP_THREADS)))
     {}

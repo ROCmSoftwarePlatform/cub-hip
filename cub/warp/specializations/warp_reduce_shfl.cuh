@@ -142,8 +142,8 @@ struct WarpReduceShfl
         lane_id(LaneId()),
 
         member_mask(IS_ARCH_WARP ?
-             0xffffffff :
-             (0xffffffff >> (32 - LOGICAL_WARP_THREADS)) << (LaneId() / LOGICAL_WARP_THREADS))
+             DefaultMask() :
+             (DefaultMask() >> (warpSize - LOGICAL_WARP_THREADS)) << (LaneId() / LOGICAL_WARP_THREADS))
     {}
 
 
