@@ -38,7 +38,7 @@
 #include "../../thread/thread_store.cuh"
 #include "../../util_type.cuh"
 #include "../../util_namespace.cuh"
-#include "../../util_ptx.cuh"
+#include "warp_default_mask.cuh"
 
 /// Optional outer namespace(s)
 CUB_NS_PREFIX

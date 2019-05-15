@@ -544,23 +544,6 @@ unsigned long long LaneMaskGe()
 /** @} */       // end group UtilPtx
 
 
-
-
-#ifdef __HIP_PLATFORM_HCC__
-     typedef unsigned long mask_type;
-#else
-     typedef unsigned int mask_type;
-#endif
-/**
- *  Return a default execution mask (all warp lanes enabled) with correct size for the HIP platform in use
- */
-__device__ __forceinline__ mask_type DefaultMask()
-{
-	return ((mask_type)-1);
-}
-
-
-
 /**
  * \brief Shuffle-up for any data type.  Each <em>warp-lane<sub>i</sub></em> obtains the value \p input contributed by <em>warp-lane</em><sub><em>i</em>-<tt>src_offset</tt></sub>.  For thread lanes \e i < src_offset, the thread's own \p input is returned to the thread. ![](shfl_up_logo.png)
  * \ingroup WarpModule
